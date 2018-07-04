@@ -9,7 +9,6 @@ implicit none
 	real,dimension(grid,grid)			 	:: arrin				! Input array
 	real,dimension(grid,grid),intent(out)	:: arrout				! Output array
 	real									:: coraltot, fishtot	! Summed values of the arrays
-	real									:: coralfishmult = 1.5	! Multiplies coral 'biomass' 
 
 ! Initializing 
 coraltot = sum(coral)
@@ -125,6 +124,7 @@ implicit none
 	real					:: coord					! Holds the coordinates of the new coral
 	integer					:: x, y, i, j, l, c			! Integers for coordinates, looping, and algae locations
 	integer,allocatable		:: algaeloc(:,:)			! Holds the locations where there is algae and not coral
+	real					:: bactfact
 	
 	
 ! Finds average coral
@@ -152,8 +152,6 @@ if (avgcoral .ge. threshold) then
 	call random_seed(put=seed)
 	call random_number(temp)
 
-	if (temp .ge. 0.4) then
-
 ! Do loops to find exact coordinates of algae
 do i = 1, grid, 1
 	
@@ -179,6 +177,10 @@ end do
 				
 		x = algaeloc(1,floor(l*coord))
 		y = algaeloc(2,floor(l*coord))
+		
+		bactfact = (kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/(maxval(kbact)*1.5)
+		
+		if (temp .ge. bactfact) then
 		
 		numnew = numnew + 1
 		
@@ -278,21 +280,42 @@ end subroutine
 subroutine phagepop
 
 use globalvars
-use functions
 
 implicit none
 	integer			:: i, j
 	real			:: bactmod
 	
-bactmod = 0.7
+bactmod = phlyratio
 	
 do i = 1, 2*grid, 1
 	
 	do j = 1, 2*grid, 1
 	
-		phage(i,j)%totalpop = int((real(bacteria(i,j)%totalpop)*bactmod)*50.0)
+		phage(i,j)%totalpop = int((real(bacteria(i,j)%totalpop)*bactmod))
 		phage(i,j)%numspecies = int((real(bacteria(i,j)%numspecies)*bactmod))
 		
+	end do
+	
+end do
+
+end subroutine
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+subroutine lysogenpop
+
+use globalvars
+
+implicit none
+	integer			:: i, j
+	
+do i = 1, 2*grid, 1
+
+	do j = 1, 2*grid, 1
+	
+		lys(i,j)%totalpop = (bacteria(i,j)%totalpop - phage(i,j)%totalpop)
+		lys(i,j)%numspecies = (bacteria(i,j)%numspecies - phage(i,j)%numspecies)
+	
 	end do
 	
 end do

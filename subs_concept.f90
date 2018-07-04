@@ -105,15 +105,15 @@ implicit none
 	real,dimension(grid,grid), intent(in) 		:: arrin				! Input array
 	real,dimension(grid,grid), intent(out)		:: arrout				! Output array
 	real										:: fishpop				! Fish population of a gridpoint
-	real										:: growpercent = 1.1	! Flat percentage growth for coral
-	
-! Grows coral	
-arrout(x,y) = arrin(x,y)*growpercent
+	real										:: growpercent = 1.5	! Flat percentage growth for coral
+	real										:: bactcoral
+
 
 ! Initializations
 fishlocal = 0.0
 fishpop = fish(x,y)
-
+bactcoral = (kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/(maxval(kbact)*3.2)
+arrout(x,y) = arrin(x,y)*growpercent*(1.0-bactcoral)
 	
 	! Checks neighboring gridpoints for fish population and grows faster with neighbors.
 	! Also checks boundaries to help with edge effects.
@@ -425,20 +425,26 @@ implicit none
 	integer		:: i, j, k, l				! Looping integers
 	real		:: groperc, delbactpop		! determines new species and change in bacteria population 
 	real		:: percentevent, loca
-	real		:: newperc
+	real		:: newperc, phagechange
 	integer		:: percount
 	
 ! Initializations
 delbactpop = 0.0
 groperc = 0.0
 percount = 0
+phagechange = 0.4
 	
 do i = 1, 2*grid, 1
 	
 	do j = 1, 2*grid, 1
 		
+		bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - 0.2*phage(i,j)%totalpop
+		
 		! Finds change in population
 		delbactpop = floor(bacgrowth(real(bacteria(i,j)%totalpop),real(bacteria(i,j)%numspecies),kbact(i,j)))
+		
+		phage(i,j)%totalpop = phage(i,j)%totalpop + floor(phagechange*real(delbactpop))
+		lys(i,j)%totalpop = lys(i,j)%totalpop + floor((1.0-phagechange)*real(delbactpop))
 		
 		! Determines how many new species show up
 		groperc = delbactpop/real(bacteria(i,j)%totalpop)
@@ -467,6 +473,7 @@ do i = 1, 2*grid, 1
 			call random_number(newperc)
 			call random_number(loca)
 			loca = loca*bacteria(i,j)%numspecies
+			bacteria(i,j)%totalpop = 2.0*bacteria(i,j)%totalpop
 			
 			do k = 1, maxspec, 1
 				
@@ -708,38 +715,5 @@ else
 end if
 
 end subroutine
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-subroutine phagegrow
-
-use globalvars
-use functions
-
-implicit none
-
-end subroutine
-
-
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 	

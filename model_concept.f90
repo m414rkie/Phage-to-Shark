@@ -78,6 +78,8 @@ allocate(kbact(2*grid,2*grid), stat=allck)
 	if (allck .ne. 0) stop "Kbact Allocation Failed"
 allocate(phage(2*grid,2*grid), stat=allck)
 	if (allck .ne. 0) stop "Phage Allocation Failed"
+allocate(lys(2*grid,2*grid), stat=allck)
+	if (allck .ne. 0) stop "Lys Allocation Failed"
 allocate(seed(randall), stat=allck)
 	if (allck .ne. 0) stop "Seed Allocation Failed"
 
@@ -88,7 +90,9 @@ fgrowfact = 0.25
 bacteria%totalpop = 0
 bacteria%numspecies = 0
 sharkmod = 0.0
-hunger = 0.3	
+hunger = 0.3
+phlyratio = 0.7
+coralfishmult = 1.5
 
 ! Populates the coral/algae layer
 call hppop(coral)
@@ -119,6 +123,7 @@ call bacteriapop
 
 ! Populating initial phage layer
 call phagepop
+call lysogenpop
 
 ! Outer loops iterates time, i and j iterate x and y respectively
 do t = 1, numtime, 1
