@@ -325,7 +325,7 @@ end do
 ! Final updating of the layer
 kbact = kbact + kdelta
 
-	open(unit=17,file="kbact.dat",position="append",status="replace")
+	open(unit=17,file="General/kbactini.dat",position="append",status="replace")
 	
 	do i = 1, 2*grid, 1
 		do j = 1, 2*grid, 1	
@@ -371,6 +371,9 @@ do i = 1, 2*grid, 1
 		phage(i,j)%totalpop = phage(i,j)%totalpop + floor(phagechange*real(delbactpop))
 		lys(i,j)%totalpop = lys(i,j)%totalpop + floor((1.0-phagechange)*real(delbactpop))
 		
+		phage(i,j)%numspecies = int((real(bacteria(i,j)%numspecies)*phlyratio))
+		lys(i,j)%numspecies = bacteria(i,j)%numspecies - phage(i,j)%numspecies
+		
 		! Determines how many new species show up
 		groperc = delbactpop/real(bacteria(i,j)%totalpop)
 		
@@ -410,7 +413,7 @@ do i = 1, 2*grid, 1
 				
 			end do
 			
-			perabund(i,j,floor(loca+1.0)) = newperc
+			perabund(i,j,floor(loca)) = newperc
 
 		end if
 

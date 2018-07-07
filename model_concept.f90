@@ -33,17 +33,37 @@ PROGRAM concept
 use globalvars
 
 implicit none
-	integer					:: i, j, t				! Looping integers; n is random seed holder
-	integer					:: numtime	    		! Number of timesteps and clusters of coral
-	character*20			:: filename1, filename2	! Changes for what is being put into the file
+	integer					:: i, j, t						! Looping integers; n is random seed holder
+	character*50			:: corfile, fishfile, lysfile	! Changes for what is being put into the file
+	character*50			:: bactfile, genfile, phagefile
+	character*50			:: kfile, percfile
 	integer					:: allck
-
+	character*50			:: corpath, fishpath, bactpath
+	character*50			:: genpath, phagepath, lyspath
 
 ! Format statements
-50 format ("coraltime",1i2,".dat")
-54 format ("fishtime",1i2,".dat")
-52 format ("bacttime",1i2,".dat")
-53 format ("phagetime",1i2,".dat")
+50 format ("Coral/coraltime",1i2,".dat")
+51 format ("Fish/fishtime",1i2,".dat")
+52 format ("Bacteria/bacttime",1i2,".dat")
+53 format ("Phage/phagetime",1i2,".dat")
+54 format ("General/kgrid",1i2,".dat")
+55 format ("Lys/lystime",1i2,".dat")
+
+
+! File path statements
+corpath   = "~/Desktop/Phage2Shark/Coral"
+fishpath  = "~/Desktop/Phage2Shark/Fish"
+bactpath  = "~/Desktop/Phage2Shark/Bacteria"
+genpath   = "~/Desktop/Phage2Shark/General"
+phagepath = "~/Desktop/Phage2Shark/Phage"
+lyspath   = "~/Desktop/Phage2Shark/Lys"
+
+call dircheck(corpath)
+call dircheck(fishpath)
+call dircheck(bactpath)
+call dircheck(genpath)
+call dircheck(phagepath)
+call dircheck(lyspath)
 
 
 ! User input 
@@ -82,6 +102,8 @@ allocate(lys(2*grid,2*grid), stat=allck)
 	if (allck .ne. 0) stop "Lys Allocation Failed"
 allocate(seed(randall), stat=allck)
 	if (allck .ne. 0) stop "Seed Allocation Failed"
+allocate(coralpercent(2,numtime), stat=allck)
+	if (allck .ne. 0) stop "Coralpercent Allocation Failed"
 
 ! Initializing grids
 coral = 0.0
@@ -107,15 +129,13 @@ write(*,*) "0.0 represents pure algae; greater than zero represents coral, highe
 write(*,*) "Files are written as (x,y,z) where z is the population/biomass"
 
 ! Initial disposition of coral/algae layer. 
-filename1 = "coralini.dat"
-write(*,*) "A"
-call printtofile(coral,grid,filename1)
-write(*,*) "B"
+corfile = "Coral/coralini.dat"
+call printtofile(coral,grid,corfile)
 call fishdist(fish)
 
 ! Initial disposition of fish layer
-filename2 = "fishini.dat"
-call printtofile(fish,grid,filename2)
+fishfile = "Fish/fishini.dat"
+call printtofile(fish,grid,fishfile)
 
 ! Populating initital bacteria layer
 call kgrid
@@ -145,19 +165,23 @@ do t = 1, numtime, 1
 		end do
 		
 		call newcoral
+		coralpercent(1,t) = t ; coralpercent(2,t) = corpercout
 		call kgrid
 		call bactgrow
 		call diffuse
 		call mixing	
-		if (mod(t,3) .eq. 0) then
-			write(filename1,50) t
-			write(filename2,54) t
-			write(bactfile,52) t
-			write(phagefile,53) t
-			call printtofile(coral,grid,filename1)
-			call printtofile(fish,grid,filename2)
-			call printbact(bactfile,phagefile)
-		end if
+		
+		write(corfile,50) t
+		write(fishfile,51) t
+		write(bactfile,52) t
+		write(phagefile,53) t
+		write(kfile,54) t
+		write(lysfile,55) t
+		call printtofile(coral,grid,corfile)
+		call printtofile(fish,grid,fishfile)
+		call printbact(bactfile,phagefile,lysfile)
+		call printgen(kfile)
+		
 
  
  		holding = coral
@@ -167,21 +191,23 @@ end do
 write(*,*) "Total number of new coral growths:", numnew
 
 ! Print statements for final layer after the number of timesteps is reached.
-filename1 = "coralfin.dat"
-call printtofile(coral,grid,filename1)
+corfile = "Coral/coralfin.dat"
+call printtofile(coral,grid,corfile)
 
-filename2 = "fishfin.dat"
-call printtofile(fish,grid,filename2)
+fishfile = "Fish/fishfin.dat"
+call printtofile(fish,grid,fishfile)
 
-open(unit=14,file="bactlayerfin.dat",status="replace",position="append")
-	
-	do i = 1, 2*grid, 1
-		do j = 1, 2*grid, 1
-			write(14,*) i, j, bacteria(i,j)%numspecies, bacteria(i,j)%totalpop
-		end do
-	end do
+bactfile  = "Bacteria/bactfin.dat"
+phagefile = "Phage/phagefin.dat"
+lysfile   = "Lys/lysfin.dat"
 
-close(14)
+call printbact(bactfile,phagefile,lysfile)
+
+percfile = "General/percentcoral.dat"
+
+open(unit=18,file=percfile,position="append",status="replace")
+write(18,*) coralpercent
+close(18)
 
 deallocate(coral)
 deallocate(holding)

@@ -18,7 +18,6 @@ end type microbevar
 	integer									:: clock, distance						! System time and radial distance of coral clusters
 	real									:: percentcover							! Percent of grid to have coral on it 'groundcover'
 	real									:: fishlocal, fgrowfact, fisheat
-	character*50							:: bactfile, phagefile
 	real									:: sharkmod, hunger
 	integer									:: numnew = 0
 	real									:: popconstant
@@ -29,7 +28,10 @@ end type microbevar
 	logical,allocatable						:: check(:,:)
 	real, allocatable						:: perabund(:,:,:)
 	real									:: phlyratio
-	real									:: coralfishmult
+	real									:: coralfishmult, corpercout
+	real, allocatable						:: coralpercent(:,:)
+	integer					:: numtime	    				! Number of timesteps and clusters of coral
+
 
 	
 end module

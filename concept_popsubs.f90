@@ -194,6 +194,8 @@ end do
 
 end if
 
+corpercout = real(area-l)/area
+
 write(*,*) "Coral percentage:", real(area-l)/area
 
 end subroutine	
@@ -263,7 +265,7 @@ average = sum(bacteria%numspecies)/area
 write(*,*) "Average number of species:" ,average
 
 
-open(unit=14,file="bactlayer.dat",status="replace",position="append")
+open(unit=14,file="Bacteria/bactlayerini.dat",status="replace",position="append")
 	
 	do i = 1, 2*grid, 1
 		do j = 1, 2*grid, 1
@@ -298,6 +300,16 @@ do i = 1, 2*grid, 1
 	
 end do
 
+open(unit=14,file="Phage/phageini.dat",status="replace",position="append")
+	
+	do i = 1, 2*grid, 1
+		do j = 1, 2*grid, 1
+			write(14,*) i, j, phage(i,j)%numspecies, phage(i,j)%totalpop
+		end do
+	end do
+
+close(14)
+
 end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -319,6 +331,17 @@ do i = 1, 2*grid, 1
 	end do
 	
 end do
+
+open(unit=14,file="Lys/lysini.dat",status="replace",position="append")
+	
+	do i = 1, 2*grid, 1
+		do j = 1, 2*grid, 1
+			write(14,*) i, j, lys(i,j)%numspecies, lys(i,j)%totalpop
+		end do
+	end do
+
+close(14)
+
 
 end subroutine
 
