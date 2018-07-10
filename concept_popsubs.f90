@@ -51,7 +51,7 @@ use globalvars
 	real,dimension(grid,grid)				:: arrin					! Input array
 	integer									:: i,j,x,y, k				! Looping integers
 	real, allocatable						:: coordinate(:,:)			! Holds x,y coordinates of center of cluster
-	real									:: tightclustermult = 0.5	! Determines the increase in coral in cluster
+	real									:: tightclustermult = 0.9	! Determines the increase in coral in cluster
 	real									:: rad						! Spreads the increase across the cluster.
 																		!  interacts with counter to linearly decrease the 
 																		!  increase in coral with distance from center
@@ -97,6 +97,10 @@ write(*,*) "Cluster at:", x, y
 				arrin(x+i,y+j) = arrin(x+i,y+j) + tightclustermult*(1/rad)
 			end if
 
+			if (arrin(x+i,y+j) .gt. 1.0) then
+				arrin(x+i,y+j) = 1.0
+			end if			
+				
 		end do
 
 	end do
@@ -104,6 +108,7 @@ write(*,*) "Cluster at:", x, y
 end do
 	
 ! Setting coral cover to percent input
+
 where (arrin .lt. (1.0-percentcover)) arrin = 0.0
 	
 end subroutine
@@ -116,6 +121,7 @@ subroutine newcoral
 ! there is a check do determine is a new coral is made.
 
 use globalvars
+use functions
 
 implicit none
 	real					:: coraltot, area			! Used to calculate the average coral
@@ -142,7 +148,7 @@ check = (coral .eq. 0.0)
 l = count(check)
 allocate(algaeloc(2,l))
 algaeloc = 0
-
+ 
 ! Checks coral average against threshold, checks against probability of generation, if pass calls random
 ! locations in algaeloc and places coral.
 if (avgcoral .ge. threshold) then
@@ -194,9 +200,7 @@ end do
 
 end if
 
-corpercout = real(area-l)/area
-
-write(*,*) "Coral percentage:", real(area-l)/area
+write(*,*) "Coral percentage:", percentcor(grid)
 
 end subroutine	
 		
@@ -213,9 +217,10 @@ implicit none
 	real 				:: avgspec, ran, minispec			! Average num. of species, random number, minimum number of species
 	real				:: average, area					! Average of species, area of grid
 	integer				:: i, j, k							! Looping integers
-	integer				:: state
+	integer				:: allck
 		
 write(*,*) "Populating initial Bacteria layer."
+
 
 ! User inputs
 write(*,*) "Maximum number of bacteria species?"
@@ -224,16 +229,16 @@ read(*,*) maxspec
 write(*,*) "Minimum number of species?"
 read(*,*) minispec
 
+allocate(perabund(2*grid,2*grid,maxspec), stat=allck)
+	if (allck .ne. 0) stop "Percent abundance failed to allocate."
+
+perabund = 0.0
+
 ! Initializations
 area = (2*float(grid))**2
 
 bacteria%totalpop = kbact
 bacteria%numspecies = 1
-
-allocate(perabund(2*grid,2*grid,maxspec), stat=state)
-	if (state .ne. 0) stop "Percent abundance failed to allocate."
-
-perabund = 0.0
 
 ! Random number generation for species distribution 
 call random_seed(size=randall)
@@ -265,7 +270,7 @@ average = sum(bacteria%numspecies)/area
 write(*,*) "Average number of species:" ,average
 
 
-open(unit=14,file="Bacteria/bactlayerini.dat",status="replace",position="append")
+open(unit=14,file="Bacteria/bacttime00.dat",status="replace",position="append")
 	
 	do i = 1, 2*grid, 1
 		do j = 1, 2*grid, 1
@@ -300,7 +305,7 @@ do i = 1, 2*grid, 1
 	
 end do
 
-open(unit=14,file="Phage/phageini.dat",status="replace",position="append")
+open(unit=14,file="Phage/phagetime00.dat",status="replace",position="append")
 	
 	do i = 1, 2*grid, 1
 		do j = 1, 2*grid, 1
@@ -332,7 +337,7 @@ do i = 1, 2*grid, 1
 	
 end do
 
-open(unit=14,file="Lys/lysini.dat",status="replace",position="append")
+open(unit=14,file="Lys/lystime00.dat",status="replace",position="append")
 	
 	do i = 1, 2*grid, 1
 		do j = 1, 2*grid, 1

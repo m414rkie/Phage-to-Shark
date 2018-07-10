@@ -31,6 +31,7 @@ PROGRAM concept
 ! ------------------ Code -----------------------------
 
 use globalvars
+use functions
 
 implicit none
 	integer					:: i, j, t						! Looping integers; n is random seed holder
@@ -48,7 +49,7 @@ implicit none
 53 format ("Phage/phagetime",1i2,".dat")
 54 format ("General/kgrid",1i2,".dat")
 55 format ("Lys/lystime",1i2,".dat")
-
+56 format ("General/perctime.dat")
 
 ! File path statements
 corpath   = "~/Desktop/Phage2Shark/Coral"
@@ -106,15 +107,15 @@ allocate(coralpercent(2,numtime), stat=allck)
 	if (allck .ne. 0) stop "Coralpercent Allocation Failed"
 
 ! Initializing grids
-coral = 0.0
-holding = 0.0
-fgrowfact = 0.25
-bacteria%totalpop = 0
+coral 				= 0.0
+holding 			= 0.0
+fgrowfact			= 0.25
+bacteria%totalpop 	= 0
 bacteria%numspecies = 0
-sharkmod = 0.0
-hunger = 0.3
-phlyratio = 0.7
-coralfishmult = 1.5
+sharkmod			= 0.0
+hunger 				= 0.3
+phlyratio 			= 0.7
+coralfishmult 		= 1.5
 
 ! Populates the coral/algae layer
 call hppop(coral)
@@ -129,12 +130,12 @@ write(*,*) "0.0 represents pure algae; greater than zero represents coral, highe
 write(*,*) "Files are written as (x,y,z) where z is the population/biomass"
 
 ! Initial disposition of coral/algae layer. 
-corfile = "Coral/coralini.dat"
+corfile = "Coral/coraltime00.dat"
 call printtofile(coral,grid,corfile)
 call fishdist(fish)
 
 ! Initial disposition of fish layer
-fishfile = "Fish/fishini.dat"
+fishfile = "Fish/fishtime00.dat"
 call printtofile(fish,grid,fishfile)
 
 ! Populating initital bacteria layer
@@ -144,6 +145,9 @@ call bacteriapop
 ! Populating initial phage layer
 call phagepop
 call lysogenpop
+
+write(percfile,56)
+open(unit=25,file=percfile,position="append",status="replace")
 
 ! Outer loops iterates time, i and j iterate x and y respectively
 do t = 1, numtime, 1
@@ -165,18 +169,21 @@ do t = 1, numtime, 1
 		end do
 		
 		call newcoral
-		coralpercent(1,t) = t ; coralpercent(2,t) = corpercout
 		call kgrid
 		call bactgrow
 		call diffuse
 		call mixing	
-		
+
+
 		write(corfile,50) t
 		write(fishfile,51) t
 		write(bactfile,52) t
 		write(phagefile,53) t
 		write(kfile,54) t
 		write(lysfile,55) t
+		
+		write(25,*) t, percentcor(grid)
+		
 		call printtofile(coral,grid,corfile)
 		call printtofile(fish,grid,fishfile)
 		call printbact(bactfile,phagefile,lysfile)
@@ -203,11 +210,7 @@ lysfile   = "Lys/lysfin.dat"
 
 call printbact(bactfile,phagefile,lysfile)
 
-percfile = "General/percentcoral.dat"
-
-open(unit=18,file=percfile,position="append",status="replace")
-write(18,*) coralpercent
-close(18)
+close(25)
 
 deallocate(coral)
 deallocate(holding)

@@ -208,6 +208,8 @@ implicit none
 	if (arrin(x,y) .le. 0.05) then
 		arrin(x,y) = 0.0
 	end if
+	
+	where (arrin .gt. 5.0) arrin = 5.0
 
 end subroutine
 
@@ -347,80 +349,94 @@ use globalvars
 use functions
 	
 implicit none
-	integer		:: i, j, k, l				! Looping integers
+	integer		:: i, j, k, m				! Looping integers
 	real		:: groperc, delbactpop		! determines new species and change in bacteria population 
 	real		:: percentevent, loca
-	real		:: newperc, phagechange
-	integer		:: percount
+	real		:: newperc, lysperc, phagechange
+	integer		:: inloca
+
 	
 ! Initializations
 delbactpop = 0.0
 groperc = 0.0
-percount = 0
 phagechange = 0.4
+lysperc = 0
 	
 do i = 1, 2*grid, 1
 	
 	do j = 1, 2*grid, 1
+	
+		loca = 0.0
+		m = 0
+		lysperc = 0.0
+		newperc = 0.0
+		groperc = 0.0
 		
-		bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - 0.2*phage(i,j)%totalpop
+		bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.2*real(phage(i,j)%totalpop))
 		
 		! Finds change in population
 		delbactpop = floor(bacgrowth(real(bacteria(i,j)%totalpop),real(bacteria(i,j)%numspecies),kbact(i,j)))
-		
-		phage(i,j)%totalpop = phage(i,j)%totalpop + floor(phagechange*real(delbactpop))
-		lys(i,j)%totalpop = lys(i,j)%totalpop + floor((1.0-phagechange)*real(delbactpop))
-		
+
+		phage(i,j)%totalpop = phage(i,j)%totalpop + floor(phagechange*delbactpop)
+		lys(i,j)%totalpop = bacteria(i,j)%totalpop - phage(i,j)%totalpop
+
 		phage(i,j)%numspecies = int((real(bacteria(i,j)%numspecies)*phlyratio))
 		lys(i,j)%numspecies = bacteria(i,j)%numspecies - phage(i,j)%numspecies
-		
+
 		! Determines how many new species show up
 		groperc = delbactpop/real(bacteria(i,j)%totalpop)
-		
+
 		if (groperc .ge. 0.02) then
 			bacteria(i,j)%numspecies = bacteria(i,j)%numspecies + 4
-		else if ((groperc .gt. 0.01) .and. (groperc .lt. 0.2) .and. (groperc .gt. 0.0)) then
+		else if ((groperc .gt. 0.01) .and. (groperc .lt. 0.2)) then
 			bacteria(i,j)%numspecies = bacteria(i,j)%numspecies + 2
-		else if ((groperc .gt. -0.02) .and.  (groperc .lt. 0.0))then
+		else if ((groperc .lt. 0.0) .and.  (groperc .gt. -0.2))then
 			bacteria(i,j)%numspecies = bacteria(i,j)%numspecies - 2
 		else if (groperc .lt. -0.2) then
 			bacteria(i,j)%numspecies = bacteria(i,j)%numspecies - 4
 		end if
 
 		bacteria(i,j)%totalpop = bacteria(i,j)%totalpop + int(delbactpop)
-		l = bacteria(i,j)%numspecies
+		m = bacteria(i,j)%numspecies
+
+		if (m .gt. maxspec) then
+			m = maxspec
+		end if
+			
 		
-		call system_clock(count=clock)
-		seed = clock + 8*(/(i-1,i=1,randall)/)
-		call random_seed(put=seed)
+		lysperc = real(lys(i,j)%totalpop)/real(bacteria(i,j)%totalpop)
+
 		call random_number(percentevent)
 
-		if (percentevent .gt. 0.75) then
-			percount = percount + 1
+		if (percentevent .gt. (1.0 - lysperc)) then
 			
 			call random_number(newperc)
 			call random_number(loca)
-			loca = loca*bacteria(i,j)%numspecies
-			bacteria(i,j)%totalpop = 2.0*bacteria(i,j)%totalpop
+			inloca = floor(loca*maxspec)
+		
+			if (inloca .gt. maxspec) then
+				inloca = maxspec
+			end if
 			
-			do k = 1, maxspec, 1
+			bacteria(i,j)%totalpop = int(1.5*real(bacteria(i,j)%totalpop))
 				
-				if (k .le. l) then
-					perabund(i,j,k) = (1.0-newperc)/real(l)
-				else 
-					perabund(i,j,k) = 0.0
-				end if
-				
-			end do
-			
-			perabund(i,j,floor(loca)) = newperc
+		!	do k = 1, maxspec, 1
+!
+!					perabund(i,j,k) = abs(1.0-newperc)/real(m)
+!					
+!					if (k .gt. maxspec) then
+!						perabund(i,j,k) = 0.0
+!					end if
+!				
+!			end do
+!			
+!			perabund(i,j,inloca) = newperc
 
 		end if
 
 	end do
 	
 end do
-
 ! Trims the layer 
 where (bacteria%numspecies .gt. maxspec) bacteria%numspecies = maxspec
 where (bacteria%numspecies .lt. 0) bacteria%numspecies = 0

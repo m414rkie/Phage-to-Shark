@@ -28,9 +28,9 @@ end type microbevar
 	logical,allocatable						:: check(:,:)
 	real, allocatable						:: perabund(:,:,:)
 	real									:: phlyratio
-	real									:: coralfishmult, corpercout
+	real									:: coralfishmult
 	real, allocatable						:: coralpercent(:,:)
-	integer					:: numtime	    				! Number of timesteps and clusters of coral
+	integer									:: numtime	    				! Number of timesteps and clusters of coral
 
 
 	
@@ -66,5 +66,28 @@ bacgrowth = 0.0
 	bacgrowth = rate*(1.0 - (real(totalpop)/real(carry)))*real(specpop)
 	
 end function bacgrowth
+
+real function percentcor(size)
+
+use globalvars
+
+implicit none
+	integer					:: size
+	integer					:: algcount, corcount
+	logical					:: wherecor(size,size)
+	
+wherecor = (coral .ne. 0.0)
+
+corcount = count(wherecor)
+
+percentcor = corcount/(real(size**2))
+
+end function
+
+
+
+
+
+
 
 end module
