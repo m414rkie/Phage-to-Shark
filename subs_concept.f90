@@ -91,7 +91,7 @@ implicit none
 ! Initializations
 fishlocal = 0.0
 fishpop = fish(x,y)
-bactcoral = (kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/(maxval(kbact)*3.2)
+bactcoral = (kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/(maxval(kbact)*4.0)
 arrout(x,y) = arrin(x,y)*growpercent*(1.0-bactcoral)
 	
 	! Checks neighboring gridpoints for fish population and grows faster with neighbors.
@@ -137,7 +137,6 @@ arrout(x,y) = arrin(x,y)*growpercent*(1.0-bactcoral)
 
 ! Finalizes the population growth of fish, faster with more coral.
 fish = fish + fishdelta(sum(coral),sum(fish))
-!fish(x,y) = fish(x,y) + fishlocal
 
 end subroutine
 	
@@ -276,7 +275,6 @@ use globalvars
 
 implicit none
 	integer							:: i, j								! Looping integers
-	real							:: algaemod, coralmod, barriermod	! Variables for varying the carrying capacity
 	real,dimension(2*grid,2*grid)	:: kdelta							! Change in carrying capacity
 
 ! Initializations 
@@ -327,16 +325,6 @@ end do
 ! Final updating of the layer
 kbact = kbact + kdelta
 
-	open(unit=17,file="General/kbactini.dat",position="append",status="replace")
-	
-	do i = 1, 2*grid, 1
-		do j = 1, 2*grid, 1	
-			write(17,*) i,j,kbact(i,j)
-		end do
-	end do
-	
-	close(17)
-
 end subroutine
 	
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -349,10 +337,10 @@ use globalvars
 use functions
 	
 implicit none
-	integer		:: i, j, k, m				! Looping integers
+	integer		:: i, j, k					! Looping integers
 	real		:: groperc, delbactpop		! determines new species and change in bacteria population 
 	real		:: percentevent, loca
-	real		:: newperc, lysperc, phagechange
+	real		:: newperc, phagechange
 	integer		:: inloca
 
 	
@@ -360,14 +348,12 @@ implicit none
 delbactpop = 0.0
 groperc = 0.0
 phagechange = 0.4
-lysperc = 0
 	
 do i = 1, 2*grid, 1
 	
 	do j = 1, 2*grid, 1
 	
 		loca = 0.0
-		m = 0
 		lysperc = 0.0
 		newperc = 0.0
 		groperc = 0.0
@@ -376,12 +362,6 @@ do i = 1, 2*grid, 1
 		
 		! Finds change in population
 		delbactpop = floor(bacgrowth(real(bacteria(i,j)%totalpop),real(bacteria(i,j)%numspecies),kbact(i,j)))
-
-		phage(i,j)%totalpop = phage(i,j)%totalpop + floor(phagechange*delbactpop)
-		lys(i,j)%totalpop = bacteria(i,j)%totalpop - phage(i,j)%totalpop
-
-		phage(i,j)%numspecies = int((real(bacteria(i,j)%numspecies)*phlyratio))
-		lys(i,j)%numspecies = bacteria(i,j)%numspecies - phage(i,j)%numspecies
 
 		! Determines how many new species show up
 		groperc = delbactpop/real(bacteria(i,j)%totalpop)
@@ -397,14 +377,6 @@ do i = 1, 2*grid, 1
 		end if
 
 		bacteria(i,j)%totalpop = bacteria(i,j)%totalpop + int(delbactpop)
-		m = bacteria(i,j)%numspecies
-
-		if (m .gt. maxspec) then
-			m = maxspec
-		end if
-			
-		
-		lysperc = real(lys(i,j)%totalpop)/real(bacteria(i,j)%totalpop)
 
 		call random_number(percentevent)
 
@@ -419,18 +391,6 @@ do i = 1, 2*grid, 1
 			end if
 			
 			bacteria(i,j)%totalpop = int(1.5*real(bacteria(i,j)%totalpop))
-				
-		!	do k = 1, maxspec, 1
-!
-!					perabund(i,j,k) = abs(1.0-newperc)/real(m)
-!					
-!					if (k .gt. maxspec) then
-!						perabund(i,j,k) = 0.0
-!					end if
-!				
-!			end do
-!			
-!			perabund(i,j,inloca) = newperc
 
 		end if
 
@@ -660,4 +620,66 @@ end if
 
 end subroutine
 	
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+subroutine phagelysgrow
+
+use globalvars
+
+implicit none
+	integer		:: delta, specdelta 
+	integer		:: i, j
+	real		:: coralgratio, popratio
+	real 		:: y, x
+	
+y(x) = x/(maxval(kbact))
+
+
+do i = 1, 2*grid, 1
+	
+	do j = 1, 2*grid, 1
+	
+		popratio = y(real(bacteria(i,j)%totalpop))
+		
+		if (popratio .lt. 0.5) then
+			popratio = 0.5
+		end if
+		
+		if (kbact(i,j) .eq. coralmod) then
+			coralgratio = 0.1
+		else
+			coralgratio = 0.0
+		end if
+		
+		delta = bacteria(i,j)%totalpop - bacthold(i,j)%totalpop
+		specdelta = bacteria(i,j)%numspecies - bacthold(i,j)%numspecies
+		
+		phage(i,j)%totalpop = phage(i,j)%totalpop + floor((1.0 - popratio + coralgratio)*real(delta))
+		lys(i,j)%totalpop = lys(i,j)%totalpop + floor(popratio*real(delta))
+	
+		phage(i,j)%numspecies = phage(i,j)%numspecies + floor((popratio - coralgratio)*real(specdelta))
+		lys(i,j)%numspecies = lys(i,j)%numspecies + floor(popratio*real(specdelta))
+		
+		
+		
+	end do
+
+end do
+
+end subroutine
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	

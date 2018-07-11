@@ -13,12 +13,14 @@ end type microbevar
 	real									:: norm, nearsum, test					! Variables for interactions
 	real, allocatable						:: holding(:,:), coral(:,:), fish(:,:)  ! Layer names
 	real, allocatable						:: kbact(:,:)							! Holds carrying capacity for bacteria
-	type (microbevar) , allocatable			:: bacteria(:,:), phage(:,:), lys(:,:)	! Layer names
+	type (microbevar), allocatable			:: bacteria(:,:), phage(:,:), lys(:,:)	! Layer names
+	type (microbevar), allocatable			:: bacthold(:,:) 
 	integer, allocatable					:: seed(:)								! Random number holding array
 	integer									:: clock, distance						! System time and radial distance of coral clusters
 	real									:: percentcover							! Percent of grid to have coral on it 'groundcover'
 	real									:: fishlocal, fgrowfact, fisheat
 	real									:: sharkmod, hunger
+	real									:: algaemod, coralmod, barriermod		! Variables for varying the carrying capacity
 	integer									:: numnew = 0
 	real									:: popconstant
 	real									:: pi = acos(-1.0)
@@ -26,8 +28,7 @@ end type microbevar
 	real									:: avgpop, threshold
 	integer									:: maxspec
 	logical,allocatable						:: check(:,:)
-	real, allocatable						:: perabund(:,:,:)
-	real									:: phlyratio
+	real									:: phlyratio, lysperc
 	real									:: coralfishmult
 	real, allocatable						:: coralpercent(:,:)
 	integer									:: numtime	    				! Number of timesteps and clusters of coral
@@ -80,7 +81,7 @@ wherecor = (coral .ne. 0.0)
 
 corcount = count(wherecor)
 
-percentcor = corcount/(real(size**2))
+percentcor = real(corcount)/(real(size)**2)
 
 end function
 

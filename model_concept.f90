@@ -35,37 +35,7 @@ use functions
 
 implicit none
 	integer					:: i, j, t						! Looping integers; n is random seed holder
-	character*50			:: corfile, fishfile, lysfile	! Changes for what is being put into the file
-	character*50			:: bactfile, genfile, phagefile
-	character*50			:: kfile, percfile
 	integer					:: allck
-	character*50			:: corpath, fishpath, bactpath
-	character*50			:: genpath, phagepath, lyspath
-
-! Format statements
-50 format ("Coral/coraltime",1i2,".dat")
-51 format ("Fish/fishtime",1i2,".dat")
-52 format ("Bacteria/bacttime",1i2,".dat")
-53 format ("Phage/phagetime",1i2,".dat")
-54 format ("General/kgrid",1i2,".dat")
-55 format ("Lys/lystime",1i2,".dat")
-56 format ("General/perctime.dat")
-
-! File path statements
-corpath   = "~/Desktop/Phage2Shark/Coral"
-fishpath  = "~/Desktop/Phage2Shark/Fish"
-bactpath  = "~/Desktop/Phage2Shark/Bacteria"
-genpath   = "~/Desktop/Phage2Shark/General"
-phagepath = "~/Desktop/Phage2Shark/Phage"
-lyspath   = "~/Desktop/Phage2Shark/Lys"
-
-call dircheck(corpath)
-call dircheck(fishpath)
-call dircheck(bactpath)
-call dircheck(genpath)
-call dircheck(phagepath)
-call dircheck(lyspath)
-
 
 ! User input 
 write(*,*) "Enter the dimension of the grid (square):"
@@ -95,6 +65,8 @@ allocate(check(grid,grid), stat=allck)
 	if (allck .ne. 0) stop "Check Allocation Failed"
 allocate(bacteria(2*grid,2*grid), stat=allck)
 	if (allck .ne. 0) stop "Bacteria Allocation Failed"
+allocate(bacthold(2*grid,2*grid), stat=allck)
+	if (allck .ne. 0) stop "Bacteria Hold Allocation Failed"
 allocate(kbact(2*grid,2*grid), stat=allck)
 	if (allck .ne. 0) stop "Kbact Allocation Failed"
 allocate(phage(2*grid,2*grid), stat=allck)
@@ -129,14 +101,7 @@ holding = coral
 write(*,*) "0.0 represents pure algae; greater than zero represents coral, higher number represents more coral"
 write(*,*) "Files are written as (x,y,z) where z is the population/biomass"
 
-! Initial disposition of coral/algae layer. 
-corfile = "Coral/coraltime00.dat"
-call printtofile(coral,grid,corfile)
 call fishdist(fish)
-
-! Initial disposition of fish layer
-fishfile = "Fish/fishtime00.dat"
-call printtofile(fish,grid,fishfile)
 
 ! Populating initital bacteria layer
 call kgrid
@@ -146,8 +111,10 @@ call bacteriapop
 call phagepop
 call lysogenpop
 
-write(percfile,56)
-open(unit=25,file=percfile,position="append",status="replace")
+bacthold = bacteria
+
+t = 0
+call datacollect(t)
 
 ! Outer loops iterates time, i and j iterate x and y respectively
 do t = 1, numtime, 1
@@ -173,44 +140,15 @@ do t = 1, numtime, 1
 		call bactgrow
 		call diffuse
 		call mixing	
-
-
-		write(corfile,50) t
-		write(fishfile,51) t
-		write(bactfile,52) t
-		write(phagefile,53) t
-		write(kfile,54) t
-		write(lysfile,55) t
 		
-		write(25,*) t, percentcor(grid)
+		call datacollect(t)
 		
-		call printtofile(coral,grid,corfile)
-		call printtofile(fish,grid,fishfile)
-		call printbact(bactfile,phagefile,lysfile)
-		call printgen(kfile)
-		
-
- 
  		holding = coral
+		bacthold = bacteria
 
 end do
 
 write(*,*) "Total number of new coral growths:", numnew
-
-! Print statements for final layer after the number of timesteps is reached.
-corfile = "Coral/coralfin.dat"
-call printtofile(coral,grid,corfile)
-
-fishfile = "Fish/fishfin.dat"
-call printtofile(fish,grid,fishfile)
-
-bactfile  = "Bacteria/bactfin.dat"
-phagefile = "Phage/phagefin.dat"
-lysfile   = "Lys/lysfin.dat"
-
-call printbact(bactfile,phagefile,lysfile)
-
-close(25)
 
 deallocate(coral)
 deallocate(holding)

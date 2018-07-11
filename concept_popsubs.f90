@@ -39,6 +39,8 @@ seed = clock + 8*(/(i-1,i=1,randall)/)
 call random_seed(put=seed)
 call random_number(arrin)
 
+where (arrin .lt. (1.0-percentcover)) arrin = 0.0
+
 end subroutine
 
 subroutine tightcluster(arrin)
@@ -184,7 +186,7 @@ end do
 		x = algaeloc(1,floor(l*coord))
 		y = algaeloc(2,floor(l*coord))
 		
-		bactfact = (kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/(maxval(kbact)*1.5)
+		bactfact = (kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/(maxval(kbact)*2.0)
 		
 		if (temp .ge. bactfact) then
 		
@@ -229,11 +231,6 @@ read(*,*) maxspec
 write(*,*) "Minimum number of species?"
 read(*,*) minispec
 
-allocate(perabund(2*grid,2*grid,maxspec), stat=allck)
-	if (allck .ne. 0) stop "Percent abundance failed to allocate."
-
-perabund = 0.0
-
 ! Initializations
 area = (2*float(grid))**2
 
@@ -257,10 +254,6 @@ do i = 1, 2*grid, 1
 			
 			bacteria(i,j)%numspecies = (int(ran))
 			
-			do k = 1, int(ran), 1
-				perabund(i,j,k) = 1.0/ran
-			end do
-
 	end do
 
 end do
@@ -268,17 +261,6 @@ end do
 ! Write statements
 average = sum(bacteria%numspecies)/area
 write(*,*) "Average number of species:" ,average
-
-
-open(unit=14,file="Bacteria/bacttime00.dat",status="replace",position="append")
-	
-	do i = 1, 2*grid, 1
-		do j = 1, 2*grid, 1
-			write(14,*) i, j, bacteria(i,j)%numspecies, bacteria(i,j)%totalpop
-		end do
-	end do
-
-close(14)
 
 end subroutine
 
@@ -305,16 +287,6 @@ do i = 1, 2*grid, 1
 	
 end do
 
-open(unit=14,file="Phage/phagetime00.dat",status="replace",position="append")
-	
-	do i = 1, 2*grid, 1
-		do j = 1, 2*grid, 1
-			write(14,*) i, j, phage(i,j)%numspecies, phage(i,j)%totalpop
-		end do
-	end do
-
-close(14)
-
 end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -336,17 +308,6 @@ do i = 1, 2*grid, 1
 	end do
 	
 end do
-
-open(unit=14,file="Lys/lystime00.dat",status="replace",position="append")
-	
-	do i = 1, 2*grid, 1
-		do j = 1, 2*grid, 1
-			write(14,*) i, j, lys(i,j)%numspecies, lys(i,j)%totalpop
-		end do
-	end do
-
-close(14)
-
 
 end subroutine
 
