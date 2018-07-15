@@ -83,60 +83,23 @@ implicit none
 	integer, intent(in)							:: x, y					! Input coordinates
 	real,dimension(grid,grid), intent(in) 		:: arrin				! Input array
 	real,dimension(grid,grid), intent(out)		:: arrout				! Output array
-	real										:: fishpop				! Fish population of a gridpoint
 	real										:: growpercent = 1.5	! Flat percentage growth for coral
 	real										:: bactcoral
 
 
 ! Initializations
-fishlocal = 0.0
-fishpop = fish(x,y)
 bactcoral = (kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/(maxval(kbact)*4.0)
-arrout(x,y) = arrin(x,y)*growpercent*(1.0-bactcoral)
-	
-	! Checks neighboring gridpoints for fish population and grows faster with neighbors.
-	! Also checks boundaries to help with edge effects.
-	if(holding(x,y) .eq. 0.0) then
-		fishlocal = fishlocal - 1.0
-	else
-		fishlocal = fishlocal + holding(x,y)*0.1	
-	end if
-	
-	if ((holding(x-1,y) .eq. 0.0) .and. (x .gt. 1)) then
-		fishlocal = fishlocal + 0.1
-	end if
-	
-	if ((holding(x+1,y) .eq. 0.0) .and. (x .lt. grid)) then
-		fishlocal = fishlocal + 0.1
-	end if
+if (bactcoral .lt. 0.0) then
+	bactcoral = 0.0
+end if
 
-	if ((holding(x,y+1) .eq. 0.0) .and. (y .lt. grid)) then
-		fishlocal = fishlocal + 0.1
-	end if
-	
-	if ((holding(x,y-1) .eq. 0.0) .and. (y .gt. 1)) then
-		fishlocal = fishlocal + 0.1
-	end if
-
-	if ((holding(x+1,y+1) .eq. 0.0) .and. (x .lt. grid) .and. (y .lt. grid)) then
-		fishlocal = fishlocal + 0.1
-	end if
-
-	if ((holding(x-1,y-1) .eq. 0.0) .and. (x .gt. 1) .and. (y .gt. 1)) then
-		fishlocal = fishlocal + 0.1
-	end if
-	
-	if ((holding(x+1,y-1) .eq. 0.0) .and. (x .lt. grid) .and. (y .gt. 1)) then
-		fishlocal = fishlocal + 0.1
-	end if
-	
-	if ((holding(x-1,y+1) .eq. 0.0) .and. (x .gt. 1) .and. (y .lt. grid)) then
-		fishlocal = fishlocal + 0.1
-	end if
-
+if (bactcoral .ge. 1.0) then 
+	arrout(x,y) = arrin(x,y)
+else
+	arrout(x,y) = arrin(x,y)*growpercent*(1.0-bactcoral)
+end if
 
 ! Finalizes the population growth of fish, faster with more coral.
-fish = fish + fishdelta(sum(coral),sum(fish))
 
 end subroutine
 	
@@ -357,7 +320,8 @@ do i = 1, 2*grid, 1
 		lysperc = 0.0
 		newperc = 0.0
 		groperc = 0.0
-		
+	
+		lysperc = real(lys(i,j)%totalpop)/real(bacteria(i,j)%totalpop)
 		bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.2*real(phage(i,j)%totalpop))
 		
 		! Finds change in population
@@ -376,23 +340,15 @@ do i = 1, 2*grid, 1
 			bacteria(i,j)%numspecies = bacteria(i,j)%numspecies - 4
 		end if
 
-		bacteria(i,j)%totalpop = bacteria(i,j)%totalpop + int(delbactpop)
-
 		call random_number(percentevent)
 
 		if (percentevent .gt. (1.0 - lysperc)) then
 			
-			call random_number(newperc)
-			call random_number(loca)
-			inloca = floor(loca*maxspec)
-		
-			if (inloca .gt. maxspec) then
-				inloca = maxspec
-			end if
-			
-			bacteria(i,j)%totalpop = int(1.5*real(bacteria(i,j)%totalpop))
+			delbactpop = delbactpop + int(0.5*real(bacteria(i,j)%totalpop))
 
 		end if
+
+		bacteria(i,j)%totalpop = bacteria(i,j)%totalpop + int(delbactpop)
 
 	end do
 	

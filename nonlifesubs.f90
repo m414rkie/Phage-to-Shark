@@ -146,22 +146,22 @@ call dircheck(phagepath)
 call dircheck(lyspath)
 call dircheck(kpath)
 
-percfile = "General/perctime.dat"
-totbactfile = "General/bacttime.dat"
-totfishfile = "General/fishtottime.dat"
-avgcoralfile = "General/avgcortime.dat"
+percfile	  = "General/perctime.dat"
+totbactfile   = "General/bacttime.dat"
+totfishfile   = "General/fishtottime.dat"
+avgcoralfile  = "General/avgcortime.dat"
 phlyratiofile = "General/phagelysratio.dat"
-micropopfile = "General/microbepops.dat"
+micropopfile  = "General/microbepops.dat"
 microspecfile = "General/microbespecs.dat"
-cortotfile = "General/cortottime.dat"
+cortotfile 	  = "General/cortottime.dat"
 
 if (tim .eq. 0) then
-	corfile = "Coral/coraltime00.dat"
-	fishfile = "Fish/fishtime00.dat"
-	lysfile = "Lys/lystime00.dat"
-	bactfile = "Bacteria/bacttime00.dat"
+	corfile   = "Coral/coraltime00.dat"
+	fishfile  = "Fish/fishtime00.dat"
+	lysfile   = "Lys/lystime00.dat"
+	bactfile  = "Bacteria/bacttime00.dat"
 	phagefile = "Phage/phagetime00.dat"
-	kfile = "Kbact/ktime00.dat"
+	kfile 	  = "Kbact/ktime00.dat"
 else if (tim .ne. 0) then
 	write(corfile,50) tim
 	write(fishfile,51) tim

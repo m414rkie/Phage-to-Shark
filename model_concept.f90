@@ -94,7 +94,7 @@ call hppop(coral)
 call tightcluster(coral)
 
 ! Increases overal population of coral as each gridpoint will be between zero and one beforehand
-coral = 2.0*coral
+coral = 5.0*coral
 
 holding = coral
 
@@ -135,6 +135,7 @@ do t = 1, numtime, 1
 	
 		end do
 		
+		fish = fish + fishdelta(sum(coral),sum(fish))
 		call newcoral
 		call kgrid
 		call bactgrow

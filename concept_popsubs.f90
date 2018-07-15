@@ -83,11 +83,6 @@ write(*,*) "Cluster at:", x, y
 	do j = -distance, distance, 1
 	
 		do i = -distance, distance, 1
-					
-			! Logic statements check for floating point issues and distribute the cluster
-			if (far .lt. 0) then
-				far = 0
-			end if
 		
 			rad = sqrt(real(i**2) + real(j**2))
 			
@@ -186,7 +181,7 @@ end do
 		x = algaeloc(1,floor(l*coord))
 		y = algaeloc(2,floor(l*coord))
 		
-		bactfact = (kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/(maxval(kbact)*2.0)
+		bactfact = (kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/(maxval(kbact)*4.0)
 		
 		if (temp .ge. bactfact) then
 		
