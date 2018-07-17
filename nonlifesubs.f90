@@ -125,7 +125,7 @@ phagelysratio = real(sum(phage%totalpop))/real(sum(lys%totalpop))
 51 format ("Fish/fishtime",1i2,".dat")
 52 format ("Bacteria/bacttime",1i2,".dat")
 53 format ("Phage/phagetime",1i2,".dat")
-54 format ("General/kgrid",1i2,".dat")
+54 format ("Kbact/kgrid",1i2,".dat")
 55 format ("Lys/lystime",1i2,".dat")
 56 format ("General/perctime.dat")
 
@@ -171,20 +171,20 @@ else if (tim .ne. 0) then
 	write(kfile,54) tim
 end if
 	
-	
-	
 call printtofile(fish,grid,fishfile)
 call printtofile(coral,grid,corfile)
-call printtofile(kbact,2*grid,kfile)	
+call printtofile(kbact,2*grid,kfile)
+
+call printbact(bactfile,phagefile,lysfile)
 	
-open(unit=15,file=percfile,status="unknown",position="append")
-open(unit=20,file=totbactfile,status="unknown",position="append")
-open(unit=21,file=totfishfile,status="unknown",position="append")
-open(unit=22,file=avgcoralfile,status="unknown",position="append")
-open(unit=23,file=phlyratiofile,status="unknown",position="append")
-open(unit=24,file=micropopfile,status="unknown",position="append")
-open(unit=25,file=microspecfile,status="unknown",position="append")
-open(unit=26,file=cortotfile,status="unknown",position="append")
+	open(unit=15,file=percfile,status="unknown",position="append")
+	open(unit=20,file=totbactfile,status="unknown",position="append")
+	open(unit=21,file=totfishfile,status="unknown",position="append")
+	open(unit=22,file=avgcoralfile,status="unknown",position="append")
+	open(unit=23,file=phlyratiofile,status="unknown",position="append")
+	open(unit=24,file=micropopfile,status="unknown",position="append")
+	open(unit=25,file=microspecfile,status="unknown",position="append")
+	open(unit=26,file=cortotfile,status="unknown",position="append")
 	
 write(15,*) tim, percentcor(grid)
 write(20,*) tim, sum(bacteria%totalpop)
@@ -195,15 +195,15 @@ write(24,*) tim, sum(bacteria%totalpop), sum(phage%totalpop), sum(lys%totalpop)
 write(25,*) tim, sum(bacteria%numspecies), sum(phage%numspecies), sum(lys%numspecies)
 write(26,*) tim, sum(coral)
 
-close(15)
-close(20)	
-close(21)	
-close(22)	
-close(23)	
-close(24)	
-close(25)	
-close(26)		
-	
+	close(15)
+	close(20)	
+	close(21)	
+	close(22)	
+	close(23)	
+	close(24)	
+	close(25)	
+	close(26)		
+
 end subroutine
 	
 

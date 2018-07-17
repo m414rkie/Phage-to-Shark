@@ -34,7 +34,7 @@ use globalvars
 use functions
 
 implicit none
-	integer					:: i, j, t						! Looping integers; n is random seed holder
+	integer					:: i, j, t, l					! Looping integers; n is random seed holder
 	integer					:: allck
 
 ! User input 
@@ -136,12 +136,18 @@ do t = 1, numtime, 1
 		end do
 		
 		fish = fish + fishdelta(sum(coral),sum(fish))
-		call newcoral
+		
+		do l = 1, grid, 1
+			call newcoral
+		end do
+		
 		call kgrid
 		call bactgrow
 		call diffuse
 		call mixing	
 		
+		write(*,*) "Coral percentage:", percentcor(grid)
+
 		call datacollect(t)
 		
  		holding = coral
