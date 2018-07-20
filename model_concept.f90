@@ -84,7 +84,6 @@ holding 			= 0.0
 fgrowfact			= 0.25
 bacteria%totalpop 	= 0
 bacteria%numspecies = 0
-sharkmod			= 0.0
 hunger 				= 0.3
 phlyratio 			= 0.7
 coralfishmult 		= 1.5
@@ -135,7 +134,7 @@ do t = 1, numtime, 1
 	
 		end do
 		
-		fish = fish + fishdelta(sum(coral),sum(fish))
+		fish = fish + fishdelta(sum(coral),sum(fish))/real(grid**2)
 		
 		do l = 1, grid, 1
 			call newcoral
@@ -143,8 +142,9 @@ do t = 1, numtime, 1
 		
 		call kgrid
 		call bactgrow
-		call diffuse
-		call mixing	
+		!call diffuse
+		!call mixing
+		call phagelysgrow
 		
 		write(*,*) "Coral percentage:", percentcor(grid)
 

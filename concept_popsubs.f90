@@ -225,9 +225,9 @@ write(*,*) "Minimum number of species?"
 read(*,*) minispec
 
 ! Initializations
-area = (2*float(grid))**2
+area = (2.0*float(grid))**2
 
-bacteria%totalpop = kbact
+bacteria%totalpop = int(kbact)
 bacteria%numspecies = 1
 
 ! Random number generation for species distribution 
@@ -273,7 +273,7 @@ do i = 1, 2*grid, 1
 	
 	do j = 1, 2*grid, 1
 	
-		phage(i,j)%totalpop = int((real(bacteria(i,j)%totalpop)*bactmod))
+		phage(i,j)%totalpop = int(10.0*real(bacteria(i,j)%totalpop)*bactmod)
 		phage(i,j)%numspecies = int((real(bacteria(i,j)%numspecies)*bactmod))
 		
 	end do
@@ -295,7 +295,7 @@ do i = 1, 2*grid, 1
 
 	do j = 1, 2*grid, 1
 	
-		lys(i,j)%totalpop = (bacteria(i,j)%totalpop - phage(i,j)%totalpop)
+		lys(i,j)%totalpop = int(0.3*float(bacteria(i,j)%totalpop))
 		lys(i,j)%numspecies = (bacteria(i,j)%numspecies - phage(i,j)%numspecies)
 	
 	end do

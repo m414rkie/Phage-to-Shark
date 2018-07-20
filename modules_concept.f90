@@ -19,7 +19,7 @@ end type microbevar
 	integer									:: clock, distance						! System time and radial distance of coral clusters
 	real									:: percentcover							! Percent of grid to have coral on it 'groundcover'
 	real									:: fishlocal, fgrowfact, fisheat
-	real									:: sharkmod, hunger
+	real									:: hunger
 	real									:: algaemod, coralmod, barriermod		! Variables for varying the carrying capacity
 	integer									:: numnew = 0
 	real									:: popconstant
@@ -49,7 +49,7 @@ use globalvars
 implicit none
 	real		:: input, pop
 	
-	fishdelta = -fgrowfact*(coralfishmult*input - pop)
+	fishdelta = -fgrowfact*(pop - 1.1*coralfishmult*input)
 	
 end function fishdelta
 
@@ -62,9 +62,8 @@ implicit none
 	real		:: rate	
 	
 rate = 0.8
-bacgrowth = 0.0
 
-	bacgrowth = rate*(1.0 - (real(totalpop)/real(carry)))*real(specpop)
+bacgrowth = rate*(1.0 - (real(totalpop)/real(carry)))*real(specpop)
 	
 end function bacgrowth
 

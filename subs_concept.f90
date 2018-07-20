@@ -83,7 +83,7 @@ implicit none
 	integer, intent(in)							:: x, y					! Input coordinates
 	real,dimension(grid,grid), intent(in) 		:: arrin				! Input array
 	real,dimension(grid,grid), intent(out)		:: arrout				! Output array
-	real										:: growpercent = 1.5	! Flat percentage growth for coral
+	real										:: growpercent = 2.0	! Flat percentage growth for coral
 	real										:: bactcoral
 
 
@@ -181,13 +181,14 @@ subroutine fishinteraction(modify,i,j)
 
 ! Interaction of fish with algae layer. Lessens the pressure of algae against the fish.
 
+use functions
 use globalvars
 
 	real						:: modify				! Input variable to be modified
 	integer,intent(in)			:: i, j					! Looping integers
 
 
-	fisheat = 0.05 + sharkmod
+	fisheat = 0.01*fishdelta(sum(coral),sum(fish))/real(grid**2)
 	
 	! Checks for fish around algae and lowers the amount of coral destroyed by the algae
 	if(fish(i,j) .ne. 0.0) then
@@ -322,10 +323,15 @@ do i = 1, 2*grid, 1
 		groperc = 0.0
 	
 		lysperc = real(lys(i,j)%totalpop)/real(bacteria(i,j)%totalpop)
-		bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.2*real(phage(i,j)%totalpop))
+		
+		if (phage(i,j)%totalpop .ge. bacteria(i,j)%totalpop) then
+			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.3*float(bacteria(i,j)%totalpop))
+		else if (phage(i,j)%totalpop .lt. bacteria(i,j)%totalpop) then
+			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.3*real(phage(i,j)%totalpop))
+		end if
 		
 		! Finds change in population
-		delbactpop = floor(bacgrowth(real(bacteria(i,j)%totalpop),real(bacteria(i,j)%numspecies),kbact(i,j)))
+		delbactpop = (bacgrowth(real(bacteria(i,j)%totalpop),real(bacteria(i,j)%numspecies),kbact(i,j)))
 
 		! Determines how many new species show up
 		groperc = delbactpop/real(bacteria(i,j)%totalpop)
@@ -353,9 +359,6 @@ do i = 1, 2*grid, 1
 	end do
 	
 end do
-! Trims the layer 
-where (bacteria%numspecies .gt. maxspec) bacteria%numspecies = maxspec
-where (bacteria%numspecies .lt. 0) bacteria%numspecies = 0
 	
 end subroutine
 
@@ -543,9 +546,6 @@ do i = 1, 2*grid, 1
 	
 end do
 
-! Trimming 
-where (bacteria%numspecies .gt. maxspec) bacteria%numspecies = maxspec
-
 end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -559,8 +559,6 @@ implicit none
 	integer			:: i
 	
 	
-sharkmod = 0.05
-
 call system_clock(count=clock)
 seed = clock + 8*(/(i-1,i=1,randall)/)
 call random_seed(put=seed)
@@ -585,38 +583,39 @@ use globalvars
 implicit none
 	integer		:: delta, specdelta 
 	integer		:: i, j
-	real		:: coralgratio, popratio
-	real 		:: y, x
+	real		:: popratio, deltratio
 	
-y(x) = x/(maxval(kbact))
-
-
 do i = 1, 2*grid, 1
 	
 	do j = 1, 2*grid, 1
-	
-		popratio = y(real(bacteria(i,j)%totalpop))
-		
-		if (popratio .lt. 0.5) then
-			popratio = 0.5
-		end if
-		
-		if (kbact(i,j) .eq. coralmod) then
-			coralgratio = 0.1
-		else
-			coralgratio = 0.0
-		end if
-		
+
 		delta = bacteria(i,j)%totalpop - bacthold(i,j)%totalpop
+
+		deltratio = real(bacteria(i,j)%totalpop)/real(bacthold(i,j)%totalpop)
+		
+		if (deltratio .lt. 1.0) then
+			deltratio = 1.0
+		end if
+		
+		if ((deltratio .lt. 1.10) .and. (deltratio .ge. 1.0)) then
+			popratio = 0.7
+		else 
+			popratio = 0.3
+		end if		
+		
 		specdelta = bacteria(i,j)%numspecies - bacthold(i,j)%numspecies
 		
-		phage(i,j)%totalpop = phage(i,j)%totalpop + floor((1.0 - popratio + coralgratio)*real(delta))
-		lys(i,j)%totalpop = lys(i,j)%totalpop + floor(popratio*real(delta))
+		if (popratio .eq. 0.7) then
+			specdelta = int(real(specdelta)*1.3)
+		else
+			specdelta = int(real(specdelta)*1.1)
+		end if
+		
+		phage(i,j)%totalpop = phage(i,j)%totalpop + int(10*specdelta)*delta
+		lys(i,j)%totalpop = lys(i,j)%totalpop + int(real(delta)*(1.0-specdelta))
 	
-		phage(i,j)%numspecies = phage(i,j)%numspecies + floor((popratio - coralgratio)*real(specdelta))
-		lys(i,j)%numspecies = lys(i,j)%numspecies + floor(popratio*real(specdelta))
-		
-		
+		phage(i,j)%numspecies = phage(i,j)%numspecies + specdelta
+		lys(i,j)%numspecies = lys(i,j)%numspecies + int(real(specdelta)*0.4)		
 		
 	end do
 
