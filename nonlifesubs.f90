@@ -117,7 +117,7 @@ implicit none
 ! Data manipulation
 avgcoral = sum(coral)/(real(grid)**2)
 avgfish = sum(fish)/(real(grid)**2)
-avgbact = sum(bacteria%totalpop)/(real(2*grid)**2)
+avgbact = real(sum(bacteria%totalpop))/(real(2*grid)**2)
 phagelysratio = real(sum(phage%totalpop))/real(sum(lys%totalpop))
 	
 ! Format statements

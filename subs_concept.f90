@@ -321,6 +321,7 @@ do i = 1, 2*grid, 1
 		lysperc = 0.0
 		newperc = 0.0
 		groperc = 0.0
+		delbactpop = 0.0
 	
 		lysperc = real(lys(i,j)%totalpop)/real(bacteria(i,j)%totalpop)
 		
@@ -350,7 +351,7 @@ do i = 1, 2*grid, 1
 
 		if (percentevent .gt. (1.0 - lysperc)) then
 			
-			delbactpop = delbactpop + int(0.5*real(bacteria(i,j)%totalpop))
+			delbactpop = delbactpop + 0.2*real(bacteria(i,j)%totalpop)
 
 		end if
 
@@ -387,64 +388,64 @@ do i = 1, 2*grid, 1
 		! x+1
 		if ((i .lt. 2*grid) .and. (bacteria(i,j)%totalpop .gt. bacteria(i+1,j)%totalpop)) then
 	
-			delta(i+1,j) = delta(i+1,j) +  diffco*(bacteria(i,j)%totalpop - bacteria(i+1,j)%totalpop)
-			delta(i,j) = delta(i,j) - diffco*(bacteria(i,j)%totalpop - bacteria(i+1,j)%totalpop)
+			delta(i+1,j) = delta(i+1,j) +  diffco*real(bacteria(i,j)%totalpop - bacteria(i+1,j)%totalpop)
+			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i+1,j)%totalpop)
 		
 		end if
 		
 		! x-1
 		if ((i .gt. 1) .and. (bacteria(i,j)%totalpop .gt. bacteria(i-1,j)%totalpop)) then
 		
-			delta(i-1,j) = delta(i-1,j) + diffco*(bacteria(i,j)%totalpop - bacteria(i-1,j)%totalpop)
-			delta(i,j) = delta(i,j) - diffco*(bacteria(i,j)%totalpop - bacteria(i-1,j)%totalpop)
+			delta(i-1,j) = delta(i-1,j) + diffco*real(bacteria(i,j)%totalpop - bacteria(i-1,j)%totalpop)
+			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i-1,j)%totalpop)
 		
 		end if
 		
 		! y+1
 		if ((j .lt. 2*grid) .and. (bacteria(i,j)%totalpop .gt. bacteria(i,j+1)%totalpop)) then
 			
-			delta(i,j+1) = delta(i,j+1) + diffco*(bacteria(i,j)%totalpop - bacteria(i,j+1)%totalpop)
-			delta(i,j) = delta(i,j) - diffco*(bacteria(i,j)%totalpop - bacteria(i,j+1)%totalpop)
+			delta(i,j+1) = delta(i,j+1) + diffco*real(bacteria(i,j)%totalpop - bacteria(i,j+1)%totalpop)
+			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i,j+1)%totalpop)
 			
 		end if
 		
 		! x-1
 		if ((j .gt. 1) .and. (bacteria(i,j)%totalpop .gt. bacteria(i,j-1)%totalpop)) then
 			
-			delta(i,j-1) = delta(i,j-1) + diffco*(bacteria(i,j)%totalpop - bacteria(i,j-1)%totalpop)
-			delta(i,j) = delta(i,j) - diffco*(bacteria(i,j)%totalpop - bacteria(i,j-1)%totalpop)
+			delta(i,j-1) = delta(i,j-1) + diffco*real(bacteria(i,j)%totalpop - bacteria(i,j-1)%totalpop)
+			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i,j-1)%totalpop)
 			
 		end if
 		
 		! x-1, y-1
 		if ((j .gt. 1) .and. (i .gt. 1) .and. (bacteria(i,j)%totalpop .gt. bacteria(i-1,j-1)%totalpop)) then
 			
-			delta(i-1,j-1) = delta(i-1,j-1) + diffco*(bacteria(i,j)%totalpop - bacteria(i-1,j-1)%totalpop)
-			delta(i,j) = delta(i,j) - diffco*(bacteria(i,j)%totalpop - bacteria(i-1,j-1)%totalpop)
+			delta(i-1,j-1) = delta(i-1,j-1) + diffco*real(bacteria(i,j)%totalpop - bacteria(i-1,j-1)%totalpop)
+			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i-1,j-1)%totalpop)
 			
 		end if
 		
 		! x+1, y-1
 		if ((j .gt. 1) .and. (i .lt. 2*grid) .and. (bacteria(i,j)%totalpop .gt. bacteria(i+1,j-1)%totalpop)) then
 			
-			delta(i+1,j-1) = delta(i+1,j-1) + diffco*(bacteria(i,j)%totalpop - bacteria(i+1,j-1)%totalpop)
-			delta(i,j) = delta(i,j) - diffco*(bacteria(i,j)%totalpop - bacteria(i+1,j-1)%totalpop)
+			delta(i+1,j-1) = delta(i+1,j-1) + diffco*real(bacteria(i,j)%totalpop - bacteria(i+1,j-1)%totalpop)
+			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i+1,j-1)%totalpop)
 			
 		end if
 		
 		! x-1, y+1
 		if ((j .lt. 2*grid) .and. (i .gt. 1) .and. (bacteria(i,j)%totalpop .gt. bacteria(i-1,j+1)%totalpop)) then
 			
-			delta(i-1,j+1) = delta(i-1,j+1) + diffco*(bacteria(i,j)%totalpop - bacteria(i-1,j+1)%totalpop)
-			delta(i,j) = delta(i,j) - diffco*(bacteria(i,j)%totalpop - bacteria(i-1,j+1)%totalpop)
+			delta(i-1,j+1) = delta(i-1,j+1) + diffco*real(bacteria(i,j)%totalpop - bacteria(i-1,j+1)%totalpop)
+			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i-1,j+1)%totalpop)
 			
 		end if
 		
 		! x+1, y+1
 		if ((j .lt. 2*grid) .and. (i .lt. 2*grid) .and. (bacteria(i,j)%totalpop .gt. bacteria(i+1,j+1)%totalpop)) then
 			
-			delta(i+1,j+1) = delta(i+1,j+1) + diffco*(bacteria(i,j)%totalpop - bacteria(i+1,j+1)%totalpop)
-			delta(i,j) = delta(i,j) - diffco*(bacteria(i,j)%totalpop - bacteria(i+1,j+1)%totalpop)
+			delta(i+1,j+1) = delta(i+1,j+1) + diffco*real(bacteria(i,j)%totalpop - bacteria(i+1,j+1)%totalpop)
+			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i+1,j+1)%totalpop)
 			
 		end if
 		
@@ -472,7 +473,7 @@ implicit none
 	real									:: mixpress		! Pressure for mixing
 	integer									:: delta		! Change in number of species
 								
-mixpress = 0.1
+mixpress = 0.01
 
 ! Working loops
 do i = 1, 2*grid, 1
@@ -584,12 +585,14 @@ implicit none
 	integer		:: delta, specdelta 
 	integer		:: i, j
 	real		:: popratio, deltratio
+
+phage%totalpop = int(real(phage%totalpop)*0.6)
 	
 do i = 1, 2*grid, 1
 	
 	do j = 1, 2*grid, 1
 
-		delta = bacteria(i,j)%totalpop - bacthold(i,j)%totalpop
+		delta = abs(bacteria(i,j)%totalpop - bacthold(i,j)%totalpop)
 
 		deltratio = real(bacteria(i,j)%totalpop)/real(bacthold(i,j)%totalpop)
 		
@@ -603,7 +606,7 @@ do i = 1, 2*grid, 1
 			popratio = 0.3
 		end if		
 		
-		specdelta = bacteria(i,j)%numspecies - bacthold(i,j)%numspecies
+		specdelta = abs(bacteria(i,j)%numspecies - bacthold(i,j)%numspecies)
 		
 		if (popratio .eq. 0.7) then
 			specdelta = int(real(specdelta)*1.3)
@@ -611,11 +614,11 @@ do i = 1, 2*grid, 1
 			specdelta = int(real(specdelta)*1.1)
 		end if
 		
-		phage(i,j)%totalpop = phage(i,j)%totalpop + int(10*specdelta)*delta
-		lys(i,j)%totalpop = lys(i,j)%totalpop + int(real(delta)*(1.0-specdelta))
+		phage(i,j)%totalpop = phage(i,j)%totalpop + int(10*popratio)*delta
+		lys(i,j)%totalpop = lys(i,j)%totalpop + int(real(delta)*(1.0-popratio))
 	
 		phage(i,j)%numspecies = phage(i,j)%numspecies + specdelta
-		lys(i,j)%numspecies = lys(i,j)%numspecies + int(real(specdelta)*0.4)		
+		lys(i,j)%numspecies = lys(i,j)%numspecies + int(real(specdelta)/1.2)		
 		
 	end do
 

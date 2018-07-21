@@ -142,8 +142,8 @@ do t = 1, numtime, 1
 		
 		call kgrid
 		call bactgrow
-		!call diffuse
-		!call mixing
+		call diffuse
+		call mixing
 		call phagelysgrow
 		
 		write(*,*) "Coral percentage:", percentcor(grid)
