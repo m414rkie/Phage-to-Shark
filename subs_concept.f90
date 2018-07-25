@@ -569,9 +569,6 @@ implicit none
 	real		:: popratio, deltratio, specratio
 
 phage%totalpop = int(real(phage%totalpop)*0.8)
-!phage%numspecies = int(real(phage%numspecies)*0.8)
-!lys%numspecies = int(real(lys%numspecies)*0.8)
-
 	
 do i = 1, 2*grid, 1
 	
@@ -616,10 +613,12 @@ do i = 1, 2*grid, 1
 			specdelta = int(real(lys(i,j)%numspecies)*0.3)
 		end if
 	
-		if ((((5.0*popratio)*(delta)) + int(real(phage(i,j)%totalpop))) .lt. (int(real(phage(i,j)%totalpop)*0.7)))then
+		if (delta .gt. 0) then
+			phagecheck = int(real(bacteria(i,j)%totalpop)*2.0)
+		else if (((5.0*popratio)*(delta)) .ge. int(0.3*real(phage(i,j)%totalpop))) then
 			phagecheck = int(real(phage(i,j)%totalpop)*0.3)
 		else
-			phagecheck = (5.0*popratio)*(-delta)
+			phagecheck = (5.0*popratio)*(delta)
 		end if
 		
 		if (int(real(delta)*(1.0-popratio) + lys(i,j)%totalpop) .le. (real(lys(i,j)%totalpop)*0.7)) then
