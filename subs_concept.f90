@@ -616,7 +616,7 @@ do i = 1, 2*grid, 1
 			specdelta = int(real(lys(i,j)%numspecies)*0.3)
 		end if
 	
-		if (((5.0*popratio)*(delta)) .ge. int(0.3*real(phage(i,j)%totalpop))) then
+		if ((((5.0*popratio)*(delta)) + int(real(phage(i,j)%totalpop))) .lt. (int(real(phage(i,j)%totalpop)*0.7)))then
 			phagecheck = int(real(phage(i,j)%totalpop)*0.3)
 		else
 			phagecheck = (5.0*popratio)*(-delta)
