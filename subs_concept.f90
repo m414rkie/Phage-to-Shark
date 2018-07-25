@@ -301,51 +301,33 @@ use globalvars
 use functions
 	
 implicit none
-	integer		:: i, j, k					! Looping integers
-	real		:: groperc, delbactpop		! determines new species and change in bacteria population 
-	real		:: percentevent, loca
-	real		:: newperc, phagechange
-	integer		:: inloca
-
+	integer		:: i, j						! Looping integers
+	real		:: delbactpop				! determines new species and change in bacteria population 
+	real		:: percentevent
 	
 ! Initializations
 delbactpop = 0.0
-groperc = 0.0
-phagechange = 0.4
 	
 do i = 1, 2*grid, 1
 	
 	do j = 1, 2*grid, 1
 	
-		loca = 0.0
 		lysperc = 0.0
-		newperc = 0.0
-		groperc = 0.0
 		delbactpop = 0.0
 	
 		lysperc = real(lys(i,j)%totalpop)/real(bacteria(i,j)%totalpop)
 		
 		if (phage(i,j)%totalpop .ge. bacteria(i,j)%totalpop) then
-			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.3*float(bacteria(i,j)%totalpop))
+			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.2*float(bacteria(i,j)%totalpop))
 		else if (phage(i,j)%totalpop .lt. bacteria(i,j)%totalpop) then
-			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.3*real(phage(i,j)%totalpop))
+			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.2*real(phage(i,j)%totalpop))
 		end if
 		
 		! Finds change in population
 		delbactpop = (bacgrowth(real(bacteria(i,j)%totalpop),real(bacteria(i,j)%numspecies),kbact(i,j)))
 
 		! Determines how many new species show up
-		groperc = delbactpop/real(bacteria(i,j)%totalpop)
-
-		if (groperc .ge. 0.02) then
-			bacteria(i,j)%numspecies = bacteria(i,j)%numspecies + 4
-		else if ((groperc .gt. 0.01) .and. (groperc .lt. 0.2)) then
-			bacteria(i,j)%numspecies = bacteria(i,j)%numspecies + 2
-		else if ((groperc .lt. 0.0) .and.  (groperc .gt. -0.2))then
-			bacteria(i,j)%numspecies = bacteria(i,j)%numspecies - 2
-		else if (groperc .lt. -0.2) then
-			bacteria(i,j)%numspecies = bacteria(i,j)%numspecies - 4
-		end if
+		bacteria(i,j)%numspecies = bacteria(i,j)%numspecies + int(0.1*delbactpop)
 
 		call random_number(percentevent)
 
@@ -377,7 +359,7 @@ implicit none
 	real										:: diffco		! Diffusion coefficient
 	
 ! Initializations
-diffco = 0.01
+diffco = 0.001
 delta = 0.0
 	
 ! Working loops
@@ -582,43 +564,75 @@ subroutine phagelysgrow
 use globalvars
 
 implicit none
-	integer		:: delta, specdelta 
+	integer		:: delta, specdelta, phagecheck, lyscheck
 	integer		:: i, j
-	real		:: popratio, deltratio
+	real		:: popratio, deltratio, specratio
 
-phage%totalpop = int(real(phage%totalpop)*0.6)
+phage%totalpop = int(real(phage%totalpop)*0.8)
+!phage%numspecies = int(real(phage%numspecies)*0.8)
+!lys%numspecies = int(real(lys%numspecies)*0.8)
+
 	
 do i = 1, 2*grid, 1
 	
 	do j = 1, 2*grid, 1
-
-		delta = abs(bacteria(i,j)%totalpop - bacthold(i,j)%totalpop)
+			
+		delta = 0
+		specdelta = 0
+		phagecheck = 0
+		popratio = 0.0
+		deltratio = 0.0
+		specratio = 0.0
+		
+		delta = (bacteria(i,j)%totalpop - bacthold(i,j)%totalpop)
 
 		deltratio = real(bacteria(i,j)%totalpop)/real(bacthold(i,j)%totalpop)
+				
+		specratio = real(phage(i,j)%totalpop)/real(bacteria(i,j)%numspecies)
+		
+		if (specratio .lt. 1.0) then
+			specratio = 1.0
+		end if
+		
+		if (specratio .ge. 2.0) then
+			popratio = 0.0
+		else
+			popratio = 0.4
+		end if
 		
 		if (deltratio .lt. 1.0) then
 			deltratio = 1.0
 		end if
 		
 		if ((deltratio .lt. 1.10) .and. (deltratio .ge. 1.0)) then
-			popratio = 0.7
+			popratio = popratio + 0.2
 		else 
-			popratio = 0.3
+			popratio = popratio + 0.4
 		end if		
 		
-		specdelta = abs(bacteria(i,j)%numspecies - bacthold(i,j)%numspecies)
+		specdelta = (bacteria(i,j)%numspecies - bacthold(i,j)%numspecies)
 		
-		if (popratio .eq. 0.7) then
-			specdelta = int(real(specdelta)*1.3)
+		if ((specdelta .ge. phage(i,j)%numspecies) .or. (specdelta .ge. lys(i,j)%numspecies)) then
+			specdelta = int(real(lys(i,j)%numspecies)*0.3)
+		end if
+	
+		if (((5.0*popratio)*(delta)) .ge. int(0.3*real(phage(i,j)%totalpop))) then
+			phagecheck = int(real(phage(i,j)%totalpop)*0.3)
 		else
-			specdelta = int(real(specdelta)*1.1)
+			phagecheck = (5.0*popratio)*(-delta)
 		end if
 		
-		phage(i,j)%totalpop = phage(i,j)%totalpop + int(10*popratio)*delta
-		lys(i,j)%totalpop = lys(i,j)%totalpop + int(real(delta)*(1.0-popratio))
+		if (int(real(delta)*(1.0-popratio) + lys(i,j)%totalpop) .le. (real(lys(i,j)%totalpop)*0.7)) then
+			lyscheck = int(real(lys(i,j)%totalpop)*0.3)
+		else 
+			lyscheck = int(real(delta)*(1.0 - popratio))
+		end if
 	
-		phage(i,j)%numspecies = phage(i,j)%numspecies + specdelta
-		lys(i,j)%numspecies = lys(i,j)%numspecies + int(real(specdelta)/1.2)		
+		phage(i,j)%totalpop = phage(i,j)%totalpop + phagecheck
+		lys(i,j)%totalpop = lys(i,j)%totalpop + lyscheck
+	
+		phage(i,j)%numspecies = phage(i,j)%numspecies + int(real(specdelta)*popratio)
+		lys(i,j)%numspecies = lys(i,j)%numspecies + int(real(specdelta)*(1.0 - popratio))		
 		
 	end do
 

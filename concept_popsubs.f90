@@ -185,15 +185,13 @@ end do
 		
 		if (temp .ge. bactfact) then
 		
-		numnew = numnew + 1
+			numnew = numnew + 1
 		
-		write(*,*) "New coral growth at:", x, y
-
-			coral(x,y) = 1.2
+			coral(x,y) = 2.0
 		
-		deallocate(algaeloc)
-		
-	end if
+			deallocate(algaeloc)
+			
+		end if
 
 end if
 
@@ -295,7 +293,7 @@ do i = 1, 2*grid, 1
 
 	do j = 1, 2*grid, 1
 	
-		lys(i,j)%totalpop = int(0.3*float(bacteria(i,j)%totalpop))
+		lys(i,j)%totalpop = int((1.0 - phlyratio)*float(bacteria(i,j)%totalpop))
 		lys(i,j)%numspecies = (bacteria(i,j)%numspecies - phage(i,j)%numspecies)
 	
 	end do

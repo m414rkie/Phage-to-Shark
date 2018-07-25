@@ -61,7 +61,7 @@ implicit none
 	real		:: totalpop, specpop, carry
 	real		:: rate	
 	
-rate = 0.8
+rate = 0.25
 
 bacgrowth = rate*(1.0 - (real(totalpop)/real(carry)))*real(specpop)
 	
