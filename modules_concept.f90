@@ -20,20 +20,31 @@ end type microbevar
 	real									:: percentcover							! Percent of grid to have coral on it 'groundcover'
 	real									:: fishlocal, fgrowfact, fisheat
 	real									:: hunger
-	real									:: algaemod, coralmod, barriermod		! Variables for varying the carrying capacity
 	integer									:: numnew = 0
 	real									:: popconstant
 	real									:: pi = acos(-1.0)
 	integer									:: randall = 12
 	real									:: avgpop, threshold
-	integer									:: maxspec
+	integer									:: maxspec, minispec
 	logical,allocatable						:: check(:,:)
 	real									:: phlyratio, lysperc
 	real									:: coralfishmult
 	real, allocatable						:: coralpercent(:,:)
-	integer									:: numtime	    				! Number of timesteps and clusters of coral
-
-
+	integer									:: numtime	    					! Number of timesteps and clusters of coral
+	! Function Variables					
+	real									:: rate								! Bacteria Growth rate adjuster
+	real									:: fishdeltmult						! Factor in the fish growth attached to carrying capacity
+	! Popsub Variables
+	real									:: tightclustermult					! Determines the increase in coral in cluster
+	! Sub Variables
+	real									:: growpercent 						! Flat percentage growth for coral
+	real									:: decayconst						! Percent of coral loss per nearby algae 
+	real									:: fisheatmult						! Multiplier for fisheat
+	real									:: algaemod, coralmod, barriermod	! Multipliers for bact. carrying capacity
+	real									:: specmult							! Species growth multiplier for bact.
+	real									:: abundperc						! Percentage growth for an abundance shift
+	real									:: caught							! Amount of fish left after shark (%)
+	real									:: phagedie							! Amount of phage that don't die each cycle
 	
 end module
 
@@ -49,7 +60,7 @@ use globalvars
 implicit none
 	real		:: input, pop
 	
-	fishdelta = -fgrowfact*(pop - 1.1*coralfishmult*input)
+	fishdelta = -fgrowfact*(pop - fishdeltmult*coralfishmult*input)
 	
 end function fishdelta
 
@@ -59,10 +70,7 @@ use globalvars
 
 implicit none
 	real		:: totalpop, specpop, carry
-	real		:: rate	
 	
-rate = 0.25
-
 bacgrowth = rate*(1.0 - (real(totalpop)/real(carry)))*real(specpop)
 	
 end function bacgrowth

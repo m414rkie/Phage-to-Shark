@@ -205,6 +205,39 @@ write(26,*) tim, sum(coral)
 	close(26)		
 
 end subroutine
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+subroutine inputs
+
+use globalvars
+
+implicit none
+
+
+! User Inputs
+write(*,*) "Enter the dimension of the grid (square):"
+read(*,*) grid
+write(*,*) "Enter the number of time steps :"
+read(*,*) numtime
+write(*,*) "Enter percentage of bed with coral:"
+read(*,*) percentcover
+write(*,*) "Number of coral clusters?"
+read(*,*) clusnum
+write(*,*) "Please input distance for the tightly clustered coral clusters:"
+read(*,*) distance
+write(*,*) "New coral threshold?"
+read(*,*) threshold
+write(*,*) "Average bacteria population?"
+read(*,*) avgpop
+write(*,*) "Maximum number of bacteria species?"
+read(*,*) maxspec
+write(*,*) "Minimum number of species?"
+read(*,*) minispec
+
+end subroutine
+
+
 	
 
 

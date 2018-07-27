@@ -83,7 +83,6 @@ implicit none
 	integer, intent(in)							:: x, y					! Input coordinates
 	real,dimension(grid,grid), intent(in) 		:: arrin				! Input array
 	real,dimension(grid,grid), intent(out)		:: arrout				! Output array
-	real										:: growpercent = 2.0	! Flat percentage growth for coral
 	real										:: bactcoral
 
 
@@ -115,12 +114,9 @@ implicit none
 	integer,intent(in)			:: x, y			! Input coordinates
 	real,dimension(grid,grid)	:: arrin		! Input array
 	real						:: algcount		! Amount of algae near input coordinates
-	real						:: decayconst	! Percent of coral loss per nearby algae 
 	
 	! Initializations
-	algcount = 0.0
-	decayconst = 0.08
-	
+	algcount = 0.0	
 	
 	! Checks for algae around the input gridpoint and out-of-bounds
 	if ((holding(x-1,y) .eq. 0.0) .and. (x .gt. 1)) then
@@ -188,7 +184,7 @@ use globalvars
 	integer,intent(in)			:: i, j					! Looping integers
 
 
-	fisheat = 0.01*fishdelta(sum(coral),sum(fish))/real(grid**2)
+	fisheat = fisheatmult*fishdelta(sum(coral),sum(fish))/real(grid**2)
 	
 	! Checks for fish around algae and lowers the amount of coral destroyed by the algae
 	if(fish(i,j) .ne. 0.0) then
@@ -244,9 +240,6 @@ implicit none
 ! Initializations 
 kbact = avgpop
 kdelta = 0.0
-algaemod = 1.6
-coralmod = 0.8
-barriermod = 1.4
 
 ! Loops for initial set up, no barrier interaction
 do i = 1, grid, 1
@@ -327,13 +320,13 @@ do i = 1, 2*grid, 1
 		delbactpop = (bacgrowth(real(bacteria(i,j)%totalpop),real(bacteria(i,j)%numspecies),kbact(i,j)))
 
 		! Determines how many new species show up
-		bacteria(i,j)%numspecies = bacteria(i,j)%numspecies + int(0.1*delbactpop)
+		bacteria(i,j)%numspecies = bacteria(i,j)%numspecies + int(specmult*delbactpop)
 
 		call random_number(percentevent)
 
 		if (percentevent .gt. (1.0 - lysperc)) then
 			
-			delbactpop = delbactpop + 0.2*real(bacteria(i,j)%totalpop)
+			delbactpop = delbactpop + abundperc*real(bacteria(i,j)%totalpop)
 
 		end if
 
@@ -548,7 +541,7 @@ call random_seed(put=seed)
 call random_number(catch)
 
 if (catch .gt. (1.0-hunger)) then
-	fish = fish*0.9
+	fish = fish*caught
 	hunger = 0.0
 	write(*,*) "SHARK!"
 else
@@ -568,7 +561,7 @@ implicit none
 	integer		:: i, j
 	real		:: popratio, deltratio, specratio
 
-phage%totalpop = int(real(phage%totalpop)*0.8)
+phage%totalpop = int(real(phage%totalpop)*phagedie)
 	
 do i = 1, 2*grid, 1
 	
@@ -602,9 +595,9 @@ do i = 1, 2*grid, 1
 		end if
 		
 		if ((deltratio .lt. 1.10) .and. (deltratio .ge. 1.0)) then
-			popratio = popratio + 0.2
-		else 
 			popratio = popratio + 0.4
+		else 
+			popratio = popratio + 0.2
 		end if		
 		
 		specdelta = (bacteria(i,j)%numspecies - bacthold(i,j)%numspecies)
@@ -614,11 +607,11 @@ do i = 1, 2*grid, 1
 		end if
 	
 		if (delta .gt. 0) then
-			phagecheck = int(real(bacteria(i,j)%totalpop)*2.0)
-		else if (((5.0*popratio)*(delta)) .ge. int(0.3*real(phage(i,j)%totalpop))) then
-			phagecheck = int(real(phage(i,j)%totalpop)*0.3)
+			phagecheck = 2*(bacthold(i,j)%totalpop)
+		else if (((5.0*popratio)*abs(delta)) .ge. int(0.2*real(phage(i,j)%totalpop))) then
+			phagecheck = int(real(phage(i,j)%totalpop)*0.2)
 		else
-			phagecheck = (5.0*popratio)*(delta)
+			phagecheck = (5.0*popratio)*abs(delta)
 		end if
 		
 		if (int(real(delta)*(1.0-popratio) + lys(i,j)%totalpop) .le. (real(lys(i,j)%totalpop)*0.7)) then

@@ -37,22 +37,7 @@ implicit none
 	integer					:: i, j, t, l					! Looping integers; n is random seed holder
 	integer					:: allck
 
-! User input 
-write(*,*) "Enter the dimension of the grid (square):"
-read(*,*) grid
-write(*,*) "Dimension: ", grid
-write(*,*) "Enter the number of time steps :"
-read(*,*) numtime
-write(*,*) "Enter percentage of bed with coral:"
-read(*,*) percentcover
-write(*,*) "Number of coral clusters?"
-read(*,*) clusnum
-write(*,*) "Please input distance for the tightly clustered coral clusters:"
-read(*,*) distance
-write(*,*) "New coral threshold?"
-read(*,*) threshold
-write(*,*) "Average bacteria population?"
-read(*,*) avgpop
+call inputs
 
 ! Allocation statements
 allocate(coral(grid,grid), stat=allck)
@@ -78,15 +63,31 @@ allocate(seed(randall), stat=allck)
 allocate(coralpercent(2,numtime), stat=allck)
 	if (allck .ne. 0) stop "Coralpercent Allocation Failed"
 
-! Initializing grids
+! Initializing grids and variables
 coral 				= 0.0
 holding 			= 0.0
-fgrowfact			= 0.25
 bacteria%totalpop 	= 0
 bacteria%numspecies = 0
-hunger 				= 0.3
-phlyratio 			= 0.7
+! Function Variables
+rate 				= 0.25
+fishdeltmult		= 1.1
 coralfishmult 		= 1.5
+fgrowfact			= 0.25
+! Popsub Variables
+tightclustermult	= 0.9
+phlyratio 			= 0.7
+! Sub Variables
+hunger 				= 0.3
+growpercent 		= 2.0
+decayconst			= 0.08
+fisheatmult			= 0.01
+algaemod			= 1.6
+coralmod			= 0.8
+barriermod 			= 1.4
+specmult			= 0.1
+abundperc			= 0.2
+caught				= 0.9
+phagedie			= 0.9
 
 ! Populates the coral/algae layer
 call hppop(coral)

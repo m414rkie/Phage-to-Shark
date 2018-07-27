@@ -53,7 +53,6 @@ use globalvars
 	real,dimension(grid,grid)				:: arrin					! Input array
 	integer									:: i,j,x,y, k				! Looping integers
 	real, allocatable						:: coordinate(:,:)			! Holds x,y coordinates of center of cluster
-	real									:: tightclustermult = 0.9	! Determines the increase in coral in cluster
 	real									:: rad						! Spreads the increase across the cluster.
 																		!  interacts with counter to linearly decrease the 
 																		!  increase in coral with distance from center
@@ -187,7 +186,7 @@ end do
 		
 			numnew = numnew + 1
 		
-			coral(x,y) = 2.0
+			coral(x,y) = 1.5
 		
 			deallocate(algaeloc)
 			
@@ -207,20 +206,13 @@ use globalvars
 use functions
 
 implicit none
-	real 				:: avgspec, ran, minispec			! Average num. of species, random number, minimum number of species
+	real 				:: avgspec, ran						! Average num. of species, random number, minimum number of species
 	real				:: average, area					! Average of species, area of grid
 	integer				:: i, j, k							! Looping integers
 	integer				:: allck
 		
 write(*,*) "Populating initial Bacteria layer."
 
-
-! User inputs
-write(*,*) "Maximum number of bacteria species?"
-read(*,*) maxspec
-
-write(*,*) "Minimum number of species?"
-read(*,*) minispec
 
 ! Initializations
 area = (2.0*float(grid))**2
