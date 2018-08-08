@@ -121,12 +121,12 @@ avgbact = real(sum(bacteria%totalpop))/(real(2*grid)**2)
 phagelysratio = real(sum(phage%totalpop))/real(sum(lys%totalpop))
 	
 ! Format statements
-50 format ("Coral/coraltime",1i2,".dat")
-51 format ("Fish/fishtime",1i2,".dat")
-52 format ("Bacteria/bacttime",1i2,".dat")
-53 format ("Phage/phagetime",1i2,".dat")
-54 format ("Kbact/kgrid",1i2,".dat")
-55 format ("Lys/lystime",1i2,".dat")
+50 format ("Coral/coraltime",1i3,".dat")
+51 format ("Fish/fishtime",1i3,".dat")
+52 format ("Bacteria/bacttime",1i3,".dat")
+53 format ("Phage/phagetime",1i3,".dat")
+54 format ("Kbact/kgrid",1i3,".dat")
+55 format ("Lys/lystime",1i3,".dat")
 56 format ("General/perctime.dat")
 
 ! File path statements

@@ -15,7 +15,7 @@ coraltot = sum(coral)
 fishtot = coralfishmult*coraltot
 
 ! Distribution across grid
-arrout = fishtot/(grid**2)
+arrout = fishtot/real(grid**2)
 
 write(*,*) "Populating the initial fish layer."
 
@@ -39,7 +39,7 @@ seed = clock + 8*(/(i-1,i=1,randall)/)
 call random_seed(put=seed)
 call random_number(arrin)
 
-where (arrin .lt. (1.0-percentcover)) arrin = 0.0
+!where (arrin .lt. (1.0-percentcover)) arrin = 0.0
 
 end subroutine
 
@@ -186,7 +186,7 @@ end do
 		
 			numnew = numnew + 1
 		
-			coral(x,y) = 1.5
+			coral(x,y) = 0.9
 		
 			deallocate(algaeloc)
 			

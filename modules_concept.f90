@@ -88,7 +88,7 @@ wherecor = (coral .ne. 0.0)
 
 corcount = count(wherecor)
 
-percentcor = real(corcount)/(real(size)**2)
+percentcor = float(corcount)/(float(size)**2)
 
 end function
 

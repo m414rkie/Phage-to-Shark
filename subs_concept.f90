@@ -73,8 +73,6 @@ end subroutine
 subroutine growth(x,y,arrin,arrout)
 	
 ! Grows the input grid location based on value and neighbors.
-! 
-!(straight percentage at this point). 
 	
 use globalvars
 use functions
@@ -83,20 +81,29 @@ implicit none
 	integer, intent(in)							:: x, y					! Input coordinates
 	real,dimension(grid,grid), intent(in) 		:: arrin				! Input array
 	real,dimension(grid,grid), intent(out)		:: arrout				! Output array
-	real										:: bactcoral
-
+	real										:: bactcoral, grow
 
 ! Initializations
-bactcoral = (kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/(maxval(kbact)*4.0)
+bactcoral = 0.0
+
+bactcoral = (bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
+			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop)/(algaemod*avgpop*4.0)
+			
 if (bactcoral .lt. 0.0) then
 	bactcoral = 0.0
 end if
 
-if (bactcoral .ge. 1.0) then 
-	arrout(x,y) = arrin(x,y)
-else
-	arrout(x,y) = arrin(x,y)*growpercent*(1.0-bactcoral)
+if (bactcoral .gt. 1.0) then
+	bactcoral = 0.9
 end if
+
+grow = growpercent*(1.0 - bactcoral)
+
+if (grow .lt. 1.0) then
+	grow = 1.0
+end if
+
+arrout(x,y) = arrin(x,y)*grow
 
 ! Finalizes the population growth of fish, faster with more coral.
 
@@ -113,42 +120,46 @@ use globalvars
 implicit none
 	integer,intent(in)			:: x, y			! Input coordinates
 	real,dimension(grid,grid)	:: arrin		! Input array
-	real						:: algcount		! Amount of algae near input coordinates
+	integer						:: algcount		! Amount of algae near input coordinates
 	
 	! Initializations
-	algcount = 0.0	
+	algcount = 0	
 	
 	! Checks for algae around the input gridpoint and out-of-bounds
-	if ((holding(x-1,y) .eq. 0.0) .and. (x .gt. 1)) then
-		algcount = algcount + 1.0
+	if ((x .gt. 1) .and. (holding(x-1,y) .eq. 0.0)) then
+		algcount = algcount + 1
 	end if
 	
-	if ((holding(x+1,y) .eq. 0.0) .and. (x .lt. grid)) then
-		algcount = algcount + 1.0
+	if ((x .lt. grid) .and. (holding(x+1,y) .eq. 0.0)) then
+		algcount = algcount + 1
 	end if
 
-	if ((holding(x,y+1) .eq. 0.0) .and. (y .lt. grid)) then
-		algcount = algcount + 1.0
+	if ((y .lt. grid) .and. (holding(x,y+1) .eq. 0.0)) then
+		algcount = algcount + 1
 	end if
 	
-	if ((holding(x,y-1) .eq. 0.0) .and. (y .gt. 1)) then
-		algcount = algcount + 1.0
+	if ((y .gt. 1) .and. (holding(x,y-1) .eq. 0.0)) then
+		algcount = algcount + 1
 	end if
 
-	if ((holding(x+1,y+1) .eq. 0.0) .and. (x .lt. grid) .and. (y .lt. grid)) then
-		algcount = algcount + 1.0
+	if ((x .lt. grid) .and. (y .lt. grid) .and. (holding(x+1,y+1) .eq. 0.0)) then
+		algcount = algcount + 1
 	end if
 
-	if ((holding(x-1,y-1) .eq. 0.0) .and. (x .gt. 1) .and. (y .gt. 1)) then
-		algcount = algcount + 1.0
+	if ((x .gt. 1) .and. (y .gt. 1) .and. (holding(x-1,y-1) .eq. 0.0)) then
+		algcount = algcount + 1
 	end if
 	
-	if ((holding(x+1,y-1) .eq. 0.0) .and. (x .lt. grid) .and. (y .gt. 1)) then
-		algcount = algcount + 1.0
+	if ((x .lt. grid) .and. (y .gt. 1) .and.(holding(x+1,y-1) .eq. 0.0)) then
+		algcount = algcount + 1
 	end if
 	
-	if ((holding(x-1,y+1) .eq. 0.0) .and. (x .gt. 1) .and. (y .lt. grid)) then
-		algcount = algcount + 1.0
+	if ((x .gt. 1) .and. (y .lt. grid) .and. (holding(x-1,y+1) .eq. 0.0)) then
+		algcount = algcount + 1
+	end if
+	
+	if (algcount .lt. 1) then
+		return
 	end if
 	
 	! Calls the fish layer to reduce the effect of algae on coral
@@ -160,14 +171,17 @@ implicit none
 	end if
 	
 	! Coral less the algae eating it
-	arrin(x,y) = arrin(x,y) - decayconst*algcount
+	if (decayconst .gt. 0.0) then
+		arrin(x,y) = arrin(x,y) - decayconst*real(algcount)
+	end if
 
 	! Resets negative values to zero
 	if (arrin(x,y) .le. 0.05) then
 		arrin(x,y) = 0.0
 	end if
-	
-	where (arrin .gt. 5.0) arrin = 5.0
+	if (arrin(x,y) .gt. 5.0) then
+		arrin(x,y) = 5.0
+	end if
 
 end subroutine
 
@@ -185,43 +199,8 @@ use globalvars
 
 
 	fisheat = fisheatmult*fishdelta(sum(coral),sum(fish))/real(grid**2)
-	
-	! Checks for fish around algae and lowers the amount of coral destroyed by the algae
-	if(fish(i,j) .ne. 0.0) then
-		modify = modify - fish(i,j)*fisheat
-	end if
-	
-	if ((fish(i-1,j) .ne. 0.0) .and. (i .gt. 1)) then
-		modify = modify - fish(i-1,j)*fisheat
-	end if
-	
-	if ((fish(i+1,j) .eq. 0.0) .and. (i .lt. grid)) then
-		modify = modify - fish(i+1,j)*fisheat
-	end if
 
-	if ((fish(i,j+1) .eq. 0.0) .and. (j .lt. grid)) then
-		modify = modify - fish(i,j+1)*fisheat
-	end if
-	
-	if ((fish(i,j-1) .eq. 0.0) .and. (j .gt. 1)) then
-		modify = modify - fish(i,j-1)*fisheat
-	end if
-
-	if ((fish(i+1,j+1) .eq. 0.0) .and. (i .lt. grid) .and. (j .lt. grid)) then
-		modify = modify - fish(i+1,j+1)*fisheat
-	end if
-
-	if ((fish(i-1,j-1) .eq. 0.0) .and. (i .gt. 1) .and. (j .gt. 1)) then
-		modify = modify - fish(i-1,j-1)*fisheat
-	end if
-	
-	if ((fish(i+1,j-1) .eq. 0.0) .and. (i .lt. grid) .and. (j .gt. 1)) then
-		fmodify = modify - fish(i+1,j-1)*fisheat
-	end if
-	
-	if ((fish(i-1,j+1) .eq. 0.0) .and. (i .gt. 1) .and. (j .lt. grid)) then
-		modify = modify - fish(i-1,j+1)*fisheat
-	end if
+	modify = modify*8.0*fisheat
 
 end subroutine
 	
@@ -311,9 +290,9 @@ do i = 1, 2*grid, 1
 		lysperc = real(lys(i,j)%totalpop)/real(bacteria(i,j)%totalpop)
 		
 		if (phage(i,j)%totalpop .ge. bacteria(i,j)%totalpop) then
-			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.2*float(bacteria(i,j)%totalpop))
+			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.1*float(bacteria(i,j)%totalpop))
 		else if (phage(i,j)%totalpop .lt. bacteria(i,j)%totalpop) then
-			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.2*real(phage(i,j)%totalpop))
+			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.1*real(phage(i,j)%totalpop))
 		end if
 		
 		! Finds change in population
@@ -607,7 +586,7 @@ do i = 1, 2*grid, 1
 		end if
 	
 		if (delta .gt. 0) then
-			phagecheck = 2*(bacthold(i,j)%totalpop)
+			phagecheck = 5.0*delta*popratio
 		else if (((5.0*popratio)*abs(delta)) .ge. int(0.2*real(phage(i,j)%totalpop))) then
 			phagecheck = int(real(phage(i,j)%totalpop)*0.2)
 		else
