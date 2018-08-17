@@ -1,75 +1,3 @@
-subroutine neighborsum(x,y,arr,total)
-	
-!Sums together the neighboring values of a given array point. Used for testing. 
-	
-use globalvars
-
-implicit none
-	integer, intent(in)						:: x, y									! position of current gridpoint
-	real,dimension(grid,grid), intent(in)	:: arr									! array of the moment
-	real, intent(out)						:: total								! sum of nearest neighbors
-	integer									:: a, b, c, d, e, f, g, h				! These sets of integers are used 
-	integer									:: i, j, k, l, m, n, o, p, q, r, s, t	!  to determine the summed value
-																					!  of nearest neighbors of input
-	
-! Initializations
-norm = 8.0
-total = 0.0
-test = 0.0
-a = 1 ; b = 1 ; c = 1 ; d = 1
-e = 1 ; f = 1 ; g = 1 ; h = 1
-i = x+1 ; j = x-1 ; k = y+1 ; l = y-1
-m = x+1 ; n = x-1 ; o = x+1 ; p = x-1
-q = y+1 ; r = y-1 ; s = y-1 ; t = y+1 
-
-		! Logic statements to catch out-of-bounds
-		if ((x+1) .gt. grid) then
-			a = 0 ; i = 1
-			norm = norm - 1.0
-		end if
-			
-		if ((x-1) .lt. 1) then
-			b = 0 ; j = 1
-			norm = norm - 1.0
-		end if 
-		
-		if ((y+1) .gt. grid) then
-			c = 0 ; k = 1
-			norm = norm - 1.0
-		end if
-	 
-		if ((y-1) .lt. 1) then 
-			d = 0 ; l = 1
-			norm = norm - 1.0
-		end if
- 
- 		if (((x+1) .gt. grid) .or. ((y+1) .gt. grid)) then
-			e = 0 ; m = 1 ; q = 1
-			norm = norm - 1.0
-		end if
- 
- 		if (((x-1) .lt. 1) .or. ((y-1) .lt. 1)) then
-			f = 0 ; n = 1 ; r = 1
-			norm = norm - 1.0
-		end if
-		 
-		if (((x+1) .gt. grid) .or. ((y-1) .lt. 1)) then
-			g = 0 ; o = 1 ; s = 1
-			norm = norm - 1.0
-		end if
-
-		if (((x-1) .lt. 1) .or. ((y+1) .gt. grid)) then
-			h = 0 ; p = 1 ; t = 1
-			norm = norm -1.0
-		end if
-				
-		total = (a*arr(i,y)+b*arr(j,y)+c*arr(x,k)+d*arr(x,l)+e*arr(m,q)+ &
-				f*arr(n,r)+g*arr(o,s)+h*arr(p,t))/norm
-
-end subroutine
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 subroutine growth(x,y,arrin,arrout)
 	
 ! Grows the input grid location based on value and neighbors.
@@ -97,15 +25,13 @@ if (bactcoral .gt. 1.0) then
 	bactcoral = 0.9
 end if
 
-grow = growpercent*(1.0 - bactcoral)
+grow = growpercent*(1.1 - bactcoral)
 
 if (grow .lt. 1.0) then
 	grow = 1.0
 end if
 
 arrout(x,y) = arrin(x,y)*grow
-
-! Finalizes the population growth of fish, faster with more coral.
 
 end subroutine
 	
@@ -247,11 +173,11 @@ do i = 1, 2*grid, 1
 	do j = 1, 2*grid, 1
 
 		if ((i .lt. 2*grid) .and. (kbact(i,j) .ne. kbact(i+1,j))) then
-			kdelta(i,j) = avgpop*barriermod - avgpop
+			kdelta(i,j) = avgpop*barriermod - kbact(i,j)
 		end if
 		
 		if ((j .gt. 2*grid) .and. (kbact(i,j) .ne. kbact(i,j+1))) then
-			kdelta(i,j) = avgpop*barriermod - avgpop
+			kdelta(i,j) = avgpop*barriermod - kbact(i,j)
 		end if
 	
 	end do
@@ -289,14 +215,14 @@ do i = 1, 2*grid, 1
 	
 		lysperc = real(lys(i,j)%totalpop)/real(bacteria(i,j)%totalpop)
 		
-		if (phage(i,j)%totalpop .ge. bacteria(i,j)%totalpop) then
-			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.1*float(bacteria(i,j)%totalpop))
-		else if (phage(i,j)%totalpop .lt. bacteria(i,j)%totalpop) then
-			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.1*real(phage(i,j)%totalpop))
+		if (0.1*phage(i,j)%totalpop .ge. 0.8*bacteria(i,j)%totalpop) then
+			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.05*real(bacteria(i,j)%totalpop))
+		else if (0.1*phage(i,j)%totalpop .lt. 0.2*bacteria(i,j)%totalpop) then
+			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.05*real(phage(i,j)%totalpop))
 		end if
 		
 		! Finds change in population
-		delbactpop = (bacgrowth(real(bacteria(i,j)%totalpop),real(bacteria(i,j)%numspecies),kbact(i,j)))
+		delbactpop = bacgrowth(real(bacteria(i,j)%totalpop),kbact(i,j),real(bacteria(i,j)%numspecies))
 
 		! Determines how many new species show up
 		bacteria(i,j)%numspecies = bacteria(i,j)%numspecies + int(specmult*delbactpop)
@@ -566,7 +492,7 @@ do i = 1, 2*grid, 1
 		if (specratio .ge. 2.0) then
 			popratio = 0.0
 		else
-			popratio = 0.4
+			popratio = 0.3
 		end if
 		
 		if (deltratio .lt. 1.0) then
@@ -574,9 +500,9 @@ do i = 1, 2*grid, 1
 		end if
 		
 		if ((deltratio .lt. 1.10) .and. (deltratio .ge. 1.0)) then
-			popratio = popratio + 0.4
+			popratio = popratio + 0.3
 		else 
-			popratio = popratio + 0.2
+			popratio = popratio + 0.1
 		end if		
 		
 		specdelta = (bacteria(i,j)%numspecies - bacthold(i,j)%numspecies)
@@ -586,18 +512,20 @@ do i = 1, 2*grid, 1
 		end if
 	
 		if (delta .gt. 0) then
-			phagecheck = 5.0*delta*popratio
+			phagecheck = 10.0*delta*popratio
 		else if (((5.0*popratio)*abs(delta)) .ge. int(0.2*real(phage(i,j)%totalpop))) then
 			phagecheck = int(real(phage(i,j)%totalpop)*0.2)
 		else
 			phagecheck = (5.0*popratio)*abs(delta)
 		end if
 		
-		if (int(real(delta)*(1.0-popratio) + lys(i,j)%totalpop) .le. (real(lys(i,j)%totalpop)*0.7)) then
-			lyscheck = int(real(lys(i,j)%totalpop)*0.3)
-		else 
-			lyscheck = int(real(delta)*(1.0 - popratio))
-		end if
+		!if (int(real(delta)*(1.0-popratio) + lys(i,j)%totalpop) .le. (real(lys(i,j)%totalpop)*0.7)) then
+		!	lyscheck = int(real(lys(i,j)%totalpop)*0.3)
+		!else 
+		!	lyscheck = int(real(delta)*(1.0 - popratio))
+		!end if
+	
+		lyscheck = int((1.0 - popratio)*delta)
 	
 		phage(i,j)%totalpop = phage(i,j)%totalpop + phagecheck
 		lys(i,j)%totalpop = lys(i,j)%totalpop + lyscheck
@@ -608,6 +536,12 @@ do i = 1, 2*grid, 1
 	end do
 
 end do
+
+where (phage%totalpop .lt. 0) phage%totalpop = 0.0
+where (lys%totalpop .lt. 0) lys%totalpop = 0.0
+
+where (lys%totalpop .gt. 0.8*bacteria%totalpop) lys%totalpop = 0.8*bacteria%totalpop
+where (phage%totalpop .gt. 10.0*bacteria%totalpop) phage%totalpop = 10.0*bacteria%totalpop
 
 end subroutine
 

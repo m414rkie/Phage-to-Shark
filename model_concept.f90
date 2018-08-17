@@ -69,25 +69,24 @@ holding 			= 0.0
 bacteria%totalpop 	= 0
 bacteria%numspecies = 0
 ! Function Variables
-rate 				= 0.2
-fishdeltmult		= 1.1
-coralfishmult 		= 1.5
+rate 				= 0.5
+coralfishmult 		= 1.1
 fgrowfact			= 0.4
 ! Popsub Variables
 tightclustermult	= 0.9
 phlyratio 			= 0.7
 ! Sub Variables
 hunger 				= 0.3
-growpercent 		= 1.01
-decayconst			= 0.015
+growpercent 		= 1.1
+decayconst			= 0.02
 fisheatmult			= 0.001
-algaemod			= 1.4
-coralmod			= 0.7
-barriermod 			= 1.2
+algaemod			= 1.3
+coralmod			= 0.8
+barriermod 			= 1.0
 specmult			= 0.1
-abundperc			= 0.2
+abundperc			= 0.001
 caught				= 0.9
-phagedie			= 0.7
+phagedie			= 0.85
 
 ! Populates the coral/algae layer
 call hppop(coral)
@@ -144,8 +143,8 @@ do t = 1, numtime, 1
 		call shark
 		call kgrid
 		call bactgrow
-		call diffuse
-		call mixing
+		!call diffuse
+		!call mixing
 		call phagelysgrow
 		
 		write(*,*) "Coral percentage:", percentcor(grid)

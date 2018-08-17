@@ -263,7 +263,7 @@ do i = 1, 2*grid, 1
 	
 	do j = 1, 2*grid, 1
 	
-		phage(i,j)%totalpop = int(10.0*real(bacteria(i,j)%totalpop)*bactmod)
+		phage(i,j)%totalpop = int(5.0*real(bacteria(i,j)%totalpop)*bactmod)
 		phage(i,j)%numspecies = int((real(bacteria(i,j)%numspecies)*bactmod))
 		
 	end do

@@ -33,7 +33,6 @@ end type microbevar
 	integer									:: numtime	    					! Number of timesteps and clusters of coral
 	! Function Variables					
 	real									:: rate								! Bacteria Growth rate adjuster
-	real									:: fishdeltmult						! Factor in the fish growth attached to carrying capacity
 	! Popsub Variables
 	real									:: tightclustermult					! Determines the increase in coral in cluster
 	! Sub Variables
@@ -60,18 +59,18 @@ use globalvars
 implicit none
 	real		:: input, pop
 	
-	fishdelta = -fgrowfact*(pop - fishdeltmult*coralfishmult*input)
+	fishdelta = -fgrowfact*(pop - coralfishmult*input)
 	
 end function fishdelta
 
-real function bacgrowth(totalpop,specpop,carry)
+real function bacgrowth(totalpop,carry,spec)
 
 use globalvars
 
 implicit none
-	real		:: totalpop, specpop, carry
+	real		:: totalpop, carry, spec
 	
-bacgrowth = rate*(1.0 - (real(totalpop)/real(carry)))*real(specpop)
+bacgrowth = rate*(1.0 - (totalpop/carry))*spec
 	
 end function bacgrowth
 
