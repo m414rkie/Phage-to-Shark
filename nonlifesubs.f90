@@ -102,7 +102,7 @@ use functions
 implicit none
 	integer			:: tim
 	real			:: avgcoral, avgfish, avgbact
-	real			:: phagelysratio
+	real (kind=8)	:: phagelysratio, phagesum
 	character*50	:: corfile, fishfile, lysfile	
 	character*50	:: bactfile, genfile, phagefile
 	character*50	:: kfile, percfile
@@ -118,7 +118,9 @@ implicit none
 avgcoral = sum(coral)/(real(grid)**2)
 avgfish = sum(fish)/(real(grid)**2)
 avgbact = real(sum(bacteria%totalpop))/(real(2*grid)**2)
-phagelysratio = real(sum(phage%totalpop))/real(sum(lys%totalpop))
+phagesum = real(sum(phage%totalpop))
+phagelysratio = real(phagesum)/real(sum(lys%totalpop))
+
 	
 ! Format statements
 50 format ("Coral/coraltime",1i3,".dat")
@@ -191,7 +193,7 @@ write(20,*) tim, sum(bacteria%totalpop)
 write(21,*) tim, sum(fish)
 write(22,*) tim, avgcoral
 write(23,*) tim, phagelysratio
-write(24,*) tim, sum(bacteria%totalpop), sum(phage%totalpop), sum(lys%totalpop)
+write(24,*) tim, sum(bacteria%totalpop), phagesum, sum(lys%totalpop)
 write(25,*) tim, sum(bacteria%numspecies), sum(phage%numspecies), sum(lys%numspecies)
 write(26,*) tim, sum(coral)
 

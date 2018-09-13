@@ -44,6 +44,8 @@ end type microbevar
 	real									:: abundperc						! Percentage growth for an abundance shift
 	real									:: caught							! Amount of fish left after shark (%)
 	real									:: phagedie							! Amount of phage that don't die each cycle
+	! PTW vars
+	real									:: bacdeath, adsorp, bactmod
 	
 end module
 
@@ -59,7 +61,7 @@ use globalvars
 implicit none
 	real		:: input, pop
 	
-	fishdelta = -fgrowfact*(pop - coralfishmult*input)
+	fishdelta = fgrowfact*(coralfishmult*input - pop)
 	
 end function fishdelta
 
@@ -91,8 +93,18 @@ percentcor = float(corcount)/(float(size)**2)
 
 end function
 
+real function virpopptw(carry,bacpop)
 
+use globalvars
 
+implicit none
+	real	:: carry, bacpop
+	
+virpopptw = (rate*(1.0 - (bacpop/carry)) - bacdeath)/adsorp
+
+end function
+	
+	
 
 
 

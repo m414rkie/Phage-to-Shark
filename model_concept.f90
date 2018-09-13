@@ -36,6 +36,7 @@ use functions
 implicit none
 	integer					:: i, j, t, l					! Looping integers; n is random seed holder
 	integer					:: allck
+	real					:: fishdelt = 0.0
 
 call inputs
 
@@ -70,23 +71,24 @@ bacteria%totalpop 	= 0
 bacteria%numspecies = 0
 ! Function Variables
 rate 				= 0.5
-coralfishmult 		= 1.1
-fgrowfact			= 0.4
+coralfishmult 		= 1.0
+fgrowfact			= 0.01
 ! Popsub Variables
 tightclustermult	= 0.9
-phlyratio 			= 0.7
+phlyratio 			= 0.6
 ! Sub Variables
 hunger 				= 0.3
-growpercent 		= 1.1
-decayconst			= 0.02
+growpercent 		= 0.01
+decayconst			= 0.028
 fisheatmult			= 0.001
 algaemod			= 1.3
 coralmod			= 0.8
 barriermod 			= 1.0
 specmult			= 0.1
 abundperc			= 0.001
-caught				= 0.9
-phagedie			= 0.85
+caught				= 0.85
+phagedie			= 0.5
+bactmod = phlyratio
 
 ! Populates the coral/algae layer
 call hppop(coral)
@@ -104,11 +106,11 @@ call fishdist(fish)
 
 ! Populating initital bacteria layer
 call kgrid
-call bacteriapop
-
+!call bacteriapop
+call microbepopptw
 ! Populating initial phage layer
-call phagepop
-call lysogenpop
+!call phagepop
+!call lysogenpop
 
 bacthold = bacteria
 
@@ -126,7 +128,6 @@ do t = 1, numtime, 1
 	
 			do j = 1, grid, 1
 		
-				!call neighborsum(i,j,holding,nearsum)
 				call growth(i,j,coral,coral)
 				call decay(i,j,coral)				
 	
@@ -134,20 +135,25 @@ do t = 1, numtime, 1
 	
 		end do
 		
-		fish = fish + fishdelta(sum(coral),sum(fish))/real(grid**2)
-		
 		do l = 1, grid, 1
 			call newcoral
 		end do
+		
+		fishdelt = 0.0
+		coralfishmult = percentcor(grid)
+		fishdelt = fishdelta(sum(coral)/5.0,sum(fish))/(float(grid**2))
 	
 		call shark
+		fish = fish + fishdelt
 		call kgrid
-		call bactgrow
+		!call bactgrow
+		!call phagelysgrow
 		!call diffuse
 		!call mixing
-		call phagelysgrow
+		call bactgrowptw
 		
 		write(*,*) "Coral percentage:", percentcor(grid)
+		write(*,*) "Fish Growth:", fishdelta(sum(coral),sum(fish))/float(grid**2)
 
 		call datacollect(t)
 		

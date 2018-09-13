@@ -4,15 +4,15 @@ subroutine fishdist(arrout)
 ! as an initializer with a multiplier.
 
 use globalvars
+use functions
 
 implicit none
-	real,dimension(grid,grid)			 	:: arrin				! Input array
-	real,dimension(grid,grid),intent(out)	:: arrout				! Output array
+	real,dimension(grid,grid)				:: arrout				! Output array
 	real									:: coraltot, fishtot	! Summed values of the arrays
 
 ! Initializing 
-coraltot = sum(coral)
-fishtot = coralfishmult*coraltot
+coraltot = sum(coral)/5.0
+fishtot = coralfishmult*coraltot*percentcor(grid)
 
 ! Distribution across grid
 arrout = fishtot/real(grid**2)
@@ -38,8 +38,6 @@ call system_clock(count=clock)
 seed = clock + 8*(/(i-1,i=1,randall)/)
 call random_seed(put=seed)
 call random_number(arrin)
-
-!where (arrin .lt. (1.0-percentcover)) arrin = 0.0
 
 end subroutine
 
@@ -180,7 +178,7 @@ end do
 		x = algaeloc(1,floor(l*coord))
 		y = algaeloc(2,floor(l*coord))
 		
-		bactfact = (kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/(maxval(kbact)*4.0)
+		bactfact = (kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/(maxval(kbact)*3.8)
 		
 		if (temp .ge. bactfact) then
 		
@@ -217,7 +215,7 @@ write(*,*) "Populating initial Bacteria layer."
 ! Initializations
 area = (2.0*float(grid))**2
 
-bacteria%totalpop = int(kbact)
+bacteria%totalpop = int(0.7*kbact)
 bacteria%numspecies = 1
 
 ! Random number generation for species distribution 
@@ -255,7 +253,7 @@ use globalvars
 
 implicit none
 	integer			:: i, j
-	real			:: bactmod
+!	real			:: bactmod
 	
 bactmod = phlyratio
 	
@@ -293,6 +291,55 @@ do i = 1, 2*grid, 1
 end do
 
 end subroutine
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+subroutine microbepopptw
+
+use globalvars
+
+implicit none
+	real	:: area, average
+	real	:: ran
+	integer :: i, j
+	
+	
+area = real((2*grid)**2)
+
+bacteria%totalpop = int(0.7*kbact)
+
+phage%totalpop = 3*bacteria%totalpop
+
+lys%totalpop = int(0.5*real(bacteria%totalpop))
+
+! Fills species grid
+do i = 1, 2*grid, 1
+	
+	do j = 1, 2*grid, 1
+	
+			call random_number(ran)
+			
+			ran = floor(maxspec*ran + minispec*(1.0-ran))
+			
+			bacteria(i,j)%numspecies = (int(ran))
+			
+	end do
+
+end do
+
+! Write statements
+average = sum(bacteria%numspecies)/area
+write(*,*) "Average number of species:" ,average
+
+phage%numspecies = int(0.6*real(bacteria%numspecies))
+
+lys%numspecies = int(0.4*real(bacteria%numspecies))
+
+end subroutine
+
+
+
+
 
 
 
