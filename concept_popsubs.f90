@@ -15,7 +15,7 @@ coraltot = sum(coral)/5.0
 fishtot = coralfishmult*coraltot*percentcor(grid)
 
 ! Distribution across grid
-arrout = fishtot/real(grid**2)
+arrout = 0.6*fishtot/real(grid**2)
 
 write(*,*) "Populating the initial fish layer."
 
@@ -215,7 +215,7 @@ write(*,*) "Populating initial Bacteria layer."
 ! Initializations
 area = (2.0*float(grid))**2
 
-bacteria%totalpop = int(0.7*kbact)
+bacteria%totalpop = int(0.5*kbact)
 bacteria%numspecies = 1
 
 ! Random number generation for species distribution 

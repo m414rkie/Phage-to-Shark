@@ -77,9 +77,8 @@ fgrowfact			= 0.01
 tightclustermult	= 0.9
 phlyratio 			= 0.6
 ! Sub Variables
-hunger 				= 0.3
 growpercent 		= 0.01
-decayconst			= 0.028
+decayconst			= 0.035
 fisheatmult			= 0.001
 algaemod			= 1.3
 coralmod			= 0.8
@@ -87,6 +86,8 @@ barriermod 			= 1.0
 specmult			= 0.1
 abundperc			= 0.001
 caught				= 0.85
+dayavg				= 20.0
+numday				= 0.0
 phagedie			= 0.5
 bactmod = phlyratio
 
@@ -141,8 +142,7 @@ do t = 1, numtime, 1
 		
 		fishdelt = 0.0
 		coralfishmult = percentcor(grid)
-		fishdelt = fishdelta(sum(coral)/5.0,sum(fish))/(float(grid**2))
-	
+		fishdelt = fishdelta(sum(coral)/5.0,sum(fish))/(float(grid**2))		
 		call shark
 		fish = fish + fishdelt
 		call kgrid
@@ -163,6 +163,7 @@ do t = 1, numtime, 1
 end do
 
 write(*,*) "Total number of new coral growths:", numnew
+write(*,*) "Average number of days between shark attack:", float(numtime)/numday
 
 deallocate(coral)
 deallocate(holding)

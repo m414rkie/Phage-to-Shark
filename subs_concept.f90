@@ -447,12 +447,13 @@ seed = clock + 8*(/(i-1,i=1,randall)/)
 call random_seed(put=seed)
 call random_number(catch)
 
-if (catch .gt. (1.0-hunger)) then
+hunger = (dayavg - 1.0)/dayavg
+
+if (catch .ge. hunger) then
 	fish = fish*caught
-	hunger = 0.0
+	numday = numday + 1
 	write(*,*) "SHARK!"
 else
-	hunger = hunger + 0.05
 	fish = fish
 end if
 
@@ -554,7 +555,7 @@ do i = 1, 2*grid, 1
 
 	do j = 1, 2*grid, 1
 
-		adsorp = (0.035/real(lys(i,j)%totalpop))
+		adsorp = (0.015/real(lys(i,j)%totalpop))
 		bacdeath = 0.2!*real(bacteria(i,j)%totalpop)
 		phlyratio = 0.0
 		bactdelta = 0.0
@@ -584,8 +585,8 @@ do i = 1, 2*grid, 1
 		
 		phagetot = int(virpopptw(kbact(i,j),float(bacteria(i,j)%totalpop)))
 		
-		phage(i,j)%totalpop = int(abs((1.0 - phlyratio)*real(phagetot)))
-		lys(i,j)%totalpop = int(abs(phlyratio*real(phagetot)))
+		phage(i,j)%totalpop = phagetot
+		lys(i,j)%totalpop = int(abs(phlyratio*real(bacteria(i,j)%totalpop)))
 	end do
 	
 end do

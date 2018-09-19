@@ -42,7 +42,8 @@ end type microbevar
 	real									:: algaemod, coralmod, barriermod	! Multipliers for bact. carrying capacity
 	real									:: specmult							! Species growth multiplier for bact.
 	real									:: abundperc						! Percentage growth for an abundance shift
-	real									:: caught							! Amount of fish left after shark (%)
+	real									:: caught, dayavg					! Amount of fish left after shark (%), Avg. num. of days
+	real									:: dayavgtot, numday
 	real									:: phagedie							! Amount of phage that don't die each cycle
 	! PTW vars
 	real									:: bacdeath, adsorp, bactmod
