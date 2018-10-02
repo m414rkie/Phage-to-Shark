@@ -11,11 +11,11 @@ implicit none
 	real									:: coraltot, fishtot	! Summed values of the arrays
 
 ! Initializing 
-coraltot = sum(coral)/5.0
-fishtot = coralfishmult*coraltot*percentcor(grid)
+coraltot = sum(coral)
+fishtot = coralfishmult*coraltot!*percentcor(grid)
 
 ! Distribution across grid
-arrout = 0.6*fishtot/real(grid**2)
+arrout = fishtot/real(grid**2)
 
 write(*,*) "Populating the initial fish layer."
 
@@ -51,7 +51,7 @@ use globalvars
 	real,dimension(grid,grid)				:: arrin					! Input array
 	integer									:: i,j,x,y, k				! Looping integers
 	real, allocatable						:: coordinate(:,:)			! Holds x,y coordinates of center of cluster
-	real									:: rad						! Spreads the increase across the cluster.
+	real									:: rad, dec					! Spreads the increase across the cluster.
 																		!  interacts with counter to linearly decrease the 
 																		!  increase in coral with distance from center
 
@@ -77,18 +77,26 @@ y = floor(coordinate(2,k)) + 1
 	
 write(*,*) "Cluster at:", x, y
 
-	do j = -distance, distance, 1
+!	do j = -distance, distance, 1
+	do j = y, grid, 1
 	
-		do i = -distance, distance, 1
-		
-			rad = sqrt(real(i**2) + real(j**2))
+	!	do i = -distance, distance, 1
+		do i = x, grid, 1
+	
+			rad = sqrt(real((i-x)**2) + real((j-y)**2))
+			dec = exp(-(rad**2)/((real(grid**2))))
+			
 			
 			if (rad .eq. 0) then
 				rad = 0.9
 			end if
 			
 			if (((y+j) .le. grid) .and. ((y+j) .gt. 0) .and. ((x+i) .le. grid) .and. ((x+i) .gt. 0)) then
-				arrin(x+i,y+j) = arrin(x+i,y+j) + tightclustermult*(1/rad)
+				arrin(x+i,y+j) = arrin(x+i,y+j) + tightclustermult*(dec)
+			end if
+			
+			if (((y-j) .ge. 0) .and. ((y-j) .le. grid) .and. ((x-i) .le. grid) .and. ((x-i) .gt. 0)) then
+				arrin(x-i,y-j) = arrin(x-i,y-j) + tightclustermult*(dec)
 			end if
 
 			if (arrin(x+i,y+j) .gt. 1.0) then
@@ -124,7 +132,7 @@ implicit none
 	real					:: coord					! Holds the coordinates of the new coral
 	integer					:: x, y, i, j, l, c			! Integers for coordinates, looping, and algae locations
 	integer,allocatable		:: algaeloc(:,:)			! Holds the locations where there is algae and not coral
-	real					:: bactfact
+	real					:: bactfact, neighbors
 	
 	
 ! Finds average coral
@@ -157,7 +165,42 @@ do i = 1, grid, 1
 	
 	do j = 1, grid, 1
 		
-		if (coral(i,j) .eq. 0.0) then
+	neighbors = 0
+	x=i ; y=j
+	! Checks for coral around the input gridpoint and out-of-bounds
+	if ((x .gt. 1) .and. (coral(x-1,y) .ne. 0.0)) then
+		neighbors = 1
+	end if
+	
+	if ((x .lt. grid) .and. (coral(x+1,y) .eq. 0.0)) then
+		neighbors = neighbors + 1
+	end if
+
+	if ((y .lt. grid) .and. (coral(x,y+1) .eq. 0.0)) then
+		neighbors = neighbors + 1
+	end if
+	
+	if ((y .gt. 1) .and. (coral(x,y-1) .eq. 0.0)) then
+		neighbors = neighbors + 1
+	end if
+
+	if ((x .lt. grid) .and. (y .lt. grid) .and. (coral(x+1,y+1) .eq. 0.0)) then
+		neighbors = neighbors + 1
+	end if
+
+	if ((x .gt. 1) .and. (y .gt. 1) .and. (coral(x-1,y-1) .eq. 0.0)) then
+		neighbors = neighbors + 1
+	end if
+	
+	if ((x .lt. grid) .and. (y .gt. 1) .and.(coral(x+1,y-1) .eq. 0.0)) then
+		neighbors = neighbors + 1
+	end if
+	
+	if ((x .gt. 1) .and. (y .lt. grid) .and. (coral(x-1,y+1) .eq. 0.0)) then
+		neighbors = neighbors + 1
+	end if
+		
+		if ((coral(i,j) .eq. 0.0) .and. (neighbors .ne. 0.0)) then
 			
 			! Saves the locations 
 			c = c + 1
@@ -178,7 +221,7 @@ end do
 		x = algaeloc(1,floor(l*coord))
 		y = algaeloc(2,floor(l*coord))
 		
-		bactfact = (kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/(maxval(kbact)*3.8)
+		bactfact = (kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/(maxval(kbact)*4.0)
 		
 		if (temp .ge. bactfact) then
 		
@@ -204,39 +247,47 @@ use globalvars
 use functions
 
 implicit none
-	real 				:: avgspec, ran						! Average num. of species, random number, minimum number of species
+	real 				:: ran								! Average num. of species, random number, minimum number of species
 	real				:: average, area					! Average of species, area of grid
 	integer				:: i, j, k							! Looping integers
 	integer				:: allck
-		
+	
 write(*,*) "Populating initial Bacteria layer."
 
 
 ! Initializations
 area = (2.0*float(grid))**2
 
-bacteria%totalpop = int(0.5*kbact)
+avgspec = (maxspec + minispec)/2.0
+
+alpha = log(avgpop)/log(avgspec)
+
+bacteria%totalpop = int(0.4*kbact)
 bacteria%numspecies = 1
 
 ! Random number generation for species distribution 
-call random_seed(size=randall)
-call system_clock(count=clock)
-seed = clock + 4*(/(i-1,i=1,randall)/)
-call random_seed(put=seed)
+!call random_seed(size=randall)
+!call system_clock(count=clock)
+!seed = clock + 4*(/(i-1,i=1,randall)/)
+!call random_seed(put=seed)
 
 ! Fills species grid
 do i = 1, 2*grid, 1
 	
 	do j = 1, 2*grid, 1
-	
-			call random_number(ran)
-			
-			ran = floor(maxspec*ran + minispec*(1.0-ran))
-			
-			bacteria(i,j)%numspecies = (int(ran))
-			
-	end do
 
+		bacteria(i,j)%numspecies = int(float(bacteria(i,j)%totalpop)**alpha)
+
+
+
+!			call random_number(ran)
+!			
+!			ran = floor(maxspec*ran + minispec*(1.0-ran))
+!			
+!			bacteria(i,j)%numspecies = (int(ran))
+!			
+	end do
+!
 end do
 
 ! Write statements
@@ -253,16 +304,17 @@ use globalvars
 
 implicit none
 	integer			:: i, j
-!	real			:: bactmod
-	
+		
 bactmod = phlyratio
+
+beta = log(5.0*avgpop*bactmod)/log(avgspec*bactmod)
 	
 do i = 1, 2*grid, 1
 	
 	do j = 1, 2*grid, 1
 	
 		phage(i,j)%totalpop = int(5.0*real(bacteria(i,j)%totalpop)*bactmod)
-		phage(i,j)%numspecies = int((real(bacteria(i,j)%numspecies)*bactmod))
+		phage(i,j)%numspecies = int(float(phage(i,j)%totalpop)**beta)
 		
 	end do
 	
@@ -284,7 +336,7 @@ do i = 1, 2*grid, 1
 	do j = 1, 2*grid, 1
 	
 		lys(i,j)%totalpop = int((1.0 - phlyratio)*float(bacteria(i,j)%totalpop))
-		lys(i,j)%numspecies = (bacteria(i,j)%numspecies - phage(i,j)%numspecies)
+		lys(i,j)%numspecies = int(float(lys(i,j)%totalpop)**beta)
 	
 	end do
 	

@@ -26,6 +26,7 @@ end type microbevar
 	integer									:: randall = 12
 	real									:: avgpop, threshold
 	integer									:: maxspec, minispec
+	real									:: alpha, beta, avgspec
 	logical,allocatable						:: check(:,:)
 	real									:: phlyratio, lysperc
 	real									:: coralfishmult
@@ -104,9 +105,19 @@ implicit none
 virpopptw = (rate*(1.0 - (bacpop/carry)) - bacdeath)/adsorp
 
 end function
-	
-	
 
+real function tempratio(carry,i,j)
+
+use globalvars
+
+implicit none
+	real	:: carry, phi,phagedelt
+	integer :: i, j
+	
+	
+tempratio = (real(phage(i,j)%totalpop)/real(bacteria(i,j)%numspecies))
+	
+end function
 
 
 

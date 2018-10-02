@@ -71,28 +71,28 @@ bacteria%totalpop 	= 0
 bacteria%numspecies = 0
 ! Function Variables
 rate 				= 0.5
-coralfishmult 		= 1.0
+!coralfishmult 		= 1.0
 fgrowfact			= 0.01
 ! Popsub Variables
 tightclustermult	= 0.9
 phlyratio 			= 0.6
 ! Sub Variables
-growpercent 		= 0.01
-decayconst			= 0.035
-fisheatmult			= 0.001
+!growpercent 		= 0.01
+decayconst			= 0.045
+fisheatmult			= 0.005
 algaemod			= 1.3
 coralmod			= 0.8
 barriermod 			= 1.0
 specmult			= 0.1
 abundperc			= 0.001
 caught				= 0.85
-dayavg				= 20.0
+dayavg				= 8.0
 numday				= 0.0
 phagedie			= 0.5
 bactmod = phlyratio
 
 ! Populates the coral/algae layer
-call hppop(coral)
+!call hppop(coral)
 call tightcluster(coral)
 
 ! Increases overal population of coral as each gridpoint will be between zero and one beforehand
@@ -122,9 +122,9 @@ write(*,*) "Coral percentage:", percentcor(grid)
 
 ! Outer loops iterates time, i and j iterate x and y respectively
 do t = 1, numtime, 1
-
+fish = 0.0
 	write(*,*) "Beginning timestep", t
-			
+		
 		do i = 1, grid, 1
 	
 			do j = 1, grid, 1
@@ -142,9 +142,8 @@ do t = 1, numtime, 1
 		
 		fishdelt = 0.0
 		coralfishmult = percentcor(grid)
-		fishdelt = fishdelta(sum(coral)/5.0,sum(fish))/(float(grid**2))		
 		call shark
-		fish = fish + fishdelt
+		fish = fish + fishdelta(sum(coral),sum(fish))/real(grid**2)
 		call kgrid
 		!call bactgrow
 		!call phagelysgrow
@@ -153,7 +152,6 @@ do t = 1, numtime, 1
 		call bactgrowptw
 		
 		write(*,*) "Coral percentage:", percentcor(grid)
-		write(*,*) "Fish Growth:", fishdelta(sum(coral),sum(fish))/float(grid**2)
 
 		call datacollect(t)
 		

@@ -10,20 +10,30 @@ implicit none
 	real,dimension(grid,grid), intent(in) 		:: arrin				! Input array
 	real,dimension(grid,grid), intent(out)		:: arrout				! Output array
 	real										:: bactcoral, grow
+	integer										:: i
 
 ! Initializations
 bactcoral = 0.0
 
+call random_seed(size=randall)
+call system_clock(count=clock)
+seed = clock + 4*(/(i-1,i=1,randall)/)
+call random_seed(put=seed)
+
 bactcoral = (bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
-			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop)/(algaemod*avgpop*4.0)
+			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop)/(algaemod*avgpop*3.8)
 			
 if (bactcoral .lt. 0.0) then
 	bactcoral = 0.0
 end if
 
 if (bactcoral .gt. 1.0) then
-	bactcoral = 0.9
+	bactcoral = 0.99
 end if
+
+call random_number(growpercent)
+
+growpercent = (5.0*growpercent + (1.0-growpercent))
 
 grow = 1.0 + growpercent*(1.0 - bactcoral)
 
@@ -128,7 +138,7 @@ use globalvars
 
 	fisheat = fisheatmult*fishdelta(sum(coral),sum(fish))/real(grid**2)
 
-	modify = modify*8.0*fisheat
+	modify =modify -  modify*8.0*fisheat
 
 end subroutine
 	
@@ -550,38 +560,55 @@ implicit none
 	real    :: temratio
 	integer :: i, j	
 	integer :: bactdelta, phagetot
+	real	:: phagechange
 
 do i = 1, 2*grid, 1
 
 	do j = 1, 2*grid, 1
 
-		adsorp = (0.015/real(lys(i,j)%totalpop))
-		bacdeath = 0.2!*real(bacteria(i,j)%totalpop)
+		adsorp = (1.0-(1.0/real(lys(i,j)%totalpop)))	!(0.012/real(lys(i,j)%totalpop))
+		bacdeath = 0.2
 		phlyratio = 0.0
 		bactdelta = 0.0
 	
 		bacteria(i,j)%totalpop = int(sqrt((kbact(i,j)*phagedie)/(50.0*adsorp)))
 		bactdelta = bacteria(i,j)%totalpop - bacthold(i,j)%totalpop
 	
-		if (bactdelta .ge. 0.0) then
-			bacteria(i,j)%numspecies = bacteria(i,j)%numspecies + 4
-			phage(i,j)%numspecies = phage(i,j)%numspecies + 4
-			lys(i,j)%numspecies = lys(i,j)%numspecies + 4
-		else if (bactdelta .lt. 0.0) then
-			bacteria(i,j)%numspecies = bacteria(i,j)%numspecies - 4
-			phage(i,j)%numspecies = phage(i,j)%numspecies - 4
-			lys(i,j)%numspecies = lys(i,j)%numspecies - 4
-		end if
+	!	if (bactdelta .ge. 0.0) then
+	!		bacteria(i,j)%numspecies = bacteria(i,j)%numspecies + 4
+	!		phage(i,j)%numspecies = phage(i,j)%numspecies + 4
+	!		lys(i,j)%numspecies = lys(i,j)%numspecies + 4
+	!	else if (bactdelta .lt. 0.0) then
+	!		bacteria(i,j)%numspecies = bacteria(i,j)%numspecies - 4
+	!		phage(i,j)%numspecies = phage(i,j)%numspecies - 4
+	!		lys(i,j)%numspecies = lys(i,j)%numspecies - 4
+	!	end if
 
-		temratio = (real(phage(i,j)%totalpop + lys(i,j)%totalpop)/real(bacteria(i,j)%numspecies))
+		beta = 0.6
+		alpha = 0.7
+
+		lys(i,j)%numspecies = int(float(lys(i,j)%totalpop)**beta)
+		phage(i,j)%numspecies = int(float(phage(i,j)%totalpop)**beta)
+		bacteria(i,j)%numspecies = int(float(bacteria(i,j)%totalpop)**alpha)
+
+		phagechange = rate*(1.0-(real(bacteria(i,j)%totalpop)/real(kbact(i,j))))
+
+		temratio = tempratio(kbact(i,j),i,j)
 	
+
 		if (temratio .le. 3.0) then
-			phlyratio = 0.05
+			phlyratio = 0.05 + phagechange
 		else if ((temratio .gt. 3.0) .and. (temratio .le. 11.0)) then
-			phlyratio = 0.4
+			phlyratio = 0.4 + phagechange
 		else if (temratio .gt. 11.0) then
-			phlyratio = 0.9
+			phlyratio = 0.9	+ phagechange
 		end if
+			
+		if (phlyratio .gt. 0.95) then
+			phlyratio = 0.95
+		end if
+		
+		adsorp = (0.012/real(lys(i,j)%totalpop))
 		
 		phagetot = int(virpopptw(kbact(i,j),float(bacteria(i,j)%totalpop)))
 		
