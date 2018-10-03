@@ -21,7 +21,7 @@ seed = clock + 4*(/(i-1,i=1,randall)/)
 call random_seed(put=seed)
 
 bactcoral = (bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
-			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop)/(algaemod*avgpop*3.8)
+			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop)/(algaemod*avgpop*2.0)
 			
 if (bactcoral .lt. 0.0) then
 	bactcoral = 0.0
@@ -566,9 +566,11 @@ do i = 1, 2*grid, 1
 
 	do j = 1, 2*grid, 1
 
-		adsorp = (1.0-(1.0/real(lys(i,j)%totalpop)))	!(0.012/real(lys(i,j)%totalpop))
+			temratio = tempratio(kbact(i,j),i,j)
+		! adsorp = (1.0 - temratio)
+		adsorp =(0.02/real(lys(i,j)%totalpop))
 		bacdeath = 0.2
-		phlyratio = 0.0
+		!phlyratio = 0.0
 		bactdelta = 0.0
 	
 		bacteria(i,j)%totalpop = int(sqrt((kbact(i,j)*phagedie)/(50.0*adsorp)))
@@ -591,10 +593,7 @@ do i = 1, 2*grid, 1
 		phage(i,j)%numspecies = int(float(phage(i,j)%totalpop)**beta)
 		bacteria(i,j)%numspecies = int(float(bacteria(i,j)%totalpop)**alpha)
 
-		phagechange = rate*(1.0-(real(bacteria(i,j)%totalpop)/real(kbact(i,j))))
-
-		temratio = tempratio(kbact(i,j),i,j)
-	
+		phagechange = rate*(1.0-(real(bacteria(i,j)%totalpop)/real(kbact(i,j))))	
 
 		if (temratio .le. 3.0) then
 			phlyratio = 0.05 + phagechange
@@ -608,7 +607,7 @@ do i = 1, 2*grid, 1
 			phlyratio = 0.95
 		end if
 		
-		adsorp = (0.012/real(lys(i,j)%totalpop))
+	!	adsorp = (0.012/real(lys(i,j)%totalpop))
 		
 		phagetot = int(virpopptw(kbact(i,j),float(bacteria(i,j)%totalpop)))
 		

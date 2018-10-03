@@ -47,13 +47,14 @@ subroutine tightcluster(arrin)
 ! Will likely be used as a base to generate more linear distributions.
 	
 use globalvars
+use functions
 
 	real,dimension(grid,grid)				:: arrin					! Input array
 	integer									:: i,j,x,y, k				! Looping integers
 	real, allocatable						:: coordinate(:,:)			! Holds x,y coordinates of center of cluster
 	real									:: rad, dec					! Spreads the increase across the cluster.
-																		!  interacts with counter to linearly decrease the 
-																		!  increase in coral with distance from center
+	real					   				:: avgcoral, perc			!  interacts with counter to linearly decrease the 
+	real									:: rem						!  increase in coral with distance from center
 
 ! Allocations
 allocate(coordinate(2,clusnum))
@@ -83,8 +84,8 @@ write(*,*) "Cluster at:", x, y
 	!	do i = -distance, distance, 1
 		do i = x, grid, 1
 	
-			rad = sqrt(real((i-x)**2) + real((j-y)**2))
-			dec = exp(-(rad**2)/((real(grid**2))))
+			rad = (real((i-x)**2) + real((j-y)**2))
+			dec = exp(-(rad)/(real(grid)))
 			
 			
 			if (rad .eq. 0) then
@@ -92,11 +93,11 @@ write(*,*) "Cluster at:", x, y
 			end if
 			
 			if (((y+j) .le. grid) .and. ((y+j) .gt. 0) .and. ((x+i) .le. grid) .and. ((x+i) .gt. 0)) then
-				arrin(x+i,y+j) = arrin(x+i,y+j) + tightclustermult*(dec)
+				arrin(x+i,y+j) = arrin(x+i,y+j) + (dec)
 			end if
 			
 			if (((y-j) .ge. 0) .and. ((y-j) .le. grid) .and. ((x-i) .le. grid) .and. ((x-i) .gt. 0)) then
-				arrin(x-i,y-j) = arrin(x-i,y-j) + tightclustermult*(dec)
+				arrin(x-i,y-j) = arrin(x-i,y-j) + (dec)
 			end if
 
 			if (arrin(x+i,y+j) .gt. 1.0) then
@@ -108,10 +109,14 @@ write(*,*) "Cluster at:", x, y
 	end do
 
 end do
-	
-! Setting coral cover to percent input
 
-where (arrin .lt. (1.0-percentcover)) arrin = 0.0
+! Setting coral cover to percent input
+avgcoral = sum(coral)/(real(grid)**2)
+perc = percentcor(grid)
+rem = percentcover*avgcoral
+if (perc .gt. percentcover) then
+	where (arrin .lt. (1.0-percentcover)) arrin = 0.0
+end if 
 	
 end subroutine
 		
@@ -262,7 +267,7 @@ avgspec = (maxspec + minispec)/2.0
 
 alpha = log(avgpop)/log(avgspec)
 
-bacteria%totalpop = int(0.4*kbact)
+bacteria%totalpop = int(0.2*kbact)
 bacteria%numspecies = 1
 
 ! Random number generation for species distribution 

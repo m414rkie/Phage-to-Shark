@@ -78,7 +78,7 @@ tightclustermult	= 0.9
 phlyratio 			= 0.6
 ! Sub Variables
 !growpercent 		= 0.01
-decayconst			= 0.045
+decayconst			= 0.6
 fisheatmult			= 0.005
 algaemod			= 1.3
 coralmod			= 0.8
@@ -86,13 +86,13 @@ barriermod 			= 1.0
 specmult			= 0.1
 abundperc			= 0.001
 caught				= 0.85
-dayavg				= 8.0
+dayavg				= 6.0
 numday				= 0.0
 phagedie			= 0.5
 bactmod = phlyratio
 
 ! Populates the coral/algae layer
-!call hppop(coral)
+call hppop(coral)
 call tightcluster(coral)
 
 ! Increases overal population of coral as each gridpoint will be between zero and one beforehand
@@ -122,7 +122,6 @@ write(*,*) "Coral percentage:", percentcor(grid)
 
 ! Outer loops iterates time, i and j iterate x and y respectively
 do t = 1, numtime, 1
-fish = 0.0
 	write(*,*) "Beginning timestep", t
 		
 		do i = 1, grid, 1
