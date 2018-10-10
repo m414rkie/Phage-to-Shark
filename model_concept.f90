@@ -92,11 +92,10 @@ phagedie			= 0.5
 bactmod = phlyratio
 
 ! Populates the coral/algae layer
-call hppop(coral)
-call tightcluster(coral)
+!call hppop(coral)
+!call tightcluster(coral)
 
-! Increases overal population of coral as each gridpoint will be between zero and one beforehand
-coral = 5.0*coral
+call corpop
 
 holding = coral
 
@@ -146,7 +145,7 @@ do t = 1, numtime, 1
 		call kgrid
 		!call bactgrow
 		!call phagelysgrow
-		!call diffuse
+		call diffuse
 		!call mixing
 		call bactgrowptw
 		
