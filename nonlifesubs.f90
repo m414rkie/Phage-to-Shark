@@ -108,32 +108,30 @@ implicit none
 	character*50	:: kfile, percfile
 	character*50	:: corpath, fishpath, bactpath
 	character*50	:: genpath, phagepath, lyspath
-	character*50	:: kpath
+	character*50	:: kpath, delcor
 	character*50	:: totbactfile, totfishfile
 	character*50	:: avgcoralfile, phlyratiofile
 	character*50	:: micropopfile, microspecfile
-	character*50	:: cortotfile
+	character*50	:: cortotfile, corgrowfile
 	
 ! Data manipulation
 avgcoral = sum(coral)/(real(grid)**2)
-avgfish = sum(fish)/(real(grid)**2)
 avgbact = real(sum(bacteria%totalpop))/(real(2*grid)**2)
 phagesum = real(sum(phage%totalpop))
 phagelysratio = real(phagesum)/real(sum(lys%totalpop))
 
 	
 ! Format statements
-50 format ("Coral/coraltime",1i3,".dat")
-51 format ("Fish/fishtime",1i3,".dat")
-52 format ("Bacteria/bacttime",1i3,".dat")
-53 format ("Phage/phagetime",1i3,".dat")
-54 format ("Kbact/kgrid",1i3,".dat")
-55 format ("Lys/lystime",1i3,".dat")
+50 format ("Coral/coraltime",1i4,".dat")
+52 format ("Bacteria/bacttime",1i4,".dat")
+53 format ("Phage/phagetime",1i4,".dat")
+54 format ("Kbact/kgrid",1i4,".dat")
+55 format ("Lys/lystime",1i4,".dat")
 56 format ("General/perctime.dat")
+57 format ("General/Corgrowth.dat")
 
 ! File path statements
 corpath   = "~/Desktop/Phage2Shark/Coral"
-fishpath  = "~/Desktop/Phage2Shark/Fish"
 bactpath  = "~/Desktop/Phage2Shark/Bacteria"
 genpath   = "~/Desktop/Phage2Shark/General"
 phagepath = "~/Desktop/Phage2Shark/Phage"
@@ -141,7 +139,6 @@ lyspath   = "~/Desktop/Phage2Shark/Lys"
 kpath	  = "~/Desktop/Phage2Shark/Kbact"
 
 call dircheck(corpath)
-call dircheck(fishpath)
 call dircheck(bactpath)
 call dircheck(genpath)
 call dircheck(phagepath)
@@ -156,24 +153,22 @@ phlyratiofile = "General/phagelysratio.dat"
 micropopfile  = "General/microbepops.dat"
 microspecfile = "General/microbespecs.dat"
 cortotfile 	  = "General/cortottime.dat"
+corgrowfile	  = "General/Corgrowth.dat"
 
 if (tim .eq. 0) then
 	corfile   = "Coral/coraltime00.dat"
-	fishfile  = "Fish/fishtime00.dat"
 	lysfile   = "Lys/lystime00.dat"
 	bactfile  = "Bacteria/bacttime00.dat"
 	phagefile = "Phage/phagetime00.dat"
 	kfile 	  = "Kbact/ktime00.dat"
 else if (tim .ne. 0) then
 	write(corfile,50) tim
-	write(fishfile,51) tim
 	write(lysfile,55) tim
 	write(bactfile,52) tim
 	write(phagefile,53) tim
 	write(kfile,54) tim
 end if
 	
-call printtofile(fish,grid,fishfile)
 call printtofile(coral,grid,corfile)
 call printtofile(kbact,2*grid,kfile)
 
@@ -187,6 +182,7 @@ call printbact(bactfile,phagefile,lysfile)
 	open(unit=24,file=micropopfile,status="unknown",position="append")
 	open(unit=25,file=microspecfile,status="unknown",position="append")
 	open(unit=26,file=cortotfile,status="unknown",position="append")
+	open(unit=27,file=corgrowfile,status="unknown",position="append")
 	
 write(15,*) tim, percentcor(grid)
 write(20,*) tim, sum(bacteria%totalpop)
@@ -196,6 +192,7 @@ write(23,*) tim, phagelysratio
 write(24,*) tim, sum(bacteria%totalpop), phagesum, sum(lys%totalpop)
 write(25,*) tim, sum(bacteria%numspecies), sum(phage%numspecies), sum(lys%numspecies)
 write(26,*) tim, sum(coral)
+write(27,*) tim, (sum(coral)-sum(holding))/sum(coral), shrkevt
 
 	close(15)
 	close(20)	
@@ -204,7 +201,8 @@ write(26,*) tim, sum(coral)
 	close(23)	
 	close(24)	
 	close(25)	
-	close(26)		
+	close(26)	
+	close(27)
 
 end subroutine
 
@@ -224,18 +222,10 @@ write(*,*) "Enter the number of time steps :"
 read(*,*) numtime
 write(*,*) "Enter percentage of bed with coral:"
 read(*,*) percentcover
-write(*,*) "Number of coral clusters?"
-read(*,*) clusnum
-write(*,*) "Please input distance for the tightly clustered coral clusters:"
-read(*,*) distance
 write(*,*) "New coral threshold?"
 read(*,*) threshold
 write(*,*) "Average bacteria population?"
 read(*,*) avgpop
-write(*,*) "Maximum number of bacteria species?"
-read(*,*) maxspec
-write(*,*) "Minimum number of species?"
-read(*,*) minispec
 
 end subroutine
 

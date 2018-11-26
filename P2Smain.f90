@@ -36,17 +36,21 @@ use functions
 implicit none
 	integer					:: i, j, t, l					! Looping integers; n is random seed holder
 	integer					:: allck
-	real					:: fishdelt = 0.0
+	real					:: fishdelt
+	integer					:: seaslen, fertile, buds
 
 call inputs
 
 ! Allocation statements
 allocate(coral(grid,grid), stat=allck)
 	if (allck .ne. 0) stop "Coral Allocation Failed"
+	coral = 0.0
 allocate(holding(grid,grid), stat=allck)
 	if (allck .ne. 0) stop "Holding Allocation Failed"
+	holding = 0.0
 allocate(fish(grid,grid), stat=allck)
 	if (allck .ne. 0) stop "Fish Allocation Failed"
+	fish = 0.0
 allocate(check(grid,grid), stat=allck)
 	if (allck .ne. 0) stop "Check Allocation Failed"
 allocate(bacteria(2*grid,2*grid), stat=allck)
@@ -55,14 +59,15 @@ allocate(bacthold(2*grid,2*grid), stat=allck)
 	if (allck .ne. 0) stop "Bacteria Hold Allocation Failed"
 allocate(kbact(2*grid,2*grid), stat=allck)
 	if (allck .ne. 0) stop "Kbact Allocation Failed"
+	kbact = 0.0
 allocate(phage(2*grid,2*grid), stat=allck)
 	if (allck .ne. 0) stop "Phage Allocation Failed"
 allocate(lys(2*grid,2*grid), stat=allck)
 	if (allck .ne. 0) stop "Lys Allocation Failed"
 allocate(seed(randall), stat=allck)
 	if (allck .ne. 0) stop "Seed Allocation Failed"
-allocate(coralpercent(2,numtime), stat=allck)
-	if (allck .ne. 0) stop "Coralpercent Allocation Failed"
+
+	
 
 ! Initializing grids and variables
 coral 				= 0.0
@@ -71,30 +76,27 @@ bacteria%totalpop 	= 0
 bacteria%numspecies = 0
 ! Function Variables
 rate 				= 0.5
-!coralfishmult 		= 1.0
-fgrowfact			= 0.01
-! Popsub Variables
-tightclustermult	= 0.9
-phlyratio 			= 0.6
+fgrowfact			= 1.0
 ! Sub Variables
 !growpercent 		= 0.01
-decayconst			= 0.6
-fisheatmult			= 0.005
+fisheatmult			= 1.0
 algaemod			= 1.3
 coralmod			= 0.8
 barriermod 			= 1.0
 specmult			= 0.1
 abundperc			= 0.001
-caught				= 0.85
-dayavg				= 6.0
+caught				= 0.95
+dayavg				= 5.0
 numday				= 0.0
 phagedie			= 0.5
-bactmod = phlyratio
+alpha				= 0.0336
+fertile = 0
+
+call cpu_time(clock)
+seed = clock + 3*(/(i-1,i=1,randall)/)
+call random_seed(put=seed)
 
 ! Populates the coral/algae layer
-!call hppop(coral)
-!call tightcluster(coral)
-
 call corpop
 
 holding = coral
@@ -106,15 +108,12 @@ call fishdist(fish)
 
 ! Populating initital bacteria layer
 call kgrid
-!call bacteriapop
 call microbepopptw
-! Populating initial phage layer
-!call phagepop
-!call lysogenpop
 
 bacthold = bacteria
 
 t = 0
+
 call datacollect(t)
 
 write(*,*) "Coral percentage:", percentcor(grid)
@@ -122,6 +121,14 @@ write(*,*) "Coral percentage:", percentcor(grid)
 ! Outer loops iterates time, i and j iterate x and y respectively
 do t = 1, numtime, 1
 	write(*,*) "Beginning timestep", t
+		
+	if (mod(t,182) .eq. 0) then
+		write(*,*) "Coral spawning begins"
+		fertile = 14
+	end if
+	
+	write(*,*) "Coral percentage:", percentcor(grid)
+	buds = nint(percentcor(grid)*10.0)
 		
 		do i = 1, grid, 1
 	
@@ -134,27 +141,24 @@ do t = 1, numtime, 1
 	
 		end do
 		
-		do l = 1, grid, 1
-			call newcoral
-		end do
+		if (fertile .gt. 0) then
+			do l = 1, buds, 1
+				call newcoral
+			end do		
+		end if
 		
-		fishdelt = 0.0
-		coralfishmult = percentcor(grid)
 		call shark
-		fish = fish + fishdelta(sum(coral),sum(fish))/real(grid**2)
+		fish = fish + fish*(1.0+fishdelta(sum(coral),sum(fish)))
 		call kgrid
-		!call bactgrow
-		!call phagelysgrow
 		call diffuse
-		!call mixing
+		call mixing
 		call bactgrowptw
 		
-		write(*,*) "Coral percentage:", percentcor(grid)
-
 		call datacollect(t)
 		
  		holding = coral
 		bacthold = bacteria
+		fertile = fertile - 1
 
 end do
 

@@ -16,26 +16,23 @@ end type microbevar
 	type (microbevar), allocatable			:: bacteria(:,:), phage(:,:), lys(:,:)	! Layer names
 	type (microbevar), allocatable			:: bacthold(:,:) 
 	integer, allocatable					:: seed(:)								! Random number holding array
-	integer									:: clock, distance						! System time and radial distance of coral clusters
+	integer									:: distance						! System time and radial distance of coral clusters
 	real									:: percentcover							! Percent of grid to have coral on it 'groundcover'
 	real									:: fishlocal, fgrowfact, fisheat
-	real									:: hunger
+	real									:: hunger, shrkevt, clock
 	integer									:: numnew = 0
 	real									:: popconstant
 	real									:: pi = acos(-1.0)
 	integer									:: randall = 12
 	real									:: avgpop, threshold
-	integer									:: maxspec, minispec
 	real									:: alpha, beta, avgspec
 	logical,allocatable						:: check(:,:)
-	real									:: phlyratio, lysperc
-	real									:: coralfishmult
+	real									:: lysperc
+	real									:: coralfishmult = 1.0
 	real, allocatable						:: coralpercent(:,:)
-	integer									:: numtime	    					! Number of timesteps and clusters of coral
+	integer									:: numtime	    					! Number of timesteps
 	! Function Variables					
 	real									:: rate								! Bacteria Growth rate adjuster
-	! Popsub Variables
-	real									:: tightclustermult					! Determines the increase in coral in cluster
 	! Sub Variables
 	real									:: growpercent 						! Flat percentage growth for coral
 	real									:: decayconst						! Percent of coral loss per nearby algae 
@@ -47,7 +44,7 @@ end type microbevar
 	real									:: dayavgtot, numday
 	real									:: phagedie							! Amount of phage that don't die each cycle
 	! PTW vars
-	real									:: bacdeath, adsorp, bactmod
+	real									:: bacdeath, adsorp
 	
 end module
 
@@ -63,21 +60,10 @@ use globalvars
 implicit none
 	real		:: input, pop
 	
-	fishdelta = fgrowfact*(coralfishmult*input - pop)
+	fishdelta = fgrowfact*(1 - pop/(coralfishmult*input))
 	
 end function fishdelta
-
-real function bacgrowth(totalpop,carry,spec)
-
-use globalvars
-
-implicit none
-	real		:: totalpop, carry, spec
-	
-bacgrowth = rate*(1.0 - (totalpop/carry))*spec
-	
-end function bacgrowth
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 real function percentcor(size)
 
 use globalvars
@@ -94,7 +80,7 @@ corcount = count(wherecor)
 percentcor = float(corcount)/(float(size)**2)
 
 end function
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 real function virpopptw(carry,bacpop)
 
 use globalvars
@@ -105,7 +91,7 @@ implicit none
 virpopptw = (rate*(1.0 - (bacpop/carry)) - bacdeath)/adsorp
 
 end function
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 real function tempratio(carry,i,j)
 
 use globalvars
@@ -118,7 +104,5 @@ implicit none
 tempratio = (real(phage(i,j)%totalpop)/real(bacteria(i,j)%numspecies))
 	
 end function
-
-
 
 end module

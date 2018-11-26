@@ -16,12 +16,12 @@ implicit none
 bactcoral = 0.0
 
 call random_seed(size=randall)
-call system_clock(count=clock)
-seed = clock + 4*(/(i-1,i=1,randall)/)
+call cpu_time(clock)
+seed = clock + (/(i-1,i=1,randall)/)
 call random_seed(put=seed)
 
-bactcoral = (bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
-			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop)/(algaemod*avgpop*2.0)
+bactcoral = real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
+			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop))/real(4*algaemod*avgpop)
 			
 if (bactcoral .lt. 0.0) then
 	bactcoral = 0.0
@@ -33,17 +33,16 @@ end if
 
 call random_number(growpercent)
 
-growpercent = (5.0*growpercent + (1.0-growpercent))
-
+growpercent = growpercent*0.1
 grow = 1.0 + growpercent*(1.0 - bactcoral)
 
 if (grow .lt. 1.0) then
 	grow = 1.0
 end if
 
-where (arrout .gt. 5.0) arrout = 5.0
-
 arrout(x,y) = arrin(x,y)*grow
+
+where (arrout .gt. 5.0) arrout = 5.0
 
 end subroutine
 	
@@ -62,6 +61,8 @@ implicit none
 	
 	! Initializations
 	algcount = 0	
+	decayconst	= 0.007
+
 	
 	! Checks for algae around the input gridpoint and out-of-bounds
 	if ((x .gt. 1) .and. (holding(x-1,y) .eq. 0.0)) then
@@ -100,8 +101,13 @@ implicit none
 		return
 	end if
 	
+	if(algcount .eq. 0) then
+		decayconst = 0.0
+	else
+		call fishinteraction(decayconst,x,y)
+		decayconst = decayconst*float(algcount)
+	end if
 	! Calls the fish layer to reduce the effect of algae on coral
-	call fishinteraction(decayconst,x,y)
 	
 	! Coral being eaten.
 	if (decayconst .lt. 0.0) then
@@ -110,9 +116,8 @@ implicit none
 	
 	! Coral less the algae eating it
 	if (decayconst .gt. 0.0) then
-		arrin(x,y) = arrin(x,y) - decayconst*real(algcount)
+		arrin(x,y) = arrin(x,y) - decayconst
 	end if
-
 	! Resets negative values to zero
 	if (arrin(x,y) .le. 0.05) then
 		arrin(x,y) = 0.0
@@ -136,9 +141,13 @@ use globalvars
 	integer,intent(in)			:: i, j					! Looping integers
 
 
-	fisheat = fisheatmult*fishdelta(sum(coral),sum(fish))/real(grid**2)
+	fisheat = fisheatmult*fishdelta(sum(coral),sum(fish))
+	
+	if (fisheat .ge. 1.0) then
+		fisheat = 0.95
+	end if
 
-	modify =modify -  modify*8.0*fisheat
+	modify = modify*(1-fisheat)*(sum(fish)/(sum(coral)*coralfishmult))
 
 end subroutine
 	
@@ -199,60 +208,6 @@ end do
 ! Final updating of the layer
 kbact = kbact + kdelta
 
-end subroutine
-	
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-subroutine bactgrow
-
-! Grows the bacteria layer, both totalpop and species
-
-use globalvars
-use functions
-	
-implicit none
-	integer		:: i, j						! Looping integers
-	real		:: delbactpop				! determines new species and change in bacteria population 
-	real		:: percentevent
-	
-! Initializations
-delbactpop = 0.0
-	
-do i = 1, 2*grid, 1
-	
-	do j = 1, 2*grid, 1
-	
-		lysperc = 0.0
-		delbactpop = 0.0
-	
-		lysperc = real(lys(i,j)%totalpop)/real(bacteria(i,j)%totalpop)
-		
-		if (0.1*real(phage(i,j)%totalpop) .ge. 0.2*real(bacteria(i,j)%totalpop)) then
-			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.2*real(bacteria(i,j)%totalpop))
-		else if (0.1*real(phage(i,j)%totalpop) .lt. 0.2*real(bacteria(i,j)%totalpop)) then
-			bacteria(i,j)%totalpop = bacteria(i,j)%totalpop - int(0.2*real(phage(i,j)%totalpop))
-		end if
-		
-		! Finds change in population
-		delbactpop = bacgrowth(real(bacteria(i,j)%totalpop),kbact(i,j),real(bacteria(i,j)%numspecies))
-
-		! Determines how many new species show up
-		bacteria(i,j)%numspecies = bacteria(i,j)%numspecies + int(delbactpop)
-
-		call random_number(percentevent)
-
-		if (percentevent .gt. (1.0 - lysperc)) then
-			
-			delbactpop = delbactpop + abundperc*real(bacteria(i,j)%totalpop)
-
-		end if
-
-		bacteria(i,j)%totalpop = bacteria(i,j)%totalpop + int(delbactpop)
-
-	end do
-	
-end do
-	
 end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -452,16 +407,17 @@ implicit none
 	integer			:: i
 	
 	
-call system_clock(count=clock)
+call cpu_time(clock)
 seed = clock + 8*(/(i-1,i=1,randall)/)
 call random_seed(put=seed)
 call random_number(catch)
 
 hunger = (dayavg - 1.0)/dayavg
-
+shrkevt = 0.0
 if (catch .ge. hunger) then
 	fish = fish*caught
 	numday = numday + 1
+	shrkevt = 1.0
 	write(*,*) "SHARK!"
 else
 	fish = fish
@@ -470,85 +426,6 @@ end if
 end subroutine
 	
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-subroutine phagelysgrow
-
-use globalvars
-
-implicit none
-	integer		:: delta, specdelta, phagecheck, lyscheck
-	integer		:: i, j
-	real		:: popratio, deltratio, specratio
-
-phage%totalpop = int(real(phage%totalpop)*phagedie)
-	
-do i = 1, 2*grid, 1
-	
-	do j = 1, 2*grid, 1
-			
-		delta = 0
-		specdelta = 0
-		phagecheck = 0
-		popratio = 0.0
-		deltratio = 0.0
-		specratio = 0.0
-		
-		delta = (bacteria(i,j)%totalpop - bacthold(i,j)%totalpop)
-
-		deltratio = real(bacteria(i,j)%totalpop)/real(bacthold(i,j)%totalpop)
-				
-		specratio = real(phage(i,j)%totalpop)/real(bacteria(i,j)%numspecies)
-		
-		if (specratio .lt. 1.0) then
-			specratio = 1.0
-		end if
-		
-		if (specratio .ge. 4.0) then
-			popratio = 0.0
-		else
-			popratio = 0.35
-		end if
-		
-		if (deltratio .lt. 1.0) then
-			deltratio = 1.0
-		end if
-		
-		if ((deltratio .lt. 1.20) .and. (deltratio .ge. 1.0)) then
-			popratio = popratio + 0.35
-		else 
-			popratio = popratio + 0.1
-		end if		
-		
-		specdelta = (bacteria(i,j)%numspecies - bacthold(i,j)%numspecies)
-		
-		if ((specdelta .ge. phage(i,j)%numspecies) .or. (specdelta .ge. lys(i,j)%numspecies)) then
-			specdelta = int(real(lys(i,j)%numspecies)*0.3)
-		end if
-		
-		if (delta .lt. 0) then
-			phagecheck = 50.0*abs(delta)*popratio + phagecheck
-		else if (delta .gt. 0) then
-			phagecheck = int(real(bacthold(i,j)%totalpop)*5.0) + phagecheck
-		end if
-	
-	!!!!!!!!!!!JUST CHANGED THE FIVE RIGHT TTHERE
-	
-		lyscheck = int((1.0 - popratio)*delta)
-	
-		phage(i,j)%totalpop = phage(i,j)%totalpop + phagecheck
-		lys(i,j)%totalpop = lys(i,j)%totalpop + lyscheck
-	
-		phage(i,j)%numspecies = phage(i,j)%numspecies + int(real(specdelta)*popratio)
-		lys(i,j)%numspecies = lys(i,j)%numspecies + int(real(specdelta)*(1.0 - popratio))		
-		
-	end do
-
-end do
-
-where (phage%totalpop .lt. 0) phage%totalpop = 0.0
-where (lys%totalpop .lt. 0) lys%totalpop = 0.0
-
-end subroutine
 
 subroutine bactgrowptw
 
@@ -560,38 +437,23 @@ implicit none
 	real    :: temratio
 	integer :: i, j	
 	integer :: bactdelta, phagetot
-	real	:: phagechange
+	real	:: phagechange, phlyratio
 
 do i = 1, 2*grid, 1
 
 	do j = 1, 2*grid, 1
 
-			temratio = tempratio(kbact(i,j),i,j)
-		! adsorp = (1.0 - temratio)
+		temratio = tempratio(kbact(i,j),i,j)
 		adsorp =(0.02/real(lys(i,j)%totalpop))
 		bacdeath = 0.2
-		!phlyratio = 0.0
 		bactdelta = 0.0
 	
 		bacteria(i,j)%totalpop = int(sqrt((kbact(i,j)*phagedie)/(50.0*adsorp)))
 		bactdelta = bacteria(i,j)%totalpop - bacthold(i,j)%totalpop
-	
-	!	if (bactdelta .ge. 0.0) then
-	!		bacteria(i,j)%numspecies = bacteria(i,j)%numspecies + 4
-	!		phage(i,j)%numspecies = phage(i,j)%numspecies + 4
-	!		lys(i,j)%numspecies = lys(i,j)%numspecies + 4
-	!	else if (bactdelta .lt. 0.0) then
-	!		bacteria(i,j)%numspecies = bacteria(i,j)%numspecies - 4
-	!		phage(i,j)%numspecies = phage(i,j)%numspecies - 4
-	!		lys(i,j)%numspecies = lys(i,j)%numspecies - 4
-	!	end if
 
-		beta = 0.6
-		alpha = 0.7
-
-		lys(i,j)%numspecies = int(float(lys(i,j)%totalpop)**beta)
-		phage(i,j)%numspecies = int(float(phage(i,j)%totalpop)**beta)
-		bacteria(i,j)%numspecies = int(float(bacteria(i,j)%totalpop)**alpha)
+		lys(i,j)%numspecies = int(75.374*float(lys(i,j)%totalpop)**alpha)
+		phage(i,j)%numspecies = int(75.374*float(phage(i,j)%totalpop)**alpha)
+		bacteria(i,j)%numspecies = int(75.374*float(bacteria(i,j)%totalpop)**alpha)
 
 		phagechange = rate*(1.0-(real(bacteria(i,j)%totalpop)/real(kbact(i,j))))	
 
@@ -607,8 +469,6 @@ do i = 1, 2*grid, 1
 			phlyratio = 0.95
 		end if
 		
-	!	adsorp = (0.012/real(lys(i,j)%totalpop))
-		
 		phagetot = int(virpopptw(kbact(i,j),float(bacteria(i,j)%totalpop)))
 		
 		phage(i,j)%totalpop = phagetot
@@ -619,32 +479,4 @@ end do
 	
 end subroutine
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
-
-
-
-
-
-
-
-
-
-
-
 	
