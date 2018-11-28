@@ -61,7 +61,7 @@ implicit none
 	
 	! Initializations
 	algcount = 0	
-	decayconst	= 0.007
+	decayconst	= 0.03
 
 	
 	! Checks for algae around the input gridpoint and out-of-bounds
@@ -113,7 +113,7 @@ implicit none
 	if (decayconst .lt. 0.0) then
 		decayconst = 0.0
 	end if
-	
+				
 	! Coral less the algae eating it
 	if (decayconst .gt. 0.0) then
 		arrin(x,y) = arrin(x,y) - decayconst
@@ -141,13 +141,13 @@ use globalvars
 	integer,intent(in)			:: i, j					! Looping integers
 
 
-	fisheat = fisheatmult*fishdelta(sum(coral),sum(fish))
+	fisheat = fisheatmult*fishdelta(sum(coral),sum(fish))/(sum(coral)*coralfishmult)
 	
-	if (fisheat .ge. 1.0) then
-		fisheat = 0.95
+	if (fisheat .ge. 0.5) then
+		fisheat = 0.5
 	end if
 
-	modify = modify*(1-fisheat)*(sum(fish)/(sum(coral)*coralfishmult))
+	modify = modify*(1.0-fisheat)*(1.0 - 0.25*(sum(fish)/(sum(coral)*coralfishmult)))
 
 end subroutine
 	
@@ -451,10 +451,6 @@ do i = 1, 2*grid, 1
 		bacteria(i,j)%totalpop = int(sqrt((kbact(i,j)*phagedie)/(50.0*adsorp)))
 		bactdelta = bacteria(i,j)%totalpop - bacthold(i,j)%totalpop
 
-		lys(i,j)%numspecies = int(75.374*float(lys(i,j)%totalpop)**alpha)
-		phage(i,j)%numspecies = int(75.374*float(phage(i,j)%totalpop)**alpha)
-		bacteria(i,j)%numspecies = int(75.374*float(bacteria(i,j)%totalpop)**alpha)
-
 		phagechange = rate*(1.0-(real(bacteria(i,j)%totalpop)/real(kbact(i,j))))	
 
 		if (temratio .le. 3.0) then
@@ -473,6 +469,11 @@ do i = 1, 2*grid, 1
 		
 		phage(i,j)%totalpop = phagetot
 		lys(i,j)%totalpop = int(abs(phlyratio*real(bacteria(i,j)%totalpop)))
+
+		lys(i,j)%numspecies = int(75.374*float(lys(i,j)%totalpop)**alpha)
+		phage(i,j)%numspecies = int(75.374*float(phage(i,j)%totalpop)**alpha)
+		bacteria(i,j)%numspecies = int(75.374*float(bacteria(i,j)%totalpop)**alpha)
+
 	end do
 	
 end do
