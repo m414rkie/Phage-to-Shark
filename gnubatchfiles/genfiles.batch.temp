@@ -1,0 +1,17 @@
+# Template batch file for gnuplot for use in 
+# making a .gif of the output data for the 
+# Phage-to-Shark project
+
+# Author: Jon Parsons
+# Date: 1-8-19
+
+set terminal png
+
+set xrange [0:XDX]
+
+set title "XTITLEX"
+
+set output "XNAMEX"
+
+XLINE1X
+XLINE2X

@@ -1,0 +1,46 @@
+# Template batch file for gnuplot for use in 
+# making a graph of the multiple files produced
+# by an iterated run of the simulation
+# Phage-to-Shark project
+
+# Author: Jon Parsons
+# Date: 1-20-19
+
+set terminal png
+
+set xrange [0:XDX]
+
+set key outside autotitle columnhead
+
+
+set style line 2 lc rgb 'blue' lt 1 lw 1
+set style line 3 lc rgb 'dark-blue' lt 1 lw 1
+set style line 4 lc rgb 'web-blue' lt 1 lw 1
+
+set style line 5 lc rgb 'red' lt 1 lw 1
+set style line 6 lc rgb 'dark-red' lt 1 lw 1
+set style line 7 lc rgb 'web-red' lt 1 lw 1
+
+set style line 8 lc rgb 'green' lt 1 lw 1
+set style line 9 lc rgb 'dark-green' lt 1 lw 1
+set style line 10 lc rgb 'web-green' lt 1 lw 1
+
+set style line 11 lc rgb 'gold' lt 1 lw 1
+set style line 12 lc rgb 'orange-red' lt 1 lw 1
+set style line 13 lc rgb 'orange' lt 1 lw 1
+
+set style line 14 lc rgb 'black' lt 1 lw 1
+set style line 15 lc rgb 'dark-grey' lt 1 lw 1
+set style line 16 lc rgb 'slategrey' lt 1 lw 1
+
+
+set title "XTITLEX"
+
+set output "XNAMEX"
+
+XLINE1X
+XLINE2X
+XLINE3X
+XLINE4X
+XLINE5X
+XLINE6X
