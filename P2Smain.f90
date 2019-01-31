@@ -36,8 +36,7 @@ use functions
 implicit none
 	integer					:: i, j, t, l					! Looping integers; n is random seed holder
 	integer					:: allck
-	real					:: fishdelt
-	integer					:: seaslen, fertile, buds
+	integer					:: seaslen, fertile, buds, mstime(8)
 
 call inputs
 
@@ -48,9 +47,6 @@ allocate(coral(grid,grid), stat=allck)
 allocate(holding(grid,grid), stat=allck)
 	if (allck .ne. 0) stop "Holding Allocation Failed"
 	holding = 0.0
-allocate(fish(grid,grid), stat=allck)
-	if (allck .ne. 0) stop "Fish Allocation Failed"
-	fish = 0.0
 allocate(check(grid,grid), stat=allck)
 	if (allck .ne. 0) stop "Check Allocation Failed"
 allocate(bacteria(2*grid,2*grid), stat=allck)
@@ -70,30 +66,24 @@ allocate(seed(randall), stat=allck)
 	
 
 ! Initializing grids and variables
+
+fish = 0.0
+
 coral 				= 0.0
 holding 			= 0.0
 bacteria%totalpop 	= 0
 bacteria%numspecies = 0
 ! Function Variables
-rate 				= 0.5
-fgrowfact			= 1.0
 ! Sub Variables
-!growpercent 		= 0.01
-fisheatmult			= 1.0
-algaemod			= 1.3
-coralmod			= 0.8
-barriermod 			= 1.0
-specmult			= 0.1
 abundperc			= 0.001
 caught				= 0.95
-dayavg				= 5.0
-numday				= 0.0
-phagedie			= 0.5
 alpha				= 0.0336
-fertile = 0
+fertile 			= 0
+numday 				= 0
 
-call cpu_time(clock)
-seed = clock + 3*(/(i-1,i=1,randall)/)
+call date_and_time(values=mstime)
+!call cpu_time(clock)
+seed = real(mstime(8)) + 3*(/(i-1,i=1,randall)/)
 call random_seed(put=seed)
 
 ! Populates the coral/algae layer
@@ -104,7 +94,8 @@ holding = coral
 write(*,*) "0.0 represents pure algae; greater than zero represents coral, higher number represents more coral"
 write(*,*) "Files are written as (x,y,z) where z is the population/biomass"
 
-call fishdist(fish)
+coraltot = sum(coral)
+fish = 990.0*percentcor(grid)
 
 ! Populating initital bacteria layer
 call kgrid
@@ -112,24 +103,46 @@ call microbepopptw
 
 bacthold = bacteria
 
+fertile = 0
+sickDays = 0
 t = 0
 
 call datacollect(t)
+
 
 write(*,*) "Coral percentage:", percentcor(grid)
 
 ! Outer loops iterates time, i and j iterate x and y respectively
 do t = 1, numtime, 1
+
+
 	write(*,*) "Beginning timestep", t
-		
+
 	if (mod(t,182) .eq. 0) then
 		write(*,*) "Coral spawning begins"
 		fertile = 14
 	end if
-	
+
+	if ((t .eq. 200).and.(disFlag .eq. "H")) then
+		call hurricane
+		write(*,*) "Hurricane!"
+	end if
+
+	if ((t .eq. 200).and.(disFlag .eq. "D")) then
+		call disease
+		write(*,*) "Disease!"
+	end if 
+
 	write(*,*) "Coral percentage:", percentcor(grid)
+	write(*,*) "Fish population:", fish
 	buds = nint(percentcor(grid)*10.0)
 		
+	if (sickDays .ge. 1) then
+		growpercmod = 0.001
+	else
+		growpercmod = 0.1
+	end if
+
 		do i = 1, grid, 1
 	
 			do j = 1, grid, 1
@@ -140,34 +153,34 @@ do t = 1, numtime, 1
 			end do
 	
 		end do
-		
+
 		if (fertile .gt. 0) then
 			do l = 1, buds, 1
 				call newcoral
 			end do		
 		end if
-		
+
 		call shark
-		fish = fish + fish*(1.0+fishdelta(sum(coral),sum(fish)))
+		fish = fish + fishdelta(sum(coral),fish)
+
 		call kgrid
-		call diffuse
-		call mixing
-		call bactgrowptw
-		
+		call diffuse		
+		call mixing		
+		call bactgrowptw		
 		call datacollect(t)
 		
  		holding = coral
 		bacthold = bacteria
 		fertile = fertile - 1
+		sickDays = sickDays - 1
 
 end do
 
 write(*,*) "Total number of new coral growths:", numnew
-write(*,*) "Average number of days between shark attack:", float(numtime)/numday
+write(*,*) "Average number of days between shark attack:", float(numtime)/float(numday)
 
 deallocate(coral)
 deallocate(holding)
-deallocate(fish)
 deallocate(check)
 deallocate(bacteria)
 deallocate(kbact)

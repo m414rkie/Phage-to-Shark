@@ -1,28 +1,3 @@
-subroutine fishdist(arrout)
-
-! Subroutine for populating fish layer. Currently an even layer is created using coral 'biomass' 
-! as an initializer with a multiplier.
-
-use globalvars
-use functions
-
-implicit none
-	real,dimension(grid,grid)				:: arrout				! Output array
-	real									:: coraltot, fishtot	! Summed values of the arrays
-
-! Initializing 
-coraltot = sum(coral)
-fishtot = 0.9*coralfishmult*coraltot
-
-! Distribution across grid
-arrout = fishtot/real(grid**2)
-
-write(*,*) "Populating the initial fish layer."
-
-end subroutine
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		
 subroutine newcoral
 
 ! Subroutine generates new coral when the average coral of the grid is above a user-input threshold. Does not trigger each time,
@@ -57,8 +32,6 @@ algaeloc = 0
 ! Checks coral average against threshold, checks against probability of generation, if pass calls random
 ! locations in algaeloc and places coral.
 if (avgcoral .ge. threshold) then
-	seed = seed + 1
-	call random_seed(put=seed)
 
 	call random_number(temp)
 
@@ -74,31 +47,31 @@ do i = 1, grid, 1
 		neighbors = 1.0
 	end if
 	
-	if ((x .lt. grid) .and. (coral(x+1,y) .eq. 0.0)) then
+	if ((x .lt. grid) .and. (coral(x+1,y) .ne. 0.0)) then
 		neighbors = neighbors + 1.0
 	end if
 
-	if ((y .lt. grid) .and. (coral(x,y+1) .eq. 0.0)) then
+	if ((y .lt. grid) .and. (coral(x,y+1) .ne. 0.0)) then
 		neighbors = neighbors + 1.0
 	end if
 	
-	if ((y .gt. 1) .and. (coral(x,y-1) .eq. 0.0)) then
+	if ((y .gt. 1) .and. (coral(x,y-1) .ne. 0.0)) then
 		neighbors = neighbors + 1.0
 	end if
 
-	if ((x .lt. grid) .and. (y .lt. grid) .and. (coral(x+1,y+1) .eq. 0.0)) then
+	if ((x .lt. grid) .and. (y .lt. grid) .and. (coral(x+1,y+1) .ne. 0.0)) then
 		neighbors = neighbors + 1.0
 	end if
 
-	if ((x .gt. 1) .and. (y .gt. 1) .and. (coral(x-1,y-1) .eq. 0.0)) then
+	if ((x .gt. 1) .and. (y .gt. 1) .and. (coral(x-1,y-1) .ne. 0.0)) then
 		neighbors = neighbors + 1.0
 	end if
 	
-	if ((x .lt. grid) .and. (y .gt. 1) .and.(coral(x+1,y-1) .eq. 0.0)) then
+	if ((x .lt. grid) .and. (y .gt. 1) .and.(coral(x+1,y-1) .ne. 0.0)) then
 		neighbors = neighbors + 1.0
 	end if
 	
-	if ((x .gt. 1) .and. (y .lt. grid) .and. (coral(x-1,y+1) .eq. 0.0)) then
+	if ((x .gt. 1) .and. (y .lt. grid) .and. (coral(x-1,y+1) .ne. 0.0)) then
 		neighbors = neighbors + 1.0
 	end if
 		
@@ -121,13 +94,13 @@ end do
 		x = algaeloc(1,floor(l*coord))
 		y = algaeloc(2,floor(l*coord))
 		
-		bactfact = real(kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/real(maxval(kbact)*4.0)
+		bactfact = corBacNew*real(kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/real(maxval(kbact)*4.0)
 		
-		if (temp .ge. bactfact) then
+		if (temp .ge. 0.5*bactfact) then
 		
 			numnew = numnew + 1
 		
-			coral(x,y) = 1.2
+			coral(x,y) = 3.5
 		
 			deallocate(algaeloc)
 			
@@ -151,7 +124,7 @@ implicit none
 	
 area = real((2*grid)**2)
 
-bacteria%totalpop = int(0.5*kbact)
+bacteria%totalpop = int(0.6*kbact)
 
 phage%totalpop = 3*bacteria%totalpop
 

@@ -15,13 +15,8 @@ implicit none
 ! Initializations
 bactcoral = 0.0
 
-call random_seed(size=randall)
-call cpu_time(clock)
-seed = clock + (/(i-1,i=1,randall)/)
-call random_seed(put=seed)
-
-bactcoral = real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
-			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop))/real(4*algaemod*avgpop)
+bactcoral = corBacGrow*real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
+			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop))/real(4.0*360.0)
 			
 if (bactcoral .lt. 0.0) then
 	bactcoral = 0.0
@@ -33,7 +28,7 @@ end if
 
 call random_number(growpercent)
 
-growpercent = growpercent*0.1
+growpercent = growpercent*growpercmod
 grow = 1.0 + growpercent*(1.0 - bactcoral)
 
 if (grow .lt. 1.0) then
@@ -61,7 +56,7 @@ implicit none
 	
 	! Initializations
 	algcount = 0	
-	decayconst	= 0.03
+	decayconst	= 0.04
 
 	
 	! Checks for algae around the input gridpoint and out-of-bounds
@@ -141,13 +136,13 @@ use globalvars
 	integer,intent(in)			:: i, j					! Looping integers
 
 
-	fisheat = fisheatmult*fishdelta(sum(coral),sum(fish))/(sum(coral)*coralfishmult)
+	fisheat = fisheatmult*fishdelta(sum(coral),fish)/(900.0*percentcor(grid))
 	
-	if (fisheat .ge. 0.5) then
-		fisheat = 0.5
+	if (fisheat .ge. 0.9) then
+		fisheat = 0.9
 	end if
 
-	modify = modify*(1.0-fisheat)*(1.0 - 0.25*(sum(fish)/(sum(coral)*coralfishmult)))
+	modify = modify*(1.0 - fisheat)
 
 end subroutine
 	
@@ -164,7 +159,7 @@ implicit none
 	real,dimension(2*grid,2*grid)	:: kdelta							! Change in carrying capacity
 
 ! Initializations 
-kbact = avgpop
+kbact = 360.0
 kdelta = 0.0
 
 ! Loops for initial set up, no barrier interaction
@@ -173,15 +168,10 @@ do i = 1, grid, 1
 	do j = 1, grid, 1
 	
 		if (coral(i,j) .ne. 0) then 
-			kbact(2*i-1,2*j-1) = avgpop*coralmod
-			kbact(2*i-1,2*j) = avgpop*coralmod
-			kbact(2*i,2*j) = avgpop*coralmod
-			kbact(2*i,2*j-1) = avgpop*coralmod
-		else if (coral(i,j) .eq. 0) then
-			kbact(2*i-1,2*j-1) = avgpop*algaemod
-			kbact(2*i,2*j) = avgpop*algaemod
-			kbact(2*i,2*j-1) = avgpop*algaemod
-			kbact(2*i-1,2*j) = avgpop*algaemod
+			kbact(2*i-1,2*j-1) = 120.0
+			kbact(2*i-1,2*j) = 120.0
+			kbact(2*i,2*j) = 120.0
+			kbact(2*i,2*j-1) = 120.0
 		end if
 			
 	end do
@@ -194,11 +184,11 @@ do i = 1, 2*grid, 1
 	do j = 1, 2*grid, 1
 
 		if ((i .lt. 2*grid) .and. (kbact(i,j) .ne. kbact(i+1,j))) then
-			kdelta(i,j) = avgpop*barriermod - kbact(i,j)
+			kdelta(i,j) = 120.0
 		end if
 		
 		if ((j .gt. 2*grid) .and. (kbact(i,j) .ne. kbact(i,j+1))) then
-			kdelta(i,j) = avgpop*barriermod - kbact(i,j)
+			kdelta(i,j) = 120.0
 		end if
 	
 	end do
@@ -404,18 +394,17 @@ use globalvars
 
 implicit none
 	real			:: catch
-	integer			:: i
 	
-	
-call cpu_time(clock)
-seed = clock + 8*(/(i-1,i=1,randall)/)
-call random_seed(put=seed)
 call random_number(catch)
 
 hunger = (dayavg - 1.0)/dayavg
 shrkevt = 0.0
+
+caught = sharkMass*5.1885
+caught = dayavg*0.002739*caught
+
 if (catch .ge. hunger) then
-	fish = fish*caught
+	fish = fish - caught
 	numday = numday + 1
 	shrkevt = 1.0
 	write(*,*) "SHARK!"
@@ -433,7 +422,6 @@ use globalvars
 use functions
 
 implicit none
-	real	:: burst, interact
 	real    :: temratio
 	integer :: i, j	
 	integer :: bactdelta, phagetot
@@ -444,11 +432,10 @@ do i = 1, 2*grid, 1
 	do j = 1, 2*grid, 1
 
 		temratio = tempratio(kbact(i,j),i,j)
-		adsorp =(0.02/real(lys(i,j)%totalpop))
-		bacdeath = 0.2
+		adsorp =(adsorpFac/real(lys(i,j)%totalpop))
 		bactdelta = 0.0
 	
-		bacteria(i,j)%totalpop = int(sqrt((kbact(i,j)*phagedie)/(50.0*adsorp)))
+		bacteria(i,j)%totalpop = int(sqrt((kbact(i,j)*phagedie)/(bacBurst*adsorp)))
 		bactdelta = bacteria(i,j)%totalpop - bacthold(i,j)%totalpop
 
 		phagechange = rate*(1.0-(real(bacteria(i,j)%totalpop)/real(kbact(i,j))))	
