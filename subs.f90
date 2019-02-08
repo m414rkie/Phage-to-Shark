@@ -16,7 +16,8 @@ implicit none
 bactcoral = 0.0
 
 bactcoral = corBacGrow*real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
-			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop))/real(4.0*360.0)
+			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop))/real(kbact(2*x,2*y) &
+			+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))
 			
 if (bactcoral .lt. 0.0) then
 	bactcoral = 0.0
@@ -56,7 +57,7 @@ implicit none
 	
 	! Initializations
 	algcount = 0	
-	decayconst	= 0.04
+	decayconst	= 0.002
 
 	
 	! Checks for algae around the input gridpoint and out-of-bounds
@@ -104,11 +105,11 @@ implicit none
 	end if
 	! Calls the fish layer to reduce the effect of algae on coral
 	
-	! Coral being eaten.
-	if (decayconst .lt. 0.0) then
-		decayconst = 0.0
-	end if
-				
+	! Coral being eaten.				
+	if (decayconst .gt. 0.09) then
+		decayconst = 0.09
+	end if	
+	
 	! Coral less the algae eating it
 	if (decayconst .gt. 0.0) then
 		arrin(x,y) = arrin(x,y) - decayconst
@@ -136,7 +137,7 @@ use globalvars
 	integer,intent(in)			:: i, j					! Looping integers
 
 
-	fisheat = fisheatmult*fishdelta(sum(coral),fish)/(900.0*percentcor(grid))
+	fisheat = fisheatmult*5.0*fishdelta(sum(coral),fish)/(1000.0*percentcor(grid))
 	
 	if (fisheat .ge. 0.9) then
 		fisheat = 0.9
@@ -159,7 +160,7 @@ implicit none
 	real,dimension(2*grid,2*grid)	:: kdelta							! Change in carrying capacity
 
 ! Initializations 
-kbact = 360.0
+kbact = 3600.0
 kdelta = 0.0
 
 ! Loops for initial set up, no barrier interaction
@@ -184,7 +185,7 @@ do i = 1, 2*grid, 1
 	do j = 1, 2*grid, 1
 
 		if ((i .lt. 2*grid) .and. (kbact(i,j) .ne. kbact(i+1,j))) then
-			kdelta(i,j) = 120.0
+			kdelta(i,j) = 1200.0
 		end if
 		
 		if ((j .gt. 2*grid) .and. (kbact(i,j) .ne. kbact(i,j+1))) then
@@ -214,7 +215,7 @@ implicit none
 	real										:: diffco		! Diffusion coefficient
 	
 ! Initializations
-diffco = 0.00001
+diffco = 0.5
 delta = 0.0
 	
 ! Working loops
@@ -310,7 +311,7 @@ implicit none
 	real									:: mixpress		! Pressure for mixing
 	integer									:: delta		! Change in number of species
 								
-mixpress = 0.0001
+mixpress = 0.1
 
 ! Working loops
 do i = 1, 2*grid, 1
@@ -388,12 +389,13 @@ end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine shark
+subroutine shark(f)
 
 use globalvars
 
 implicit none
 	real			:: catch
+	integer			:: f
 	
 call random_number(catch)
 
@@ -407,7 +409,9 @@ if (catch .ge. hunger) then
 	fish = fish - caught
 	numday = numday + 1
 	shrkevt = 1.0
-	write(*,*) "SHARK!"
+	if (f .eq. 1) then
+		write(*,*) "SHARK!"
+	end if
 else
 	fish = fish
 end if

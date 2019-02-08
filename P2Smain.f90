@@ -73,10 +73,8 @@ coral 				= 0.0
 holding 			= 0.0
 bacteria%totalpop 	= 0
 bacteria%numspecies = 0
-! Function Variables
 ! Sub Variables
 abundperc			= 0.001
-caught				= 0.95
 alpha				= 0.0336
 fertile 			= 0
 numday 				= 0
@@ -107,8 +105,57 @@ fertile = 0
 sickDays = 0
 t = 0
 
-call datacollect(t)
+write(*,*) "Beginning Equilibration"
 
+do t = 1, 90, 1
+
+if (t .eq. 18) then 
+	write(*,*) "Equilibration 20% Complete."
+else if (t .eq. 36) then
+	write(*,*) "Equilibration 40% Complete."
+else if (t .eq. 54) then
+	write(*,*) "Equilibration 60% Complete."
+else if (t .eq. 72) then 
+	write(*,*) "Equilibration 80% Complete."
+end if
+		
+		buds = nint(percentcor(grid)*10.0)
+		
+		call diffuse		
+		call mixing		
+		
+	growpercmod = 0.1
+
+		do i = 1, grid, 1
+	
+			do j = 1, grid, 1
+		
+				call growth(i,j,coral,coral)
+				call decay(i,j,coral)				
+	
+			end do
+	
+		end do
+
+		call shark(0)
+		fish = fish + fishdelta(sum(coral),fish)
+
+		do i = 1, buds, 1
+			call corexp
+		end do
+		call kgrid
+		call bactgrowptw		
+		
+ 		holding = coral
+		bacthold = bacteria
+
+end do
+
+write(*,*) "Equilibration Complete"
+
+t = 0
+
+call datacollect(t)
 
 write(*,*) "Coral percentage:", percentcor(grid)
 
@@ -143,6 +190,9 @@ do t = 1, numtime, 1
 		growpercmod = 0.1
 	end if
 
+		call diffuse		
+		call mixing		
+
 		do i = 1, grid, 1
 	
 			do j = 1, grid, 1
@@ -160,13 +210,15 @@ do t = 1, numtime, 1
 			end do		
 		end if
 
-		call shark
+		call shark(1)
 		fish = fish + fishdelta(sum(coral),fish)
-
+		if (sickDays .lt. 1) then
+		do i = 1, buds, 1
+			call corexp
+		end do
+		end if
 		call kgrid
-		call diffuse		
-		call mixing		
-		call bactgrowptw		
+		call bactgrowptw	
 		call datacollect(t)
 		
  		holding = coral

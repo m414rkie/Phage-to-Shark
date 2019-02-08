@@ -11,7 +11,7 @@ use Time::Piece;
 
 my $timeVar = localtime -> strftime('%d%m%y');
 
-print "Single run or a range? (s/r) \n";
+print "Single run, range, or statistical run (10 runs)? (s/r/t) \n";
 my $runnum = <STDIN>;
 chomp $runnum;
 
@@ -19,7 +19,7 @@ $grid = 100;
 $numtime = 500;
 $percentcover = 0.5;
 $threshold = 1.2;
-$sharkmass = 45;
+$sharkmass = 150;
 $dayavg = 5;
 $rate = 0.5;
 $corBacNew = 1.0;
@@ -34,9 +34,12 @@ $disFlagin = 'N';
 $disLevel = 3;
 
 my @iterArray = ($grid, $numtime, $percentcover, $threshold, $sharkmass, $dayavg, $rate, $corBacNew, $corBacGrow, $adsorpFac, $bacDeath, $bacBurst, $phagedie, $fisheatmult, $fgrowfact, $disFlagin, $disLevel);
+
 my @nameArray = ("Gridpoints", "Number of Timesteps", "Coral Percentage", "New Coral Threshold", "Shark Biomass", "Avg Number of Days Between Shark Events", 
 				 "Bacterial Growth Rate", "Bacteria-New Coral Intensity", "Bacteria-Coral Growth Intensity", "Adsorption Factor Coefficient", "Rate of Bacterial Death", "Phage Burst Count", "Phage Decay Rate",
 				 "Fish-Algae Intensity", "Fish Growth Rate", "Disaster Flag", "Disaster Intensity");
+
+my @fileArray = ("avgcortime.dat", "bacttime.dat","Corgrowth.dat","cortottime.dat","fishtottime.dat","perctime.dat","phagelysratio.dat","vmr.dat");
 
 if ($runnum eq 's') {
 
@@ -87,7 +90,7 @@ system("rm -r /home/jon/Desktop/Phage2Shark/Outputs");
 ##########################################################################################################################
 # Begin Multiple run Portion
 ##########################################################################################################################
-} else {
+} elsif ($runnum eq 'r') {
 
 print "Which variable is to be iterated over? Input the number of your choice.";
 print "Choices: Initial Coral Coverage (1); New coral threshold (2); Piscivore Mass (3) \n";
@@ -177,8 +180,190 @@ system("rm -r /home/jon/Desktop/Phage2Shark/General");
 system("rm -r /home/jon/Desktop/Phage2Shark/Coral");
 system("rm -r /home/jon/Desktop/Phage2Shark/Outputs");
 
+###################################################################################################################################
+} else {  # Statistics run
+###################################################################################################################################
+
+print "Which variable is to be iterated over? Input the number of your choice.";
+print "Choices: Initial Coral Coverage (1); New coral threshold (2); Piscivore Mass (3) \n";
+print "Average days between Shark Events (4); Bacterial Growth Rate (5); Influence of Bacteria on New Coral (6);\n";
+print "Influence of Bacteria on Coral Growth (7); Phage Adsorption coefficient (8); Rate of bacterial death (9)\n";
+print "Burst Count of Phage (10); Rate of Phage decay (11); Fish Influence Factor (12); Rate of Fish Growth (13)\n";
+
+my $deltavar = <STDIN>;
+chomp $deltavar;
+$deltavar = $deltavar;
+
+print "Enter the initial value\n";
+my $iniVar = <STDIN>;
+chomp $iniVar;
+
+print "Enter the final value\n";
+my $finVar = <STDIN>;
+chomp $finVar;
+
+my $numruns = 10;
+
+my $varIter = ($finVar - $iniVar)/$numruns;
+
+@iterArray[$deltavar] = $iniVar;
+
+system("mkdir Outputs");
+
+	my $vmrAvgF = '/home/jon/Desktop/Phage2Shark/Outputs/avgvmr.dat';
+	my $phlyAvgF = '/home/jon/Desktop/Phage2Shark/Outputs/avgphly.dat';
+	my $fishAvgF = '/home/jon/Desktop/Phage2Shark/Outputs/avgfishtot.dat';
+	my $totAvgF = '/home/jon/Desktop/Phage2Shark/Outputs/avgtotcor.dat';
+	my $bactAvgF = '/home/jon/Desktop/Phage2Shark/Outputs/avgbact.dat';
+	my $avgAvgF = '/home/jon/Desktop/Phage2Shark/Outputs/avgcoravg.dat';
+	my $percAvgF = '/home/jon/Desktop/Phage2Shark/Outputs/avgperc.dat';
+
+
+open(my $pa, '>', $percAvgF);
+open(my $aa, '>', $avgAvgF);
+open(my $ba, '>', $bactAvgF);
+open(my $ta, '>', $totAvgF);
+open(my $fa, '>', $fishAvgF);
+open(my $ha, '>', $phlyAvgF);
+open(my $va, '>', $vmrAvgF);
+
+# Iterates variables
+for (my $j = 1; $j <= $numruns; $j++){
+
+	my $percAvg = 0.0;
+	my $avgAvg = 0.0;
+	my $bactAvg = 0.0;
+	my $totAvg = 0.0;
+	my $fishAvg = 0.0;
+	my $phlyAvg = 0.0;
+	my $vmrAvg = 0.0;
+
+# Multiple runs for averages
+	for (my $i = 1; $i <= $numruns; $i++) {
+
+		my $dirgen = '/home/jon/Desktop/Phage2Shark';
+		chdir($dirgen);
+
+		print "Beginning Run $j;$i\n";
+		system("rm -r /home/jon/Desktop/Phage2Shark/General");
+
+
+		runit(\@iterArray);
+	
+		my $dirgen = '/home/jon/Desktop/Phage2Shark/General';
+		chdir($dirgen);
+		
+	for (my $k = 0; $k <= 6; $k++){					
+			open (SF, "/home/jon/Desktop/Phage2Shark/General/$fileArray[$k]"); 		
+			
+			my @tvals;
+		
+			<SF>;
+			while(<SF>){
+				my ($disc, $keep) = split;
+				push @tvals, $keep;
+			}
+			
+			if ($k eq 0) {		
+						$avgAvg = $avgAvg + ($tvals[-1] - $tvals[0]);
+				} elsif ($k eq 1) {
+						$bactAvg = $bactAvg + ($tvals[-1] - $tvals[0]);
+				} elsif ($k eq 2) {
+						$totAvg = $totAvg + ($tvals[-1] - $tvals[0]);
+				} elsif ($k eq 3) {
+						$fishAvg = $fishAvg + ($tvals[-1] - $tvals[0]);
+				} elsif ($k eq 4) {
+						$percAvg = $percAvg + ($tvals[-1] - $tvals[0]);
+				} elsif ($k eq 5) {
+						$phlyAvg = $phlyAvg + ($tvals[-1] - $tvals[0]);	
+				} elsif ($k eq 6) {
+						$vmrAvg = $vmrAvg + ($tvals[-1] - $tvals[0]);
+				} 
+
+			undef @tvals;
+			
+			close(SF);
+			
+		}		
+		
+	}
+	
+	
+	
+	$avgAvg = $avgAvg/$numruns;
+	$bactAvg = $bactAvg/$numruns;
+	$totAvg = $totAvg/$numruns;
+	$fishAvg = $fishAvg/$numruns;
+	$percAvg = $percAvg/$numruns;
+	$phlyAvg = $phlyAvg/$numruns;
+	$vmrAvg = $vmrAvg/$numruns;
+		
+	my $dirgen = '/home/jon/Desktop/Phage2Shark/Outputs';
+	chdir($dirgen);
+		
+	print $pa qq{$j "@nameArray[$deltavar+1]=@iterArray[$deltavar]" $percAvg \n};
+	print $aa qq{$j "@nameArray[$deltavar+1]=@iterArray[$deltavar]" $avgAvg \n};
+	print $ba qq{$j "@nameArray[$deltavar+1]=@iterArray[$deltavar]" $bactAvg \n};
+	print $ta qq{$j "@nameArray[$deltavar+1]=@iterArray[$deltavar]" $totAvg \n};
+	print $fa qq{$j "@nameArray[$deltavar+1]=@iterArray[$deltavar]" $fishAvg \n};
+	print $ha qq{$j "@nameArray[$deltavar+1]=@iterArray[$deltavar]" $phlyAvg \n};
+	print $va qq{$j "@nameArray[$deltavar+1]=@iterArray[$deltavar]" $vmrAvg \n};
+	
+	@iterArray[$deltavar] = @iterArray[$deltavar] + $varIter;
+	
 }
 
+close $pa;
+close $aa;
+close $ba;
+close $ta;
+close $fa;
+close $ha;
+close $va;
+
+	@iterArray[$deltavar] = @iterArray[$deltavar] + $varIter;
+	
+	my $dir = '/home/jon/Desktop/Phage2Shark';
+	chdir($dir);
+
+	$timeVar .= "stats";
+	my $vmrAvgF = 'avgvmr.dat';
+	my $phlyAvgF = 'avgphly.dat';
+	my $fishAvgF = 'avgfishtot.dat';
+	my $totAvgF = 'avgtotcor.dat';
+	my $bactAvgF = 'avgbact.dat';
+	my $avgAvgF = 'avgcoravg.dat';
+	my $percAvgF = 'avgperc.dat';
+	
+	my @avgcor = ($avgAvgF, "Average Coral", "avgcoral.png", 1, @nameArray[$deltavar]);
+	my @bacttime = ($bactAvgF, "Bacteria Population", "bactpop.png", 1, @nameArray[$deltavar]);
+	my @cortot = ($totAvgF,"Total Coral","cortot.png", 1, @nameArray[$deltavar]);
+	my @fishtot = ($fishAvgF,"Fish Population","fishtot.png", 1, @nameArray[$deltavar]);	
+	my @perctime = ($percAvgF,"Percentage of Coral Coverage","perctime.png", 1, @nameArray[$deltavar]);
+	my @phlyrat = ($phlyAvgF,"Phage - Lysogen Ratio","phlyrat.png", 1, @nameArray[$deltavar]);
+	my @vmrat = ($vmrAvgF, "VMR", "VMR.png",1, @nameArray[$deltavar]);
+
+	statrun(\@avgcor);
+	statrun(\@bacttime);
+	statrun(\@cortot);
+	statrun(\@fishtot);
+	statrun(\@perctime);
+	statrun(\@phlyrat);
+	statrun(\@vmrat);
+
+system("mkdir /home/jon/Desktop/Phage2Shark/Runs");
+system("cp -aR /home/jon/Desktop/Phage2Shark/Outputs /home/jon/Desktop/Phage2Shark/Runs/$timeVar");
+system("cp -aR /home/jon/Desktop/Phage2Shark/General /home/jon/Desktop/Phage2Shark/Runs/$timeVar");
+system("mv /home/jon/Desktop/Phage2Shark/inputs.dat /home/jon/Desktop/Phage2Shark/Runs/$timeVar/");
+system("rm -r /home/jon/Desktop/Phage2Shark/General");
+system("rm -r /home/jon/Desktop/Phage2Shark/Coral");
+system("rm -r /home/jon/Desktop/Phage2Shark/Outputs");
+
+
+}
+############################################################################################################
+# END OF MAIN
+############################################################################################################
 ############################################################################################################
 # Run the Model Subroutine here
 
@@ -272,8 +457,9 @@ system("rm gnu.batch");
 }
 
 # Creates the .gif file from the images generated by the above loop
-	system("convert -delay 20 -loop 0 $filelist coral.gif");
-	system("mv coral.gif /home/jon/Desktop/Phage2Shark/Outputs");
+	system("convert -delay 4 -loop 0 $filelist coral.gif");
+	system("ffmpeg -f gif -i coral.gif coral.mp4");
+	system("mv coral.mp4 /home/jon/Desktop/Phage2Shark/Outputs");
 # Clean the intermediate files
 	system("rm cortime*.png");
 }
@@ -376,9 +562,9 @@ my $varVal1 = @arrin[5];
 my $delVar = @arrin[6];
 
 my $varVal2 = $varVal1 + $delVar;
-my $varVal3 = $varVal2 + $delVar;
-my $varVal4 = $varVal3 + $delVar;
-my $varVal5 = $varVal4 + $delVar;
+my $varVal3 = $varVal1 + 2*$delVar;
+my $varVal4 = $varVal1 + 3*$delVar;
+my $varVal5 = $varVal1 + 4*$delVar;
 
 my $curfile1 = $curfile."1.dat";
 my $curfile2 = $curfile."2.dat";
@@ -423,8 +609,8 @@ $FHF = open ( BATCH, '>'.$batchout );
 		s/XLABEL1X/    "$curfile2" using 1:2 title "$varIter = $varVal2" with lines,  \\/;
 		s/XLINE2X/     "$curfile3" using 1:2 title "$varIter = $varVal3" with lines,  \\/;
 		s/XLABEL2X/    "$curfile4" using 1:2 title "$varIter = $varVal4" with lines,  \\/;
-		s/XLINE3X/     "$curfile4" using 1:2 title "$varIter = $varVal4" with lines,  \\/;
-		s/XLABEL3X/    "$curfile5" using 1:2 title "$varIter = $varVal5" with lines    /;
+		s/XLINE3X/     "$curfile5" using 1:2 title "$varIter = $varVal5" with lines		/;
+		s/XLABEL3X/ /;
 		s/XLINE4X/ /;
 		s/XLABEL4X/ /;
 		s/XLINE5X/ /;
@@ -495,6 +681,67 @@ close(BATCH);
 	
 system("gnuplot gnucur.batch");
 system("mv $curname /home/jon/Desktop/Phage2Shark/Outputs");
+
+system("rm gnucur.batch");	
+
+}
+#####################################################################################################################################################
+# Stat Run
+#####################################################################################################################################################
+sub statrun {
+
+my ($inargs) = @_;
+my @arrin = @{$inargs};
+
+my $curfile = @arrin[0];
+my $curtitle = @arrin[1];
+my $curname = @arrin[2];
+my $multflag = @arrin[3];
+my $varIter = @arrin[4];
+
+my $dirgen = '/home/jon/Desktop/Phage2Shark/General';
+my $dirout = '/home/jon/Desktop/Phage2Shark/Outputs';
+my $batchpath = '/home/jon/Desktop/Phage2Shark/gnubatchfiles/genfilesmult.batch.temp';
+my $batchpathmic = '/home/jon/Desktop/Phage2Shark/gnubatchfiles/statfiles.batch.temp';
+my $batchout = "/home/jon/Desktop/Phage2Shark/Outputs/gnucur.batch";
+my $batchout2 = "/home/jon/Desktop/Phage2Shark/General/gnucurmic.batch";
+
+chdir($dirgen);
+	
+$FHT = open (TEMP, $batchpathmic);
+
+# Error check for file open
+	if (!$FHT){
+		print "Gnu batch template file missing from directory, unable to complete process. \n";
+		exit;
+	}
+
+# Open file for final gnuplot batch 
+$FHF = open ( BATCH, '>' .$batchout );
+	
+# Error check for file open
+	if (!$FHF){
+		print "Unable to open gnu.batch file. Exiting. \n";
+		exit;
+	}
+	
+# Write chenges to file.
+	while (<TEMP>) {
+		s/XDX/$numtime/;
+		s/XTITLEX/$curtitle/ge;
+		s/XNAMEX/$curname/ge;
+		s/XLINE1X/plot "$curfile" using 1:3:xtic(2) with boxes /;
+		s/XLABEL1X/ /;
+		print BATCH;
+	}
+
+close(TEMP);
+close(BATCH);
+
+chdir($dirout);
+
+system("gnuplot gnucur.batch");
+#system("mv $curname /home/jon/Desktop/Phage2Shark/Outputs");
 
 system("rm gnucur.batch");	
 

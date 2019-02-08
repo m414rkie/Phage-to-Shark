@@ -190,7 +190,7 @@ write(26,*) tim, sum(coral)
 if (shrkevt .eq. 0.0) then
 	write(27,*) tim, (sum(coral)-sum(holding))/sum(coral)
 else
-	write(27,*) tim, (sum(coral)-sum(holding))/sum(coral), shrkevt/100.0
+	write(27,*) tim, (sum(coral)-sum(holding))/sum(coral), shrkevt/1000.0
 end if
 write(28,*) tim, vmRatio
 
