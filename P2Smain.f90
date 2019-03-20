@@ -36,7 +36,7 @@ use functions
 implicit none
 	integer					:: i, j, t, l					! Looping integers; n is random seed holder
 	integer					:: allck
-	integer					:: seaslen, fertile, buds, mstime(8)
+	integer					:: fertile, buds, mstime(8)
 
 call inputs
 
@@ -74,14 +74,13 @@ holding 			= 0.0
 bacteria%totalpop 	= 0
 bacteria%numspecies = 0
 ! Sub Variables
-abundperc			= 0.001
 alpha				= 0.0336
 fertile 			= 0
 numday 				= 0
 
 call date_and_time(values=mstime)
 !call cpu_time(clock)
-seed = real(mstime(8)) + 3*(/(i-1,i=1,randall)/)
+seed = float(mstime(8))! + 3*(/(i-1,i=1,randall)/)
 call random_seed(put=seed)
 
 ! Populates the coral/algae layer
@@ -138,9 +137,9 @@ end if
 		end do
 
 		call shark(0)
-		fish = fish + fishdelta(sum(coral),fish)
+		fish = fish + fishdelta(fish)
 
-		do i = 1, buds, 1
+		do i = 1, 2*buds, 1
 			call corexp
 		end do
 		call kgrid
@@ -156,6 +155,8 @@ write(*,*) "Equilibration Complete"
 t = 0
 
 call datacollect(t)
+call againstouts(t)
+
 
 write(*,*) "Coral percentage:", percentcor(grid)
 
@@ -185,7 +186,7 @@ do t = 1, numtime, 1
 	buds = nint(percentcor(grid)*10.0)
 		
 	if (sickDays .ge. 1) then
-		growpercmod = 0.001
+		growpercmod = 0.00001
 	else
 		growpercmod = 0.1
 	end if
@@ -211,15 +212,16 @@ do t = 1, numtime, 1
 		end if
 
 		call shark(1)
-		fish = fish + fishdelta(sum(coral),fish)
+		fish = fish + fishdelta(fish)
 		if (sickDays .lt. 1) then
-		do i = 1, buds, 1
+		do i = 1, 2*buds, 1
 			call corexp
 		end do
 		end if
 		call kgrid
 		call bactgrowptw	
 		call datacollect(t)
+		call againstouts(t)
 		
  		holding = coral
 		bacthold = bacteria

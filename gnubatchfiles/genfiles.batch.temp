@@ -6,10 +6,8 @@
 # Date: 1-8-19
 
 set terminal png
-
-set key autotitle columnhead
-
-set xrange [0:XDX]
+set datafile separator whitespace
+set autoscale
 
 set title "XTITLEX"
 
@@ -17,3 +15,6 @@ set output "XNAMEX"
 
 XLINE1X
 XLINE2X
+XLINE3X
+XLINE4X
+XLINE5X

@@ -61,17 +61,12 @@ use globalvars
 use functions
 
 implicit none
-	real					:: avgcoral					! The average coral
 	real					:: temp						! Holds a random number which checks to see if a new coral is generated
 	real					:: coord					! Holds the coordinates of the new coral
 	integer					:: x, y, i, j, l, c			! Integers for coordinates, looping, and algae locations
 	integer,allocatable		:: algaeloc(:,:)			! Holds the locations where there is algae and not coral
 	real					:: bactfact, neighbors
 	
-	
-! Finds average coral
-
-avgcoral  = sum(coral)/(percentcor(grid)*(float(grid)**2))
 ! Initialize the 'counting' integer to update algaeloc locations
 c = 0
 
@@ -85,9 +80,6 @@ algaeloc = 0
  
 ! Checks coral average against threshold, checks against probability of generation, if pass calls random
 ! locations in algaeloc and places coral.
-if (avgcoral .ge. 0.5*threshold) then
-
-	call random_number(temp)
 
 ! Do loops to find exact coordinates of coral
 do i = 1, grid, 1
@@ -95,37 +87,36 @@ do i = 1, grid, 1
 	do j = 1, grid, 1
 		
 	neighbors = 0
-	x=i ; y=j
 	! Checks for coral around the input gridpoint and out-of-bounds
-	if ((x .gt. 1) .and. (coral(x-1,y) .ne. 0.0)) then
+	if ((i .gt. 1) .and. (coral(i-1,j) .ne. 0.0)) then
 		neighbors = 1.0
 	end if
 	
-	if ((x .lt. grid) .and. (coral(x+1,y) .ne. 0.0)) then
+	if ((i .lt. grid) .and. (coral(i+1,j) .ne. 0.0)) then
 		neighbors = neighbors + 1.0
 	end if
 
-	if ((y .lt. grid) .and. (coral(x,y+1) .ne. 0.0)) then
+	if ((j .lt. grid) .and. (coral(i,j+1) .ne. 0.0)) then
 		neighbors = neighbors + 1.0
 	end if
 	
-	if ((y .gt. 1) .and. (coral(x,y-1) .ne. 0.0)) then
+	if ((i .gt. 1) .and. (coral(i,j-1) .ne. 0.0)) then
 		neighbors = neighbors + 1.0
 	end if
 
-	if ((x .lt. grid) .and. (y .lt. grid) .and. (coral(x+1,y+1) .ne. 0.0)) then
+	if ((i .lt. grid) .and. (j .lt. grid) .and. (coral(i+1,j+1) .ne. 0.0)) then
 		neighbors = neighbors + 1.0
 	end if
 
-	if ((x .gt. 1) .and. (y .gt. 1) .and. (coral(x-1,y-1) .ne. 0.0)) then
+	if ((i .gt. 1) .and. (j .gt. 1) .and. (coral(i-1,j-1) .ne. 0.0)) then
 		neighbors = neighbors + 1.0
 	end if
 	
-	if ((x .lt. grid) .and. (y .gt. 1) .and.(coral(x+1,y-1) .ne. 0.0)) then
+	if ((i .lt. grid) .and. (j .gt. 1) .and.(coral(i+1,j-1) .ne. 0.0)) then
 		neighbors = neighbors + 1.0
 	end if
 	
-	if ((x .gt. 1) .and. (y .lt. grid) .and. (coral(x-1,y+1) .ne. 0.0)) then
+	if ((i .gt. 1) .and. (j .lt. grid) .and. (coral(i-1,j+1) .ne. 0.0)) then
 		neighbors = neighbors + 1.0
 	end if
 		
@@ -142,24 +133,27 @@ do i = 1, grid, 1
 	
 end do
 
-		! Logic statements for coordinates
-		call random_number(coord)
+! Logic statements for coordinates
+call random_number(coord)
 				
-		x = algaeloc(1,floor(l*coord))
-		y = algaeloc(2,floor(l*coord))
-		
-		bactfact = corBacNew*real(kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/real(maxval(kbact)*4.0)
-		
-		if (temp .ge. bactfact) then
-		
-			numnew = numnew + 1
-		
-			coral(x,y) = 3.5
-		
-			deallocate(algaeloc)
-			
-		end if
+x = algaeloc(1,floor(l*coord))
+y = algaeloc(2,floor(l*coord))
 
+if (x .lt. 1) x = 1
+if (y .lt. 1) y = 1
+if (x .gt. grid) x = grid
+if (y .gt. grid) y = grid
+
+call random_number(temp)
+bactfact = corBacNew*real(kbact(2*x,2*y)+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))/real(maxval(kbact)*4.0)
+
+if (temp .ge. bactfact) then				
+	numnew = numnew + 1
+	
+	coral(x,y) = 3.5
+					
 end if
+
+deallocate(algaeloc)
 
 end subroutine	

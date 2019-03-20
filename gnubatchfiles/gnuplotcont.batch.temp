@@ -18,6 +18,6 @@ set pm3d map impl
 set contour
 set style increment user
 set cntrparam levels incr -0.3,0.1,0.5
-set palette defined (0 '#352a87', 1 '#0363e1',2 '#1485d4', 3 '#06a7c6', 4 '#38b99e', 5 '#92bf73', 6 '#d9ba56', 7 '#fcce2e', 8 '#f9fb0e')
+set palette defined (0 'dark-green', 1 'chartreuse',2 'yellow', 3 'orange', 4 'red', 5 'orangered4') #, 6 '#d9ba56', 7 '#fcce2e', 8 '#f9fb0e')
 set autoscale fix
 splot "XFILEX" with pm3d notitle

@@ -9,28 +9,24 @@ implicit none
 	integer, intent(in)							:: x, y					! Input coordinates
 	real,dimension(grid,grid), intent(in) 		:: arrin				! Input array
 	real,dimension(grid,grid), intent(out)		:: arrout				! Output array
-	real										:: bactcoral, grow
-	integer										:: i
+	real										:: bactcoral, grow, bacteff
 
 ! Initializations
 bactcoral = 0.0
 
-bactcoral = corBacGrow*real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
-			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop))/real(kbact(2*x,2*y) &
-			+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))
+bactcoral = real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
+			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop))
 			
 if (bactcoral .lt. 0.0) then
 	bactcoral = 0.0
 end if
 
-if (bactcoral .gt. 1.0) then
-	bactcoral = 0.99
-end if
+bacteff = bactouch(bactcoral)
 
 call random_number(growpercent)
 
 growpercent = growpercent*growpercmod
-grow = 1.0 + growpercent*(1.0 - bactcoral)
+grow = 1.0 + growpercent*(1.0 - bacteff)
 
 if (grow .lt. 1.0) then
 	grow = 1.0
@@ -58,6 +54,7 @@ implicit none
 	! Initializations
 	algcount = 0	
 	decayconst	= 0.002
+	call fishinteraction(decayconst)
 
 	
 	! Checks for algae around the input gridpoint and out-of-bounds
@@ -100,7 +97,6 @@ implicit none
 	if(algcount .eq. 0) then
 		decayconst = 0.0
 	else
-		call fishinteraction(decayconst,x,y)
 		decayconst = decayconst*float(algcount)
 	end if
 	! Calls the fish layer to reduce the effect of algae on coral
@@ -121,12 +117,11 @@ implicit none
 	if (arrin(x,y) .gt. 5.0) then
 		arrin(x,y) = 5.0
 	end if
-
 end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine fishinteraction(modify,i,j)
+subroutine fishinteraction(modify)
 
 ! Interaction of fish with algae layer. Lessens the pressure of algae against the fish.
 
@@ -134,10 +129,12 @@ use functions
 use globalvars
 
 	real						:: modify				! Input variable to be modified
-	integer,intent(in)			:: i, j					! Looping integers
 
+	fisheat = fisheatmult*150.0*fishdelta(fish)/(1000.0*percentcor(grid))
 
-	fisheat = fisheatmult*5.0*fishdelta(sum(coral),fish)/(1000.0*percentcor(grid))
+	if (fisheat .lt. 0.0) then
+		fisheat = 0.0
+	end if	
 	
 	if (fisheat .ge. 0.9) then
 		fisheat = 0.9
@@ -157,11 +154,13 @@ use globalvars
 
 implicit none
 	integer							:: i, j								! Looping integers
-	real,dimension(2*grid,2*grid)	:: kdelta							! Change in carrying capacity
+
+kalg = 9000.0
+kcor = 3000.0
+kbar = 12000.0
 
 ! Initializations 
-kbact = 3600.0
-kdelta = 0.0
+kbact = kalg
 
 ! Loops for initial set up, no barrier interaction
 do i = 1, grid, 1
@@ -169,10 +168,10 @@ do i = 1, grid, 1
 	do j = 1, grid, 1
 	
 		if (coral(i,j) .ne. 0) then 
-			kbact(2*i-1,2*j-1) = 120.0
-			kbact(2*i-1,2*j) = 120.0
-			kbact(2*i,2*j) = 120.0
-			kbact(2*i,2*j-1) = 120.0
+			kbact(2*i-1,2*j-1) = kcor
+			kbact(2*i-1,2*j) = kcor
+			kbact(2*i,2*j) = kcor
+			kbact(2*i,2*j-1) = kcor
 		end if
 			
 	end do
@@ -185,19 +184,16 @@ do i = 1, 2*grid, 1
 	do j = 1, 2*grid, 1
 
 		if ((i .lt. 2*grid) .and. (kbact(i,j) .ne. kbact(i+1,j))) then
-			kdelta(i,j) = 1200.0
+			kbact(i,j) = kbar
 		end if
 		
 		if ((j .gt. 2*grid) .and. (kbact(i,j) .ne. kbact(i,j+1))) then
-			kdelta(i,j) = 120.0
+			kbact(i,j) = kbar
 		end if
 	
 	end do
 	
 end do
-
-! Final updating of the layer
-kbact = kbact + kdelta
 
 end subroutine
 
@@ -215,7 +211,7 @@ implicit none
 	real										:: diffco		! Diffusion coefficient
 	
 ! Initializations
-diffco = 0.5
+diffco = 0.01
 delta = 0.0
 	
 ! Working loops
@@ -311,7 +307,7 @@ implicit none
 	real									:: mixpress		! Pressure for mixing
 	integer									:: delta		! Change in number of species
 								
-mixpress = 0.1
+mixpress = 0.05
 
 ! Working loops
 do i = 1, 2*grid, 1
@@ -435,7 +431,7 @@ do i = 1, 2*grid, 1
 
 	do j = 1, 2*grid, 1
 
-		temratio = tempratio(kbact(i,j),i,j)
+		temratio = tempratio(i,j)
 		adsorp =(adsorpFac/real(lys(i,j)%totalpop))
 		bactdelta = 0.0
 	

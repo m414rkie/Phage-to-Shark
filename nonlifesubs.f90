@@ -102,13 +102,12 @@ use functions
 
 implicit none
 	integer			:: tim
-	real			:: avgcoral, avgfish, avgbact
-	real (kind=8)	:: phagelysratio, phagesum, vmRatio
+	real			:: avgcoral, avgbact
+	real (kind=8)	:: phagelysratio, phagesum, vmRatio, bacsum
 	character*50	:: corfile
 	character*50	:: percfile
 	character*50	:: corpath
 	character*50	:: genpath
-	character*50	:: kpath, delcor
 	character*50	:: totbactfile, totfishfile
 	character*50	:: avgcoralfile, phlyratiofile
 	character*50	:: micropopfile, microspecfile, microratiofile
@@ -118,16 +117,12 @@ implicit none
 avgcoral = sum(coral)/(real(grid)**2)
 avgbact = real(sum(bacteria%totalpop))/(real(2*grid)**2)
 phagesum = real(sum(phage%totalpop))
+bacsum = real(sum(bacteria%totalpop))
 phagelysratio = real(phagesum)/real(sum(lys%totalpop))
-vmRatio = (phagesum)/(real(sum(bacteria%totalpop)) + phagesum)
+vmRatio = (phagesum)/bacsum
 	
 ! Format statements
 50 format ("Coral/coraltime",1i4,".dat")
-52 format ("Bacteria/bacttime",1i4,".dat")
-53 format ("Phage/phagetime",1i4,".dat")
-55 format ("Lys/lystime",1i4,".dat")
-56 format ("General/perctime.dat")
-57 format ("General/Corgrowth.dat")
 
 ! File path statements
 corpath   = "~/Desktop/Phage2Shark/Coral"
@@ -167,25 +162,29 @@ call printtofile(coral,grid,corfile)
 	open(unit=28,file=microratiofile,status="unknown",position="append")
 	
 if (tim .eq. 0) then 
-	write(15,*) "Time, Percentage of Coral"
-	write(20,*) "Time, Total Bacteria Pop."
-	write(21,*) "Time, Total Fish Mass"
-	write(22,*) "Time, Average Coral"
-	write(23,*) "Time, Phage-Lysogen Ratio"
-	write(24,*) "Time, Bacteria, Lytic, Lysogenic"
-	write(25,*) "Time, Bacteria, Lytic, Lysogenic"
-	write(26,*) "Time, Total Coral Mass"
-	write(27,*) "Time, Growth, Shark Event"
-	write(28,*) "Time, VMR"
+	write(15,*) "Time Percentage-of-Coral"
+	write(20,*) "Time Bacteria-Pop."
+	write(21,*) "Time Total-Fish-Mass"
+	write(22,*) "Time Average-Coral"
+	write(23,*) "Time Phage/Lysogen-Ratio"
+	write(24,*) "Time Bacteria Lytic Lysogenic"
+	write(25,*) "Time Bacteria Lytic Lysogenic"
+	write(26,*) "Time Total-Coral-Mass"
+	write(27,*) "Time Growth Shark-Event"
+	write(28,*) "Time VMR"
 end if
 	
+	
+!!! Bacteria/Phage prefactors are based on a 100x100 grid, with each grid being 10cm a side.
+!!!  For calculation purposes the values are normalized by divided by 1e8. With the above grid
+!!!  and accounting for a 10m water column, we work out to a final 1/10 division.
 write(15,*) tim, percentcor(grid)
-write(20,*) tim, sum(bacteria%totalpop)
+write(20,*) tim, sum(bacteria%totalpop)*0.1
 write(21,*) tim, fish
 write(22,*) tim, avgcoral
 write(23,*) tim, phagelysratio
-write(24,*) tim, sum(bacteria%totalpop), phagesum, sum(lys%totalpop)
-write(25,*) tim, sum(bacteria%numspecies), sum(phage%numspecies), sum(lys%numspecies)
+write(24,*) tim, 0.1*sum(bacteria%totalpop), 0.1*phagesum, sum(lys%totalpop)*0.1
+write(25,*) tim, sum(bacteria%numspecies)/(grid*grid), sum(phage%numspecies)/(grid*grid), sum(lys%numspecies)/(grid*grid)
 write(26,*) tim, sum(coral)
 if (shrkevt .eq. 0.0) then
 	write(27,*) tim, (sum(coral)-sum(holding))/sum(coral)
@@ -293,11 +292,169 @@ end do
 
 end subroutine
 	
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+subroutine againstouts(tim)
 
+use globalvars
+use functions
+
+implicit none
+	integer				:: tim
+	character*50		:: againstpath	
+	character*50		:: vmr_micab_file, fgrow_fbio_file
+	character*50		:: algae_fbio_file, cor_fbio_file
+	real				:: fdel
+	real				:: alg
+	real(kind=8)		:: phagesum, vmr, bacsum
+	
+againstpath	  = "~/Desktop/Phage2Shark/General"
+
+call dircheck(againstpath)
+
+vmr_micab_file = "General/vmrmic.dat"
+fgrow_fbio_file = "General/fdelftot.dat"
+algae_fbio_file = "General/algftot.dat"
+
+phagesum = real(sum(phage%totalpop))
+bacsum = real(sum(bacteria%totalpop))
+vmr = phagesum/bacsum
+fdel = fishdelta(fish)
+alg = 1.0 - percentcor(grid)
+
+open(unit=30,file=vmr_micab_file,status="unknown",position="append")
+open(unit=31,file=fgrow_fbio_file,status="unknown",position="append")
+open(unit=32,file=algae_fbio_file,status="unknown",position="append")
+
+if (tim .eq. 0) then
+	write(30,*) "VMR Microbes"
+	write(31,*) "Fdelta Fish"
+	write(32,*) "Algae Fish"
+end if
+
+write(30,*) vmr, phagesum+bacsum
+write(31,*) fish, fdel
+write(32,*) alg, fish
+
+close(30)
+close(31)
+close(32)
+
+end subroutine
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+subroutine domainout(tim)
+
+use globalvars
+
+implicit none
+	integer				:: tim
+	character*50		:: mic_algFile, mic_corFile, mic_barFile
+	character*50		:: vmr_algFile, vmr_corFile, vmr_barFile
+	integer				:: algCount, corCoun, barCount
+	real				:: algAvg, corAvg, barAvg
+	logical				:: kcounter(2*grid,2*grid)
+	real(kind=8)		:: vmrAlgSum, vmrCorSum, vmrBarSum
+	real(kind=8)		:: bmicAlgSum, pmicAlgSum, lmicAlgSum
+	real(kind=8)		:: bmicCorSum, pmicCorSum, lmicCorSum
+	real(kind=8)		:: bmicBarSum, pmicBarSum, lmicBarSum
+	
+	integer				:: i, j
 	
 	
+mic_algFile = "General/microbes_algdom.dat"
+mic_corFile = "General/microbes_cordom.dat"
+mic_barFile = "General/microbes_bardom.dat"
+vmr_algFile = "General/vmr_algdom.dat"
+vmr_corFile = "General/vmr_cordom.dat"
+vmr_barFile = "General/vmr_bardom.dat"
+
+bmicAlgSum = 0.0
+pmicAlgSum = 0.0
+lmicAlgSum = 0.0
+bmicCorSum = 0.0
+pmicCorSum = 0.0
+lmicCorSum = 0.0
+bmicBarSum = 0.0
+pmicBarSum = 0.0
+lmicBarSum = 0.0
+vmrAlgSum = 0.0
+vmrCorSum = 0.0
+vmrBarSum = 0.0
+
+open(unit=41,file=mic_algFile,status="unknown",position="append")
+open(unit=42,file=mic_corFile,status="unknown",position="append")
+open(unit=43,file=mic_barFile,status="unknown",position="append")
+open(unit=44,file=vmr_algFile,status="unknown",position="append")
+open(unit=45,file=vmr_corFile,status="unknown",position="append")
+open(unit=46,file=vmr_barFile,status="unknown",position="append")
+
+if (tim = 0) then
+	write(41,*) "Time	Bacteria	Lytic	Lysogenic"
+	write(42,*) "Time	Bacteria	Lytic	Lysogenic"
+	write(43,*) "Time	Bacteria	Lytic	Lysogenic"
+	write(44,*) "Time	VMR"
+	write(45,*) "Time	VMR"
+	write(46,*) "Time	VMR"
+end if
 	
+kcounter = (kbact .eq. kalg)
+
+algCount = count(kcounter)
+
+kcounter = (kbact .eq. kcor)
+
+corCount = count(kcounter)
+
+kcounter = (kbact .eq. kbar)
+
+barCount = count(kcounter)
+
+do i = 1, 2*grid, 1
+	
+	do j = 1, 2*grid, 1
+	
+		if (kbact(i,j) .eq. kalg)
+			bmicAlgSum = bmicAlgSum + bacteria(i,j)%totalpop
+			lmicAlgSum = lmicAlgSum + lys(i,j)%totalpop
+			pmicAlgSum = pmicAlgSum + phage(i,j)%totalpop
+			vmrAlgSum = vmrAlgSum + phage(i,j)%totalpop/bacteria(i,j)%totalpop
+		end if
+	
+		if (kbact(i,j) .eq. kcor)
+			bmicCorSum = bmicCorSum + bacteria(i,j)%totalpop
+			lmicCorSum = lmicCorSum + lys(i,j)%totalpop
+			pmicCorSum = pmicCorSum + phage(i,j)%totalpop
+			vmrCorSum = vmrCorSum + phage(i,j)%totalpop/bacteria(i,j)%totalpop
+		end if
+		
+		if (kbact(i,j) .eq. kbar)
+			bmicBarSum = bmicBarSum + bacteria(i,j)%totalpop
+			lmicBarSum = lmicBarSum + lys(i,j)%totalpop
+			pmicBarSum = pmicBarSum + phage(i,j)%totalpop
+			vmrBarSum = vmrBarSum + phage(i,j)%totalpop/bacteria(i,j)%totalpop
+		end if
+		
+	end do
+
+end do
+	
+write(41,*) tim, bmicAlgSum/float(algCount), pmicAlgSum/float(algCount), lmicAlgSum/float(algCount)
+write(42,*) tim, bmicCorSum/float(corCount), pmicCorSum/float(corCount), lmicCorSum/float(corCount)
+write(43,*) tim, bmicBarSum/float(barCount), pmicBarSum/float(barCount), lmicBarSum/float(barCount)
+write(44,*) tim, vmrAlgSum/float(algCount)
+write(45,*) tim, vmrCorSum/float(corCount)
+write(46,*) tim, vmrBarSum/float(corCount)
+
+close(41)
+close(42)
+close(43)
+close(44)
+close(45)
+close(46)
+
+end subroutine
 
 
 

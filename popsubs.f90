@@ -94,6 +94,11 @@ end do
 		x = algaeloc(1,floor(l*coord))
 		y = algaeloc(2,floor(l*coord))
 		
+		if (x .lt. 1) x = 1
+		if (y .lt. 1) y = 1
+		if (x .gt. grid) x = grid
+		if (y .gt. grid) y = grid
+		
 		bactfact = corBacNew*real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
 			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop))/real(kbact(2*x,2*y) &
 			+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1))
@@ -120,7 +125,6 @@ use globalvars
 
 implicit none
 	real	:: area, average
-	real	:: ran
 	integer :: i, j
 	
 	
@@ -131,10 +135,13 @@ bacteria%totalpop = int(0.6*kbact)
 phage%totalpop = 3*bacteria%totalpop
 
 lys%totalpop = int(0.8*real(bacteria%totalpop))
-
-lys(i,j)%numspecies = int(float(lys(i,j)%totalpop)**beta)
-phage(i,j)%numspecies = int(float(phage(i,j)%totalpop)**beta)
-bacteria(i,j)%numspecies = int(float(bacteria(i,j)%totalpop)**alpha)
+do i = 1, 2*grid, 1
+	do j = 1, 2*grid, 1
+		lys(i,j)%numspecies = int(float(lys(i,j)%totalpop)**beta)
+		phage(i,j)%numspecies = int(float(phage(i,j)%totalpop)**beta)
+		bacteria(i,j)%numspecies = int(float(bacteria(i,j)%totalpop)**alpha)
+	end do
+end do
 
 ! Write statements
 average = sum(bacteria%numspecies)/area

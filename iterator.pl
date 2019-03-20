@@ -16,22 +16,22 @@ my $runnum = <STDIN>;
 chomp $runnum;
 
 $grid = 100;
-$numtime = 500;
+$numtime = 75;
 $percentcover = 0.5;
 $threshold = 1.2;
-$sharkmass = 150;
+$sharkmass = 200;
 $dayavg = 5;
-$rate = 0.5;
+$rate = 1.0;
 $corBacNew = 1.0;
 $corBacGrow = 1.0;
 $adsorpFac = 0.02;
-$bacDeath = 0.2;
+$bacDeath = 0.5;
 $bacBurst = 50;
 $phagedie = 0.5;
 $fisheatmult = 1.0;
 $fgrowfact = 1.0;
 $disFlagin = 'N';
-$disLevel = 3;
+$disLevel = 5;
 
 my @iterArray = ($grid, $numtime, $percentcover, $threshold, $sharkmass, $dayavg, $rate, $corBacNew, $corBacGrow, $adsorpFac, $bacDeath, $bacBurst, $phagedie, $fisheatmult, $fgrowfact, $disFlagin, $disLevel);
 
@@ -56,15 +56,18 @@ if ($movie eq 'y' ) {
 }
 
 my @avgcor = ("avgcortime.dat", "Average Coral", "avgcoral.png", 1);
-my @bacttime = ("bacttime.dat", "Bacteria Population", "bactpop.png", 1);
+my @bacttime = ("bacttime.dat", "Bacteria Population (Count/mL)", "bactpop.png", 1);
 my @corgrow = ("Corgrowth.dat", "Coral Growth", "corgrow.png", 3);
 my @cortot = ("cortottime.dat","Total Coral","cortot.png", 1);
 my @fishtot = ("fishtottime.dat","Fish Population","fishtot.png", 1);
-my @micropop = ("microbepops.dat","Microbe Populations","micropops.png", 2);
-my @microspecs = ("microbespecs.dat","Microbe Species Count","microspecs.png", 2);
+my @micropop = ("microbepops.dat","Microbe Populations (Count/mL)","micropops.png", 2);
+my @microspecs = ("microbespecs.dat","Microbe Species Count (1/mL)","microspecs.png", 2);
 my @perctime = ("perctime.dat","Percentage of Coral Coverage","perctime.png", 1);
 my @phlyrat = ("phagelysratio.dat","Phage - Lysogen Ratio","phlyrat.png",1);
 my @vmrat = ("vmr.dat", "VMR", "VMR.png",1);
+my @vmrmic = ("vmrmic.dat","VMR and Microbial Abundance (Count/mL)","vmrmic.png",1);
+my @fdft = ("fdelftot.dat","Fish delta and Total","fdelftot.png",1);
+my @algft = ("algftot.dat","Algae and Fish","algftot.png",1);
 
 singlerun(\@avgcor);
 singlerun(\@bacttime);
@@ -76,6 +79,23 @@ singlerun(\@microspecs);
 singlerun(\@perctime);
 singlerun(\@phlyrat);
 singlerun(\@vmrat);
+singlerun(\@vmrmic);
+singlerun(\@fdft);
+singlerun(\@algft);
+
+	
+mic_algFile = "General/microbes_algdom.dat"
+mic_corFile = "General/microbes_cordom.dat"
+mic_barFile = "General/microbes_bardom.dat"
+vmr_algFile = "General/vmr_algdom.dat"
+vmr_corFile = "General/vmr_cordom.dat"
+vmr_barFile = "General/vmr_bardom.dat"
+
+my @algft = ("microbes_algdom.dat","microbes_cordom.dat","microbes_bardom.dat","Microbe by Domain","micdom.png");
+my @algft = ("vmr_algdom.dat","vmr_cordom.dat","vmr_bardom.dat","VMR by Domain","vmrdom.png");
+
+domrun(\@micdom);
+domrun(\@vmrdom);
 
 $timeVar .= "single";
 
@@ -119,7 +139,7 @@ my $varIter = ($finVar - $iniVar)/$numruns;
 system("mkdir Outputs");
 
 
-for (my $i = 1; $i <= $numruns; $i++) {
+for (my $i = 1; $i <= $numruns+1; $i++) {
 	
 	runit(\@iterArray);
 	
@@ -138,6 +158,9 @@ for (my $i = 1; $i <= $numruns; $i++) {
 	system("mv perctime.dat perctime$i.dat");
 	system("mv phagelysratio.dat phagelysratio$i.dat");
 	system("mv vmr.dat vmr$i.dat");
+	system("mv vmrmic.dat vmrmic$i.dat");
+	system("mv fdelftot.dat fdelftot$i.dat");
+	system("mv algftot.dat algftot$i.dat");
 	
 	my $dir = '/home/jon/Desktop/Phage2Shark';
 	chdir($dir);
@@ -145,16 +168,18 @@ for (my $i = 1; $i <= $numruns; $i++) {
 }
 
 	my @avgcor = ("avgcortime", "Average Coral", "avgcoral.png", 1, @nameArray[$deltavar], $iniVar, $varIter);
-	my @bacttime = ("bacttime", "Bacteria Population", "bactpop.png", 1, @nameArray[$deltavar], $iniVar, $varIter);
+	my @bacttime = ("bacttime", "Global Avg. Bacteria Population (Count/mL)", "bactpop.png", 1, @nameArray[$deltavar], $iniVar, $varIter);
 	my @corgrow = ("Corgrowth", "Coral Growth", "corgrow.png", 3, @nameArray[$deltavar], $iniVar, $varIter);
 	my @cortot = ("cortottime","Total Coral","cortot.png", 1, @nameArray[$deltavar], $iniVar, $varIter);
 	my @fishtot = ("fishtottime","Fish Population","fishtot.png", 1, @nameArray[$deltavar], $iniVar, $varIter);	
-	my @micropop = ("microbepops","Microbe Populations","micropops.png", 2, @nameArray[$deltavar], $iniVar, $varIter);
-	my @microspecs = ("microbespecs","Microbe Species Count","microspecs.png", 2, @nameArray[$deltavar], $iniVar, $varIter);
+	my @micropop = ("microbepops","Global Avg. Microbe Populations (Count/mL)","micropops.png", 2, @nameArray[$deltavar], $iniVar, $varIter);
+	my @microspecs = ("microbespecs","Global Avg. Microbe Species Count (1/mL)","microspecs.png", 2, @nameArray[$deltavar], $iniVar, $varIter);
 	my @perctime = ("perctime","Percentage of Coral Coverage","perctime.png", 1, @nameArray[$deltavar], $iniVar, $varIter);
 	my @phlyrat = ("phagelysratio","Phage - Lysogen Ratio","phlyrat.png", 1, @nameArray[$deltavar], $iniVar, $varIter);
 	my @vmrat = ("vmr", "VMR", "VMR.png",1, @nameArray[$deltavar], $iniVar, $varIter);
-
+	my @vmrmic = ("vmrmic","Global Avg. VMR and Microbial Abundance (Count/mL)","vmrmic.png",1, @nameArray[$deltavar], $iniVar, $varIter);
+	my @fdft = ("fdelftot","Fish delta and Total","fdelftot.png",1, @nameArray[$deltavar], $iniVar, $varIter);
+	my @algft = ("algftot","Algae and Fish","algftot.png",1, @nameArray[$deltavar], $iniVar, $varIter);
 
 	rangerun(\@avgcor);
 	rangerun(\@bacttime);
@@ -166,6 +191,9 @@ for (my $i = 1; $i <= $numruns; $i++) {
 	rangerun(\@perctime);
 	rangerun(\@phlyrat);
 	rangerun(\@vmrat);
+	rangerun(\@vmrmic);
+	rangerun(\@fdft);
+	rangerun(\@algft);
 
 my $dir = '/home/jon/Desktop/Phage2Shark';
 chdir($dir);
@@ -502,11 +530,13 @@ $FHF = open ( BATCH, '>'.$batchout );
 if ($multflag eq 1) {
 # Write chenges to file.
 	while (<TEMP>) {
-		s/XDX/$numtime/;
 		s/XTITLEX/$curtitle/ge;
 		s/XNAMEX/$curname/ge;
-		s/XLINE1X/plot "$curfile" with lines/;
-		s/XLINE2X/ /;
+		s/XLINE1X/datafile = '$curfile' /;
+		s/XLINE2X/firstrow = system('head -1 '.datafile) /;
+		s/XLINE3X/set xlabel word(firstrow,1) /;
+		s/XLINE4X/set ylabel word(firstrow,2) /;
+		s/XLINE5X/ plot datafile using 1:2 with lines /;
 		print BATCH;
 	}	
 
@@ -518,6 +548,9 @@ if ($multflag eq 1) {
 		s/XNAMEX/$curname/ge;
 		s/XLINE1X/set key autotitle columnhead/;
 		s/XLINE2X/plot for [col=2:4] "$curfile" using 1:col with lines/;
+		s/XLINE3X/ /;
+		s/XLINE4X/ /;
+		s/XLINE5X/ /;
 		print BATCH;
 	}
 
@@ -529,6 +562,9 @@ if ($multflag eq 1) {
 		s/XNAMEX/$curname/ge;
 		s/XLINE1X/set key autotitle columnhead/;
 		s/XLINE2X/plot "$curfile" using 1:2 with lines, "$curfile" using 1:3 pt 7 ps 0.2/;
+		s/XLINE3X/ /;
+		s/XLINE4X/ /;
+		s/XLINE5X/ /;
 		print BATCH;
 	}
 
@@ -542,6 +578,7 @@ close(TEMP);
 close(BATCH);
 
 system("rm gnucur.batch");	
+
 
 }
 
@@ -605,16 +642,16 @@ $FHF = open ( BATCH, '>'.$batchout );
 		s/XDX/$numtime/;
 		s/XTITLEX/$curtitle/ge;
 		s/XNAMEX/$curname/ge;
-		s/XLINE1X/plot "$curfile1" using 1:2 title "$varIter = $varVal1" with lines,  \\/;
-		s/XLABEL1X/    "$curfile2" using 1:2 title "$varIter = $varVal2" with lines,  \\/;
-		s/XLINE2X/     "$curfile3" using 1:2 title "$varIter = $varVal3" with lines,  \\/;
-		s/XLABEL2X/    "$curfile4" using 1:2 title "$varIter = $varVal4" with lines,  \\/;
-		s/XLINE3X/     "$curfile5" using 1:2 title "$varIter = $varVal5" with lines		/;
-		s/XLABEL3X/ /;
-		s/XLINE4X/ /;
-		s/XLABEL4X/ /;
-		s/XLINE5X/ /;
-		s/XLABEL5X/ /;
+		s/XLINE1X/ datafile = "$curfile1"/;
+		s/XLABEL1X/ firstrow = system('head -1 '.datafile')/;
+		s/XLINE2X/  set xlabel word(firstrow, 1)/;
+		s/XLABEL2X/ set ylabel word(firstrow, 2)/;
+		s/XLINE3X/ 	/;
+		s/XLABEL3X/plot datafile using 1:2 title "$varIter = $varVal1" with lines,  \\/;
+		s/XLINE4X/    "$curfile2" using 1:2 title "$varIter = $varVal2" with lines,  \\/;
+		s/XLABEL4X/     "$curfile3" using 1:2 title "$varIter = $varVal3" with lines,  \\/;
+		s/XLINE5X/    "$curfile4" using 1:2 title "$varIter = $varVal4" with lines,  \\/;
+		s/XLABEL5X/     "$curfile5" using 1:2 title "$varIter = $varVal5" with lines		/;
 		s/XLINE6X/ /;
 		print BATCH;
 	}	
@@ -747,5 +784,65 @@ system("rm gnucur.batch");
 
 }
 	
+#####################################################################################################################################################
+# Domain Plots
+#####################################################################################################################################################
+
+sub domrun {
+
+my ($inargs) = @_;
+my @arrin = @{$inargs};
+
+my $curfile1 = @arrin[0];
+my $curfile2 = @arrin[1];
+my $curfile3 = @arrin[2];
+my $curtitle = @arrin[3];
+my $curname = @arrin[4];
+
+my $dirgen = '/home/jon/Desktop/Phage2Shark/General';
+my $batchpath = '/home/jon/Desktop/Phage2Shark/gnubatchfiles/genfiles.batch.temp';
+my $batchout = "/home/jon/Desktop/Phage2Shark/General/gnucur.batch";
+
+chdir($dirgen);
+
+$FHT = open (TEMP, $batchpath);
+
+# Error check for file open
+	if (!$FHT){
+		print "Gnu batch template (Average coral) file missing from directory, unable to complete process. \n";
+		exit;
+	}
+
+# Open file for final gnuplot batch 
+$FHF = open ( BATCH, '>'.$batchout );
 	
+# Error check for file open
+	if (!$FHF){
+		print "Unable to open gnu.batch file (Average coral). Exiting. \n";
+		exit;
+	}
+	
+# Write chenges to file.
+	while (<TEMP>) {
+		s/XTITLEX/$curtitle/ge;
+		s/XNAMEX/$curname/ge;
+		s/XLINE1X/plot for [col=2:4] "$curfile1" using 1:col with lines title = "Algae Domain", \\ /;
+		s/XLINE2X/	  for [col=2:4] "$curfile2" using 1:col with lines title = "Coral Domain", \\/;
+		s/XLINE3X/	  for [col=2:4] "$curfile3" using 1:col with lines title = "Barrier Domain"/;
+		s/XLINE4X/ /;
+		s/XLINE5X/ /;
+		print BATCH;
+	}	
+	
+system("gnuplot gnucur.batch");
+system("mv $curname /home/jon/Desktop/Phage2Shark/Outputs");
+
+# Close the files
+close(TEMP);
+close(BATCH);
+
+system("rm gnucur.batch");	
+
+
+}
 	
