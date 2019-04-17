@@ -14,9 +14,31 @@ implicit none
 ! Initializations
 bactcoral = 0.0
 
+! On coral directly
 bactcoral = real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
 			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop))
-			
+
+! Adjacent to the coral square on the lower bounds
+bactcoral = bactcoral + real(bacteria(x,2*y)%totalpop+bacteria(x,2*y-1)%totalpop)
+bactcoral = bactcoral + real(bacteria(2*x,y)%totalpop+bacteria(2*x-1,y)%totalpop)
+bactcoral = bactcoral + real(bacteria(x+1,y+1)%totalpop)
+
+
+! Adjacent to the coral square on the upper bounds
+if (x .lt. grid) then
+	bactcoral = bactcoral + real(bacteria(2*x+1,2*y)%totalpop+bacteria(2*x+1,2*y-1)%totalpop)
+	bactcoral = bactcoral + real(bacteria(2*x+1,y)%totalpop)
+end if
+
+if (y .lt. grid) then
+	bactcoral = bactcoral + real(bacteria(2*x,2*y+1)%totalpop+bacteria(2*x-1,2*y+1)%totalpop)
+	bactcoral = bactcoral + real(bacteria(x,2*y+1)%totalpop)
+end if
+
+if ((x .lt. grid).and.(y .lt. grid)) then
+	bactcoral = bactcoral + real(bacteria(2*x+1,2*y+1)%totalpop)
+end if
+	
 if (bactcoral .lt. 0.0) then
 	bactcoral = 0.0
 end if
@@ -26,7 +48,7 @@ bacteff = bactouch(bactcoral)
 call random_number(growpercent)
 
 growpercent = growpercent*growpercmod
-grow = 1.0 + growpercent*(1.0 - bacteff)
+grow = 1.0 + growpercent*(1.0 + bacteff)
 
 if (grow .lt. 1.0) then
 	grow = 1.0
@@ -53,7 +75,7 @@ implicit none
 	
 	! Initializations
 	algcount = 0	
-	decayconst	= 0.002
+	decayconst	= 0.003
 	call fishinteraction(decayconst)
 
 	
@@ -211,7 +233,7 @@ implicit none
 	real										:: diffco		! Diffusion coefficient
 	
 ! Initializations
-diffco = 0.01
+diffco = 0.015
 delta = 0.0
 	
 ! Working loops

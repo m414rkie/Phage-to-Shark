@@ -139,11 +139,11 @@ end if
 
 
 pop = pop/25.0
-pop = pop*100000000
-write(*,*) "pop", pop
+pop = pop*1000
 
-bactouch = slope*pop
-	
+
+bactouch = slope*pop*10.0
+
 end function
 	
 end module

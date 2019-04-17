@@ -147,7 +147,7 @@ if (tim .eq. 0) then
 else if (tim .ne. 0) then
 	write(corfile,50) tim
 end if
-	
+	 
 call printtofile(coral,grid,corfile)
 	
 	open(unit=15,file=percfile,status="unknown",position="append")
@@ -304,6 +304,7 @@ implicit none
 	character*50		:: againstpath	
 	character*50		:: vmr_micab_file, fgrow_fbio_file
 	character*50		:: algae_fbio_file, cor_fbio_file
+	character*50		:: algae_fdel_file, micab_lys_file
 	real				:: fdel
 	real				:: alg
 	real(kind=8)		:: phagesum, vmr, bacsum
@@ -315,30 +316,41 @@ call dircheck(againstpath)
 vmr_micab_file = "General/vmrmic.dat"
 fgrow_fbio_file = "General/fdelftot.dat"
 algae_fbio_file = "General/algftot.dat"
+algae_fdel_file = "General/algfdel.dat"
+micab_lys_file = "General/miclys.dat"
 
-phagesum = real(sum(phage%totalpop))
-bacsum = real(sum(bacteria%totalpop))
+phagesum = real(sum(phage%totalpop))*0.1
+bacsum = real(sum(bacteria%totalpop))*0.1
 vmr = phagesum/bacsum
 fdel = fishdelta(fish)
 alg = 1.0 - percentcor(grid)
+lysperc = real(sum(lys%totalpop))/bacsum
 
 open(unit=30,file=vmr_micab_file,status="unknown",position="append")
 open(unit=31,file=fgrow_fbio_file,status="unknown",position="append")
 open(unit=32,file=algae_fbio_file,status="unknown",position="append")
+open(unit=33,file=algae_fdel_file,status="unknown",position="append")
+open(unit=34,file=micab_lys_file,status="unknown",position="append")
 
 if (tim .eq. 0) then
-	write(30,*) "VMR Microbes"
-	write(31,*) "Fdelta Fish"
+	write(30,*) "Microbes VMR"
+	write(31,*) "Fish FDelta"
 	write(32,*) "Algae Fish"
+	write(33,*) "Algae FDelta"
+	write(34,*) "Bacteria LysRatio(Bac/Lys)"
 end if
 
-write(30,*) vmr, phagesum+bacsum
+write(30,*) bacsum, vmr
 write(31,*) fish, fdel
 write(32,*) alg, fish
+write(33,*) alg, fdel
+write(34,*) bacsum, lysperc
 
 close(30)
 close(31)
 close(32)
+close(33)
+close(34)
 
 end subroutine
 
@@ -352,7 +364,7 @@ implicit none
 	integer				:: tim
 	character*50		:: mic_algFile, mic_corFile, mic_barFile
 	character*50		:: vmr_algFile, vmr_corFile, vmr_barFile
-	integer				:: algCount, corCoun, barCount
+	integer				:: algCount, corCount, barCount
 	real				:: algAvg, corAvg, barAvg
 	logical				:: kcounter(2*grid,2*grid)
 	real(kind=8)		:: vmrAlgSum, vmrCorSum, vmrBarSum
@@ -361,7 +373,6 @@ implicit none
 	real(kind=8)		:: bmicBarSum, pmicBarSum, lmicBarSum
 	
 	integer				:: i, j
-	
 	
 mic_algFile = "General/microbes_algdom.dat"
 mic_corFile = "General/microbes_cordom.dat"
@@ -390,7 +401,7 @@ open(unit=44,file=vmr_algFile,status="unknown",position="append")
 open(unit=45,file=vmr_corFile,status="unknown",position="append")
 open(unit=46,file=vmr_barFile,status="unknown",position="append")
 
-if (tim = 0) then
+if (tim .eq. 0) then
 	write(41,*) "Time	Bacteria	Lytic	Lysogenic"
 	write(42,*) "Time	Bacteria	Lytic	Lysogenic"
 	write(43,*) "Time	Bacteria	Lytic	Lysogenic"
@@ -415,21 +426,21 @@ do i = 1, 2*grid, 1
 	
 	do j = 1, 2*grid, 1
 	
-		if (kbact(i,j) .eq. kalg)
+		if (kbact(i,j) .eq. kalg) then
 			bmicAlgSum = bmicAlgSum + bacteria(i,j)%totalpop
 			lmicAlgSum = lmicAlgSum + lys(i,j)%totalpop
 			pmicAlgSum = pmicAlgSum + phage(i,j)%totalpop
 			vmrAlgSum = vmrAlgSum + phage(i,j)%totalpop/bacteria(i,j)%totalpop
 		end if
 	
-		if (kbact(i,j) .eq. kcor)
+		if (kbact(i,j) .eq. kcor) then
 			bmicCorSum = bmicCorSum + bacteria(i,j)%totalpop
 			lmicCorSum = lmicCorSum + lys(i,j)%totalpop
 			pmicCorSum = pmicCorSum + phage(i,j)%totalpop
 			vmrCorSum = vmrCorSum + phage(i,j)%totalpop/bacteria(i,j)%totalpop
 		end if
 		
-		if (kbact(i,j) .eq. kbar)
+		if (kbact(i,j) .eq. kbar) then
 			bmicBarSum = bmicBarSum + bacteria(i,j)%totalpop
 			lmicBarSum = lmicBarSum + lys(i,j)%totalpop
 			pmicBarSum = pmicBarSum + phage(i,j)%totalpop

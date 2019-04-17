@@ -156,6 +156,7 @@ t = 0
 
 call datacollect(t)
 call againstouts(t)
+call domainout(t)
 
 
 write(*,*) "Coral percentage:", percentcor(grid)
@@ -222,6 +223,7 @@ do t = 1, numtime, 1
 		call bactgrowptw	
 		call datacollect(t)
 		call againstouts(t)
+		call domainout(t)
 		
  		holding = coral
 		bacthold = bacteria
