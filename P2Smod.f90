@@ -33,7 +33,7 @@ end type microbevar
 	integer														:: numtime, numday	    					! Number of timesteps
 	! Function Variables
 	! Sub Variables
-	real															:: growpercent, growpercmod			! Flat percentage growth for coral
+	real															:: growpercent		! Flat percentage growth for coral
 	real															:: decayconst						! Percent of coral loss per nearby algae
 	real															:: fisheatmult, coraltot			! Multiplier for fisheat
 	real															:: caught, dayavg					! Amount of fish left after shark (%), Avg. num. of days

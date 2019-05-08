@@ -1,4 +1,4 @@
-subroutine growth(arrin,arrout)
+subroutine growth(arrin,arrout,growpercin)
 
 ! Grows the input grid location based on value and neighbors.
 
@@ -8,6 +8,7 @@ use functions
 implicit none
 	real,dimension(grid,grid), intent(in) 		:: arrin				! Input array
 	real,dimension(grid,grid), intent(out)		:: arrout				! Output array
+	real,intent(in)														:: growpercin
 	real																			:: bactcoral, grow, bacteff
 	integer																		:: x, y
 
@@ -49,10 +50,10 @@ do x = 1, grid, 1
 		bacteff = bactouch(bactcoral)
 
 		call random_number(growpercent)
-
-		growpercent = growpercent*growpercmod
+		write(*,*) growpercent, growpercin
+		growpercent = growpercent*growpercin
 		grow = 1.0 + growpercent*(1.0 + bacteff)
-
+		write(*,*) bacteff, grow, growpercent
 		if (grow .lt. 1.0) then
 			grow = 1.0
 		end if

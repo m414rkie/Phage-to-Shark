@@ -37,6 +37,7 @@ implicit none
 	integer					:: i, t, l					! Looping integers
 	integer					:: allck
 	integer					:: fertile, buds, mstime(8)
+	real						:: growpercmod
 
 call inputs
 
@@ -116,16 +117,13 @@ else if (t .eq. 72) then
 end if
 
 		buds = nint(percentcor(grid)*10.0)
-		write(*,*) "Coral percentage:", percentcor(grid)
 
 		call diffuse
 		call mixing
 
-	write(*,*) "Coral percentage:", percentcor(grid)
-	write(*,*) "Coral percentage:", percentcor(grid)
+		growpercmod = 0.15
 
-
-				call growth(holding,coral)
+				call growth(holding,coral,growpercmod)
 				call decay(coral)
 
 		call shark(0)
@@ -186,7 +184,7 @@ do t = 1, numtime, 1
 		call diffuse
 		call mixing
 
-		call growth(coral,holding)
+		call growth(coral,holding,growpercmod)
 		call decay(coral)
 
 		if (fertile .gt. 0) then
