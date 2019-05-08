@@ -89,7 +89,6 @@ holding = coral
 write(*,*) "0.0 represents pure algae; greater than zero represents coral, higher number represents more coral"
 write(*,*) "Files are written as (x,y,z) where z is the population/biomass"
 
-coraltot = sum(coral)
 fish = 990.0*percentcor(grid)
 
 ! Populating initital bacteria layer
@@ -117,11 +116,14 @@ else if (t .eq. 72) then
 end if
 
 		buds = nint(percentcor(grid)*10.0)
+		write(*,*) "Coral percentage:", percentcor(grid)
 
 		call diffuse
 		call mixing
 
-	growpercmod = 0.1
+	write(*,*) "Coral percentage:", percentcor(grid)
+	write(*,*) "Coral percentage:", percentcor(grid)
+
 
 				call growth(holding,coral)
 				call decay(coral)
@@ -178,13 +180,13 @@ do t = 1, numtime, 1
 	if (sickDays .ge. 1) then
 		growpercmod = 0.00001
 	else
-		growpercmod = 0.1
+		growpercmod = 0.15
 	end if
 
 		call diffuse
 		call mixing
 
-		call growth(holding,coral)
+		call growth(coral,holding)
 		call decay(coral)
 
 		if (fertile .gt. 0) then
@@ -195,6 +197,10 @@ do t = 1, numtime, 1
 
 		call shark(1)
 		fish = fish + fishdelta(fish)
+		if (fish .lt. 0) then
+				fish = 0.0
+		end if
+
 		if (sickDays .lt. 1) then
 		do i = 1, 2*buds, 1
 			call corexp

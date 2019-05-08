@@ -11,12 +11,11 @@ implicit none
 	real																			:: bactcoral, grow, bacteff
 	integer																		:: x, y
 
-! Initializations
-bactcoral = 0.0
-
 do x = 1, grid, 1
 
 	do y = 1, grid, 1
+
+		bactcoral = 0.0
 
 		! On coral directly
 		bactcoral = real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
@@ -83,7 +82,7 @@ implicit none
 
 	! Initializations
 	algcount = 0
-	decayconst	= 0.003
+	decayconst	= 0.001
 	call fishinteraction(decayconst)
 
 do x = 1, grid, 1
@@ -132,7 +131,7 @@ do x = 1, grid, 1
 		else
 			decayconst = decayconst*float(algcount)
 		end if
-	
+
 		! Coral being eaten.
 		if (decayconst .gt. 0.09) then
 			decayconst = 0.09
