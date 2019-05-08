@@ -9,49 +9,46 @@ type microbevar
 end type microbevar
 
 
-	integer									:: grid, clusnum						! Array size
-	real									:: norm, nearsum, test					! Variables for interactions
-	real									:: fish
-	real, allocatable						:: holding(:,:), coral(:,:)				 ! Layer names
-	real, allocatable						:: kbact(:,:)							! Holds carrying capacity for bacteria
-	type (microbevar), allocatable			:: bacteria(:,:), phage(:,:), lys(:,:)	! Layer names
-	type (microbevar), allocatable			:: bacthold(:,:) 
-	integer, allocatable					:: seed(:)								! Random number holding array
-	integer									:: distance								! radial distance of coral clusters
-	real									:: percentcover							! Percent of grid to have coral on it 'groundcover'
-	real									:: fgrowfact, fisheat
-	real									:: fishtot
-	real									:: kalg, kcor, kbar
-	real									:: hunger, shrkevt, clock
-	integer									:: numnew = 0
-	real									:: popconstant
-	real									:: pi = acos(-1.0)
-	integer									:: randall = 33
-	real									:: threshold
-	real									:: alpha, beta, avgspec
-	logical,allocatable						:: check(:,:)
-	real									:: lysperc
-	real									:: coralfishmult
-	real, allocatable						:: coralpercent(:,:)
-	integer									:: numtime, numday	    					! Number of timesteps
-	! Function Variables					
+	integer														:: grid, clusnum						! Array size
+	real															:: norm, nearsum, test					! Variables for interactions
+	real															:: fish
+	real, allocatable									:: holding(:,:), coral(:,:)				 ! Layer names
+	real, allocatable									:: kbact(:,:)							! Holds carrying capacity for bacteria
+	type (microbevar), allocatable		:: bacteria(:,:), phage(:,:), lys(:,:)	! Layer names
+	type (microbevar), allocatable		:: bacthold(:,:)
+	integer, allocatable							:: seed(:)								! Random number holding array
+	integer														:: distance								! radial distance of coral clusters
+	real															:: percentcover							! Percent of grid to have coral on it 'groundcover'
+	real															:: fgrowfact, fisheat
+	real															:: fishtot
+	real															:: kalg, kcor, kbar
+	real															:: hunger, shrkevt, clock
+	integer														:: numnew
+	real															:: popconstant
+	real															:: threshold
+	real															:: alpha, avgspec
+	logical,allocatable								:: check(:,:)
+	real															:: coralfishmult
+	real, allocatable									:: coralpercent(:,:)
+	integer														:: numtime, numday	    					! Number of timesteps
+	! Function Variables
 	! Sub Variables
-	real									:: growpercent, growpercmod			! Flat percentage growth for coral
-	real									:: decayconst						! Percent of coral loss per nearby algae 
-	real									:: fisheatmult, coraltot			! Multiplier for fisheat
-	real									:: caught, dayavg					! Amount of fish left after shark (%), Avg. num. of days
-	real									:: dayavgtot
-	real									:: phagedie							! Amount of phage that don't die each cycle
+	real															:: growpercent, growpercmod			! Flat percentage growth for coral
+	real															:: decayconst						! Percent of coral loss per nearby algae
+	real															:: fisheatmult, coraltot			! Multiplier for fisheat
+	real															:: caught, dayavg					! Amount of fish left after shark (%), Avg. num. of days
+	real															:: dayavgtot
+	real															:: phagedie							! Amount of phage that don't die each cycle
 	! PTW vars
-	real									:: bacDeath, adsorp
-	character*1								:: disFLag
-	integer									:: disSevere, sickDays
-	real									:: sharkMass
-	real									:: rate								! Bacteria Growth rate adjuster
-	real									:: corBacNew, corBacGrow
-	real									:: adsorpFac
-	real									:: bacBurst
-	
+	real															:: bacDeath, adsorp
+	character*1												:: disFLag
+	integer														:: disSevere, sickDays
+	real															:: sharkMass
+	real															:: rate								! Bacteria Growth rate adjuster
+	real															:: corBacNew, corBacGrow
+	real															:: adsorpFac
+	real															:: bacBurst
+
 end module
 
 
@@ -65,11 +62,11 @@ use globalvars
 
 implicit none
 	real		:: pop
-	
+
 	coralfishmult = 1000.0*percentcor(grid)
-	
+
 	fishdelta = fgrowfact*(1.0 - pop/(coralfishmult))*pop
-	
+
 end function fishdelta
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -82,7 +79,7 @@ implicit none
 	integer					:: size
 	integer					:: corcount
 	logical					:: wherecor(size,size)
-	
+
 wherecor = (coral .ne. 0.0)
 
 corcount = count(wherecor)
@@ -97,8 +94,12 @@ use globalvars
 
 implicit none
 	real	:: carry, bacpop
-	
-virpopptw = (rate*(1.0 - (bacpop/carry)) - bacdeath)/adsorp
+
+if ((rate*(1.0-bacpop/carry)) .lt. bacdeath) then
+	virpopptw = (rate*(1.0 - (bacpop/carry)))/adsorp
+else
+	virpopptw = (rate*(1.0 - (bacpop/carry)) - bacdeath)/adsorp
+end if
 
 end function
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -109,10 +110,10 @@ use globalvars
 
 implicit none
 	integer :: i, j
-	
-	
+
+
 tempratio = (real(phage(i,j)%totalpop)/real(bacteria(i,j)%numspecies))
-	
+
 end function
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -124,7 +125,7 @@ use globalvars
 implicit none
 	real	:: pop, slope
 	real	:: maxpop, minpop
-	
+
 maxpop = 10000000.0
 minpop = 100000.0
 slope = -1.0/(maxpop-minpop)
@@ -145,5 +146,5 @@ pop = pop*1000
 bactouch = slope*pop*10.0
 
 end function
-	
+
 end module

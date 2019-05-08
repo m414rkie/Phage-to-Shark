@@ -2,7 +2,7 @@
 
 # Driving portion of the Phage-to-Shark program.
 # Sets input parameters and creates a .gif of the output
-# Options for single runs, multiple runs
+# Options for single runs, multiple runs, and time-averaged runs.
 
 # Author: Jon Parsons
 # Date: 1-11-19
@@ -17,26 +17,26 @@ my $runnum = <>;
 chomp $runnum;
 
 $grid = 100;
-$numtime = 75;
-$percentcover = 0.5; 
-$threshold = 1.2;
+$numtime = 500;
+$percentcover = 0.5;
+$threshold = 1.0;
 $sharkmass = 200;
 $dayavg = 5;
 $rate = 1.0;
 $corBacNew = 1.0;
 $corBacGrow = 1.0;
-$adsorpFac = 0.02;
-$bacDeath = 0.3;
+$adsorpFac = 0.005;
+$bacDeath = 0.1;
 $bacBurst = 100;
-$phagedie = 0.5;
+$phagedie = 0.8;
 $fisheatmult = 1.0;
-$fgrowfact = 1.0;
+$fgrowfact = 0.7;
 $disFlagin = 'N';
 $disLevel = 5;
 
 my @iterArray = ($grid, $numtime, $percentcover, $threshold, $sharkmass, $dayavg, $rate, $corBacNew, $corBacGrow, $adsorpFac, $bacDeath, $bacBurst, $phagedie, $fisheatmult, $fgrowfact, $disFlagin, $disLevel);
 
-my @nameArray = ("Gridpoints", "Number of Timesteps", "Coral Percentage", "New Coral Threshold", "Shark Biomass", "Avg Number of Days Between Shark Events", 
+my @nameArray = ("Gridpoints", "Number of Timesteps", "Coral Percentage", "New Coral Threshold", "Shark Biomass", "Avg Number of Days Between Shark Events",
 				 "Bacterial Growth Rate", "Bacteria-New Coral Intensity", "Bacteria-Coral Growth Intensity", "Adsorption Factor Coefficient", "Rate of Bacterial Death", "Phage Burst Count", "Phage Decay Rate",
 				 "Fish-Algae Intensity", "Fish Growth Rate", "Disaster Flag", "Disaster Intensity");
 
@@ -71,6 +71,8 @@ my @fdft = ("fdelftot.dat","Fish delta and Total","fdelftot.png",1);
 my @algft = ("algftot.dat","Algae and Fish","algftot.png",1);
 my @algfd = ("algfdel.dat","Algae and Fish Delta","algfdel.png",1);
 my @miclys = ("miclys.dat","Bacteria and Lysogen Ratio","baclys.png",1);
+my @vmrpha = ("vmrpha.dat","VMR and Phage Population","vmrpha.png",1);
+my @vmrshark = ("vmrshark.dat","VMR and Shark","vmrshark.png",1);
 
 singlerun(\@avgcor);
 singlerun(\@bacttime);
@@ -87,7 +89,8 @@ singlerun(\@fdft);
 singlerun(\@algft);
 singlerun(\@algfd);
 singlerun(\@miclys);
-
+singlerun(\@vmrpha);
+singlerun(\@vmrshark);
 
 my @micdom = ("microbes_algdom.dat","microbes_cordom.dat","microbes_bardom.dat","Microbe by Domain","micdom.png",2);
 my @vmrdom = ("vmr_algdom.dat","vmr_cordom.dat","vmr_bardom.dat","VMR by Domain","vmrdom.png",1);
@@ -138,9 +141,9 @@ system("mkdir Outputs");
 
 
 for (my $i = 1; $i <= $numruns+1; $i++) {
-	
+
 	runit(\@iterArray);
-	
+
 	@iterArray[$deltavar] = @iterArray[$deltavar] + $varIter;
 
 	my $dirgen = '/home/jon/Desktop/Phage2Shark/General';
@@ -162,7 +165,7 @@ for (my $i = 1; $i <= $numruns+1; $i++) {
 	system("mv algfdelt.dat algfel$i.dat");
 	system("mv miclys.dat miclys$i.dat");
 
-	
+
 	my $dir = '/home/jon/Desktop/Phage2Shark';
 	chdir($dir);
 
@@ -172,7 +175,7 @@ for (my $i = 1; $i <= $numruns+1; $i++) {
 	my @bacttime = ("bacttime", "Global Avg. Bacteria Population (Count/mL)", "bactpop.png", 1, @nameArray[$deltavar], $iniVar, $varIter);
 	my @corgrow = ("Corgrowth", "Coral Growth", "corgrow.png", 3, @nameArray[$deltavar], $iniVar, $varIter);
 	my @cortot = ("cortottime","Total Coral","cortot.png", 1, @nameArray[$deltavar], $iniVar, $varIter);
-	my @fishtot = ("fishtottime","Fish Population","fishtot.png", 1, @nameArray[$deltavar], $iniVar, $varIter);	
+	my @fishtot = ("fishtottime","Fish Population","fishtot.png", 1, @nameArray[$deltavar], $iniVar, $varIter);
 	my @micropop = ("microbepops","Global Avg. Microbe Populations (Count/mL)","micropops.png", 2, @nameArray[$deltavar], $iniVar, $varIter);
 	my @microspecs = ("microbespecs","Global Avg. Microbe Species Count (1/mL)","microspecs.png", 2, @nameArray[$deltavar], $iniVar, $varIter);
 	my @perctime = ("perctime","Percentage of Coral Coverage","perctime.png", 1, @nameArray[$deltavar], $iniVar, $varIter);
@@ -183,7 +186,9 @@ for (my $i = 1; $i <= $numruns+1; $i++) {
 	my @algft = ("algftot","Algae and Fish","algftot.png",1, @nameArray[$deltavar], $iniVar, $varIter);
 	my @algfd = ("algfdel","Algae and Fish Delta","algfdel.png",1,@nameArray[$deltavar],$iniVar,$varIter);
 	my @miclys = ("miclys","Bacteria and Lysogen Ratio","baclys.png",1,@nameArray[$deltavar],$iniVar,$varIter);
-	
+	my @vmrpha = ("vmrpha","VMR and Phage Population","vmrpha.png",1,@nameArray[$deltavar],$iniVar,$varIter);
+	my @vmrshark = ("vmrshark","VMR and Shark","vmrshark.png",1,@nameArray[$deltavra],$iniVar,$varIter);
+
 	rangerun(\@avgcor);
 	rangerun(\@bacttime);
 	rangerun(\@corgrow);
@@ -199,6 +204,8 @@ for (my $i = 1; $i <= $numruns+1; $i++) {
 	rangerun(\@algft);
 	rangerun(\@algfd);
 	rangerun(\@miclys);
+	rangerun(\@vmrpha);
+	rangerun(\@vmrshark);
 
 my $dir = '/home/jon/Desktop/Phage2Shark';
 chdir($dir);
@@ -282,22 +289,22 @@ for (my $j = 1; $j <= $numruns; $j++){
 
 
 		runit(\@iterArray);
-	
+
 		my $dirgen = '/home/jon/Desktop/Phage2Shark/General';
 		chdir($dirgen);
-		
-	for (my $k = 0; $k <= 6; $k++){					
-			open (SF, "/home/jon/Desktop/Phage2Shark/General/$fileArray[$k]"); 		
-			
+
+	for (my $k = 0; $k <= 6; $k++){
+			open (SF, "/home/jon/Desktop/Phage2Shark/General/$fileArray[$k]");
+
 			my @tvals;
-		
+
 			<SF>;
 			while(<SF>){
 				my ($disc, $keep) = split;
 				push @tvals, $keep;
 			}
-			
-			if ($k eq 0) {		
+
+			if ($k eq 0) {
 						$avgAvg = $avgAvg + ($tvals[-1] - $tvals[0]);
 				} elsif ($k eq 1) {
 						$bactAvg = $bactAvg + ($tvals[-1] - $tvals[0]);
@@ -308,17 +315,17 @@ for (my $j = 1; $j <= $numruns; $j++){
 				} elsif ($k eq 4) {
 						$percAvg = $percAvg + ($tvals[-1] - $tvals[0]);
 				} elsif ($k eq 5) {
-						$phlyAvg = $phlyAvg + ($tvals[-1] - $tvals[0]);	
+						$phlyAvg = $phlyAvg + ($tvals[-1] - $tvals[0]);
 				} elsif ($k eq 6) {
 						$vmrAvg = $vmrAvg + ($tvals[-1] - $tvals[0]);
-				} 
+				}
 
 			undef @tvals;
-			
+
 			close(SF);
-			
-		}		
-		
+
+		}
+
 	}
 
 	$avgAvg = $avgAvg/$numruns;
@@ -328,10 +335,10 @@ for (my $j = 1; $j <= $numruns; $j++){
 	$percAvg = $percAvg/$numruns;
 	$phlyAvg = $phlyAvg/$numruns;
 	$vmrAvg = $vmrAvg/$numruns;
-		
+
 	my $dirgen = '/home/jon/Desktop/Phage2Shark/Outputs';
 	chdir($dirgen);
-		
+
 	print $pa qq{$j "@nameArray[$deltavar+1]=@iterArray[$deltavar]" $percAvg \n};
 	print $aa qq{$j "@nameArray[$deltavar+1]=@iterArray[$deltavar]" $avgAvg \n};
 	print $ba qq{$j "@nameArray[$deltavar+1]=@iterArray[$deltavar]" $bactAvg \n};
@@ -339,9 +346,9 @@ for (my $j = 1; $j <= $numruns; $j++){
 	print $fa qq{$j "@nameArray[$deltavar+1]=@iterArray[$deltavar]" $fishAvg \n};
 	print $ha qq{$j "@nameArray[$deltavar+1]=@iterArray[$deltavar]" $phlyAvg \n};
 	print $va qq{$j "@nameArray[$deltavar+1]=@iterArray[$deltavar]" $vmrAvg \n};
-	
+
 	@iterArray[$deltavar] = @iterArray[$deltavar] + $varIter;
-	
+
 }
 
 close $pa;
@@ -353,7 +360,7 @@ close $ha;
 close $va;
 
 	@iterArray[$deltavar] = @iterArray[$deltavar] + $varIter;
-	
+
 	my $dir = '/home/jon/Desktop/Phage2Shark';
 	chdir($dir);
 
@@ -365,11 +372,11 @@ close $va;
 	my $bactAvgF = 'avgbact.dat';
 	my $avgAvgF = 'avgcoravg.dat';
 	my $percAvgF = 'avgperc.dat';
-	
+
 	my @avgcor = ($avgAvgF, "Average Coral", "avgcoral.png", 1, @nameArray[$deltavar]);
 	my @bacttime = ($bactAvgF, "Bacteria Population", "bactpop.png", 1, @nameArray[$deltavar]);
 	my @cortot = ($totAvgF,"Total Coral","cortot.png", 1, @nameArray[$deltavar]);
-	my @fishtot = ($fishAvgF,"Fish Population","fishtot.png", 1, @nameArray[$deltavar]);	
+	my @fishtot = ($fishAvgF,"Fish Population","fishtot.png", 1, @nameArray[$deltavar]);
 	my @perctime = ($percAvgF,"Percentage of Coral Coverage","perctime.png", 1, @nameArray[$deltavar]);
 	my @phlyrat = ($phlyAvgF,"Phage - Lysogen Ratio","phlyrat.png", 1, @nameArray[$deltavar]);
 	my @vmrat = ($vmrAvgF, "VMR", "VMR.png",1, @nameArray[$deltavar]);
@@ -457,9 +464,9 @@ for ($i=0; $i<=$file_num; $i++){
 		exit;
 	}
 
-# Open file for final gnuplot batch 
+# Open file for final gnuplot batch
 	$FHF = open ( BATCH, ">./gnu.batch");
-	
+
 # Error check for file open
 	if (!$FHF){
 		print "Unable to open gnu.batch file. Exiting. \n";
@@ -472,8 +479,8 @@ for ($i=0; $i<=$file_num; $i++){
 		s/XTX/$i/;
 		s/XFILEX/$files[$i]/ge;
 		print BATCH;
-	}	
-	
+	}
+
 	$fname = "cortime".$i.".png";
 	system("gnuplot gnu.batch");
 	system("mv coralt.png $fname");
@@ -521,15 +528,15 @@ $FHT = open (TEMP, $batchpath);
 		exit;
 	}
 
-# Open file for final gnuplot batch 
+# Open file for final gnuplot batch
 $FHF = open ( BATCH, '>'.$batchout );
-	
+
 # Error check for file open
 	if (!$FHF){
 		print "Unable to open gnu.batch file (Average coral). Exiting. \n";
 		exit;
 	}
-	
+
 if ($multflag eq 1) {
 # Write chenges to file.
 	while (<TEMP>) {
@@ -541,7 +548,7 @@ if ($multflag eq 1) {
 		s/XLINE4X/set ylabel word(firstrow,2) /;
 		s/XLINE5X/ plot datafile using 1:2 with lines /;
 		print BATCH;
-	}	
+	}
 
 } elsif ($multflag eq 2) {
 
@@ -572,7 +579,7 @@ if ($multflag eq 1) {
 	}
 
 }
-	
+
 system("gnuplot gnucur.batch");
 system("mv $curname /home/jon/Desktop/Phage2Shark/Outputs");
 
@@ -580,7 +587,7 @@ system("mv $curname /home/jon/Desktop/Phage2Shark/Outputs");
 close(TEMP);
 close(BATCH);
 
-system("rm gnucur.batch");	
+system("rm gnucur.batch");
 
 
 }
@@ -620,7 +627,7 @@ my $batchout = "/home/jon/Desktop/Phage2Shark/General/gnucur.batch";
 my $batchout2 = "/home/jon/Desktop/Phage2Shark/General/gnucurmic.batch";
 
 chdir($dirgen);
-	
+
 if ($multflag eq 1) {
 
 $FHT = open (TEMP, $batchpath);
@@ -631,15 +638,15 @@ $FHT = open (TEMP, $batchpath);
 		exit;
 	}
 
-# Open file for final gnuplot batch 
+# Open file for final gnuplot batch
 $FHF = open ( BATCH, '>'.$batchout );
-	
+
 # Error check for file open
 	if (!$FHF){
 		print "Unable to open gnu.batch file. Exiting. \n";
 		exit;
 	}
-	
+
 # Write chenges to file.
 	while (<TEMP>) {
 		s/XDX/$numtime/;
@@ -657,7 +664,7 @@ $FHF = open ( BATCH, '>'.$batchout );
 		s/XLABEL5X/     "$curfile5" using 1:2 title "$varIter = $varVal5" with lines		/;
 		s/XLINE6X/ /;
 		print BATCH;
-	}	
+	}
 
 # Close the files
 close(TEMP);
@@ -713,16 +720,16 @@ $FHF = open ( BATCH, '>'.$batchout );
 		s/XLINE6X/     "$curfile5" using 1:2 with lines lc rgbcolor "orange", "$curfile5" using 1:3 pt 7 ps 0.6 lc rgbcolor "orange" /;
 		print BATCH;
 	}
-	
+
 close(TEMP);
 close(BATCH);
 
 }
-	
+
 system("gnuplot gnucur.batch");
 system("mv $curname /home/jon/Desktop/Phage2Shark/Outputs");
 
-system("rm gnucur.batch");	
+system("rm gnucur.batch");
 
 }
 #####################################################################################################################################################
@@ -747,7 +754,7 @@ my $batchout = "/home/jon/Desktop/Phage2Shark/Outputs/gnucur.batch";
 my $batchout2 = "/home/jon/Desktop/Phage2Shark/General/gnucurmic.batch";
 
 chdir($dirgen);
-	
+
 $FHT = open (TEMP, $batchpathmic);
 
 # Error check for file open
@@ -756,15 +763,15 @@ $FHT = open (TEMP, $batchpathmic);
 		exit;
 	}
 
-# Open file for final gnuplot batch 
+# Open file for final gnuplot batch
 $FHF = open ( BATCH, '>' .$batchout );
-	
+
 # Error check for file open
 	if (!$FHF){
 		print "Unable to open gnu.batch file. Exiting. \n";
 		exit;
 	}
-	
+
 # Write chenges to file.
 	while (<TEMP>) {
 		s/XDX/$numtime/;
@@ -783,10 +790,10 @@ chdir($dirout);
 system("gnuplot gnucur.batch");
 #system("mv $curname /home/jon/Desktop/Phage2Shark/Outputs");
 
-system("rm gnucur.batch");	
+system("rm gnucur.batch");
 
 }
-	
+
 #####################################################################################################################################################
 # Domain Plots
 #####################################################################################################################################################
@@ -817,9 +824,9 @@ $FHT = open (TEMP, $batchpath);
 		exit;
 	}
 
-# Open file for final gnuplot batch 
+# Open file for final gnuplot batch
 $FHF = open ( BATCH, '>'.$batchout );
-	
+
 # Error check for file open
 	if (!$FHF){
 		print "Unable to open gnu.batch file (Average coral). Exiting. \n";
@@ -837,8 +844,8 @@ if ($tflag eq 1) {
 		s/XLINE4X/ 		1\/0 with points pt -1 t "Barrier Domain", \\/;
 		s/XLINE5X/	  "$curfile3" with lines title columnheader /;
 		print BATCH;
-	}	
-	
+	}
+
 } elsif	($tflag eq 2){
 
 # Write chenges to file.
@@ -851,8 +858,8 @@ if ($tflag eq 1) {
 		s/XLINE4X/ 		1\/0 with points pt -1 t "Barrier Domain", \\/;
 		s/XLINE5X/	  for [col=2:4] "$curfile3" using 1:col with lines title columnheader /;
 		print BATCH;
-	}	
-	
+	}
+
 }
 
 system("gnuplot gnucur.batch");
@@ -862,8 +869,7 @@ system("mv $curname /home/jon/Desktop/Phage2Shark/Outputs");
 close(TEMP);
 close(BATCH);
 
-system("rm gnucur.batch");	
+system("rm gnucur.batch");
 
 
 }
-	

@@ -21,7 +21,7 @@ PROGRAM concept
 ! OUT args/commons             Units      Description
 ! ----------------             -----      ----------------------------
 ! output variables             units      variable purpose
-! 
+!
 !
 ! Special requirements:
 ! * Module file -  modules_concept.f90
@@ -34,7 +34,7 @@ use globalvars
 use functions
 
 implicit none
-	integer					:: i, j, t, l					! Looping integers; n is random seed holder
+	integer					:: i, t, l					! Looping integers
 	integer					:: allck
 	integer					:: fertile, buds, mstime(8)
 
@@ -60,27 +60,25 @@ allocate(phage(2*grid,2*grid), stat=allck)
 	if (allck .ne. 0) stop "Phage Allocation Failed"
 allocate(lys(2*grid,2*grid), stat=allck)
 	if (allck .ne. 0) stop "Lys Allocation Failed"
-allocate(seed(randall), stat=allck)
+allocate(seed(33), stat=allck)
 	if (allck .ne. 0) stop "Seed Allocation Failed"
-
-	
 
 ! Initializing grids and variables
 
-fish = 0.0
-
+fish 					= 0.0
 coral 				= 0.0
 holding 			= 0.0
 bacteria%totalpop 	= 0
 bacteria%numspecies = 0
 ! Sub Variables
-alpha				= 0.0336
-fertile 			= 0
-numday 				= 0
+alpha			= 0.0336
+fertile 	= 0
+numday 		= 0
+numnew 		= 0
 
 call date_and_time(values=mstime)
 !call cpu_time(clock)
-seed = float(mstime(8))! + 3*(/(i-1,i=1,randall)/)
+seed = (mstime(8))
 call random_seed(put=seed)
 
 ! Populates the coral/algae layer
@@ -108,33 +106,25 @@ write(*,*) "Beginning Equilibration"
 
 do t = 1, 90, 1
 
-if (t .eq. 18) then 
+if (t .eq. 18) then
 	write(*,*) "Equilibration 20% Complete."
 else if (t .eq. 36) then
 	write(*,*) "Equilibration 40% Complete."
 else if (t .eq. 54) then
 	write(*,*) "Equilibration 60% Complete."
-else if (t .eq. 72) then 
+else if (t .eq. 72) then
 	write(*,*) "Equilibration 80% Complete."
 end if
-		
+
 		buds = nint(percentcor(grid)*10.0)
-		
-		call diffuse		
-		call mixing		
-		
+
+		call diffuse
+		call mixing
+
 	growpercmod = 0.1
 
-		do i = 1, grid, 1
-	
-			do j = 1, grid, 1
-		
-				call growth(i,j,coral,coral)
-				call decay(i,j,coral)				
-	
-			end do
-	
-		end do
+				call growth(holding,coral)
+				call decay(coral)
 
 		call shark(0)
 		fish = fish + fishdelta(fish)
@@ -143,8 +133,8 @@ end if
 			call corexp
 		end do
 		call kgrid
-		call bactgrowptw		
-		
+		call bactgrowptw
+
  		holding = coral
 		bacthold = bacteria
 
@@ -155,9 +145,8 @@ write(*,*) "Equilibration Complete"
 t = 0
 
 call datacollect(t)
-call againstouts(t)
-call domainout(t)
 
+call domainout(t)
 
 write(*,*) "Coral percentage:", percentcor(grid)
 
@@ -180,36 +169,28 @@ do t = 1, numtime, 1
 	if ((t .eq. 200).and.(disFlag .eq. "D")) then
 		call disease
 		write(*,*) "Disease!"
-	end if 
+	end if
 
 	write(*,*) "Coral percentage:", percentcor(grid)
 	write(*,*) "Fish population:", fish
 	buds = nint(percentcor(grid)*10.0)
-		
+
 	if (sickDays .ge. 1) then
 		growpercmod = 0.00001
 	else
 		growpercmod = 0.1
 	end if
 
-		call diffuse		
-		call mixing		
+		call diffuse
+		call mixing
 
-		do i = 1, grid, 1
-	
-			do j = 1, grid, 1
-		
-				call growth(i,j,coral,coral)
-				call decay(i,j,coral)				
-	
-			end do
-	
-		end do
+		call growth(holding,coral)
+		call decay(coral)
 
 		if (fertile .gt. 0) then
 			do l = 1, buds, 1
 				call newcoral
-			end do		
+			end do
 		end if
 
 		call shark(1)
@@ -220,15 +201,15 @@ do t = 1, numtime, 1
 		end do
 		end if
 		call kgrid
-		call bactgrowptw	
-		call datacollect(t)
-		call againstouts(t)
-		call domainout(t)
-		
- 		holding = coral
+		call bactgrowptw
+
+		holding = coral
 		bacthold = bacteria
 		fertile = fertile - 1
 		sickDays = sickDays - 1
+
+		call datacollect(t)
+		call domainout(t)
 
 end do
 
@@ -242,5 +223,5 @@ deallocate(bacteria)
 deallocate(kbact)
 deallocate(seed)
 
- 
+
 end program
