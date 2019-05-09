@@ -121,7 +121,7 @@ end if
 		call diffuse
 		call mixing
 
-		growpercmod = 0.15
+		growpercmod = 0.1
 
 				call growth(holding,coral,growpercmod)
 				call decay(coral)
@@ -156,7 +156,7 @@ do t = 1, numtime, 1
 
 	write(*,*) "Beginning timestep", t
 
-	if (mod(t,182) .eq. 0) then
+	if ((t .gt. 181).and.(mod(t,182) .eq. 0)) then
 		write(*,*) "Coral spawning begins"
 		fertile = 14
 	end if
@@ -178,13 +178,13 @@ do t = 1, numtime, 1
 	if (sickDays .ge. 1) then
 		growpercmod = 0.00001
 	else
-		growpercmod = 0.15
+		growpercmod = 0.1
 	end if
 
 		call diffuse
 		call mixing
 
-		call growth(coral,holding,growpercmod)
+		call growth(holding,coral,growpercmod)
 		call decay(coral)
 
 		if (fertile .gt. 0) then

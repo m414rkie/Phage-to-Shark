@@ -143,7 +143,7 @@ pop = pop/25.0
 pop = pop*1000
 
 
-bactouch = slope*pop
+bactouch = slope*pop*2.0
 
 end function
 
