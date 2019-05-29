@@ -119,7 +119,6 @@ end if
 		buds = nint(percentcor(grid)*10.0)
 
 		call diffuse
-		call mixing
 
 		growpercmod = 0.1
 
@@ -182,7 +181,6 @@ do t = 1, numtime, 1
 	end if
 
 		call diffuse
-		call mixing
 
 		call growth(holding,coral,growpercmod)
 		call decay(coral)

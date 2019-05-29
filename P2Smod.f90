@@ -9,17 +9,17 @@ type microbevar
 end type microbevar
 
 
-	integer														:: grid, clusnum						! Array size
-	real															:: norm, nearsum, test					! Variables for interactions
-	real															:: fish
-	real, allocatable									:: holding(:,:), coral(:,:)				 ! Layer names
-	real, allocatable									:: kbact(:,:)							! Holds carrying capacity for bacteria
+	integer														:: grid, clusnum ! Array size
+	real															:: norm, nearsum, test	! Variables for interactions
+	real															:: fish ! Holds fish population.
+	real, allocatable									:: holding(:,:), coral(:,:)	! Layer names
+	real, allocatable									:: kbact(:,:)	! Holds carrying capacity for bacteria
 	type (microbevar), allocatable		:: bacteria(:,:), phage(:,:), lys(:,:)	! Layer names
-	type (microbevar), allocatable		:: bacthold(:,:)
-	integer, allocatable							:: seed(:)								! Random number holding array
-	integer														:: distance								! radial distance of coral clusters
-	real															:: percentcover							! Percent of grid to have coral on it 'groundcover'
-	real															:: fgrowfact, fisheat
+	type (microbevar), allocatable		:: bacthold(:,:) ! Bacteria temporary arry
+	integer, allocatable							:: seed(:)	! Random number holding array
+	integer														:: distance	! radial distance of coral clusters
+	real															:: percentcover	! Percent of grid to have coral on it 'groundcover'
+	real															:: fgrowfact, fisheat	! modifier for fish growth; amount of pressure fish puts on algae
 	real															:: fishtot
 	real															:: kalg, kcor, kbar
 	real															:: hunger, shrkevt, clock
@@ -39,6 +39,7 @@ end type microbevar
 	real															:: caught, dayavg					! Amount of fish left after shark (%), Avg. num. of days
 	real															:: dayavgtot
 	real															:: phagedie							! Amount of phage that don't die each cycle
+	real															:: diffco		! Diffusion coefficent
 	! PTW vars
 	real															:: bacDeath, adsorp
 	character*1												:: disFLag

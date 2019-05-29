@@ -240,7 +240,7 @@ write(33,*) alg, fdel
 write(34,*) bacsum, lysperc
 write(35,*) percentcor(grid), fish
 write(36,*) vmr, phagesum
-write(36,*) vmr, sharkMass
+write(37,*) vmr, sharkMass
 
 	close(15)
 	close(20)
@@ -305,6 +305,8 @@ write(*,*) "Enter the fish impact multiplier on algae."
 read(*,*) fisheatmult
 write(*,*) "Enter the rate of fish growth."
 read(*,*) fgrowfact
+write(*,*) "Enter the diffusion coefficient."
+read(*,*) diffco
 write(*,*) "Enter 'H' for a hurricane, or 'D' for a disease."
 write(*,*) "Any other entry will result in neither."
 read(*,*) disFlagin
@@ -358,15 +360,15 @@ use globalvars
 
 implicit none
 	integer				:: tim
-	character*50		:: mic_algFile, mic_corFile, mic_barFile
-	character*50		:: vmr_algFile, vmr_corFile, vmr_barFile
+	character*50	:: mic_algFile, mic_corFile, mic_barFile
+	character*50	:: vmr_algFile, vmr_corFile, vmr_barFile
 	integer				:: algCount, corCount, barCount
 	logical				:: kcounter(2*grid,2*grid)
-	real(kind=8)		:: vmrAlgSum, vmrCorSum, vmrBarSum
-	real(kind=8)		:: bmicAlgSum, pmicAlgSum, lmicAlgSum
-	real(kind=8)		:: bmicCorSum, pmicCorSum, lmicCorSum
-	real(kind=8)		:: bmicBarSum, pmicBarSum, lmicBarSum
-	real(kind=8)		:: AvgBactCapUse
+	real(kind=8)	:: vmrAlgSum, vmrCorSum, vmrBarSum
+	real(kind=8)	:: bmicAlgSum, pmicAlgSum, lmicAlgSum
+	real(kind=8)	:: bmicCorSum, pmicCorSum, lmicCorSum
+	real(kind=8)	:: bmicBarSum, pmicBarSum, lmicBarSum
+	real(kind=8)	:: AvgBactCapUse
 
 	integer				:: i, j
 

@@ -50,10 +50,9 @@ do x = 1, grid, 1
 		bacteff = bactouch(bactcoral)
 
 		call random_number(growpercent)
-		write(*,*) growpercent, growpercin
+
 		growpercent = growpercent*growpercin
 		grow = 1.0 + growpercent*(1.0 + bacteff)
-		write(*,*) bacteff, grow, growpercent
 		if (grow .lt. 1.0) then
 			grow = 1.0
 		end if
@@ -149,7 +148,6 @@ do x = 1, grid, 1
 		if (arrin(x,y) .gt. 5.0) then
 			arrin(x,y) = 5.0
 		end if
-
 	end do
 end do
 end subroutine
@@ -241,12 +239,10 @@ subroutine diffuse
 use globalvars
 
 implicit none
-	real, dimension(2*grid,2*grid)				:: delta		! Holds overall change from diffusion
-	integer										:: i, j			! Looping integers
-	real										:: diffco		! Diffusion coefficient
+	real, dimension(2*grid,2*grid)	:: delta		! Holds overall change from diffusion
+	integer													:: i, j			! Looping integers
 
 ! Initializations
-diffco = 0.015
 delta = 0.0
 
 ! Working loops
@@ -326,95 +322,6 @@ end do
 bacteria%totalpop = bacteria%totalpop + int(delta)
 
 where (bacteria%totalpop .lt. 0) bacteria%totalpop = 0
-
-end subroutine
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-subroutine mixing
-
-! Mixing subroutine for redistributing species
-
-use globalvars
-
-implicit none
-	integer									:: i,j 			! Looping integers
-	real									:: mixpress		! Pressure for mixing
-	integer									:: delta		! Change in number of species
-
-mixpress = 0.05
-
-! Working loops
-do i = 1, 2*grid, 1
-
-	do j = 1, 2*grid, 1
-
-		delta = 0
-		! x+1
-		if (i .lt. 2*grid) then
-
-			delta = delta + bacteria(i,j)%numspecies - bacteria(i+1,j)%numspecies
-
-		end if
-
-		! x-1
-		if (i .ne. 1) then
-
-			delta = delta + bacteria(i,j)%numspecies - bacteria(i-1,j)%numspecies
-
-		end if
-
-		! y+1
-		if (j .lt. 2*grid) then
-
-			delta = delta + bacteria(i,j)%numspecies - bacteria(i,j+1)%numspecies
-
-		end if
-
-		! y-1
-		if (j .ne. 1) then
-
-			delta = delta + bacteria(i,j)%numspecies - bacteria(i,j-1)%numspecies
-
-		end if
-
-		! x-1, y-1
-		if ((j .gt. 1) .and. (i .gt. 1)) then
-
-			delta = delta + bacteria(i,j)%numspecies - bacteria(i-1,j-1)%numspecies
-
-		end if
-
-		! x+1, y-1
-		if ((j .gt. 1) .and. (i .lt. 2*grid)) then
-
-			delta = delta + bacteria(i,j)%numspecies - bacteria(i+1,j-1)%numspecies
-
-		end if
-
-		! x-1, y+1
-		if ((j .lt. 2*grid) .and. (i .gt. 1)) then
-
-			delta = delta + bacteria(i,j)%numspecies - bacteria(i-1,j+1)%numspecies
-
-		end if
-
-		! x+1, y+1
-		if ((j .lt. 2*grid) .and. (i .lt. 2*grid)) then
-
-			delta = delta + bacteria(i,j)%numspecies - bacteria(i+1,j+1)%numspecies
-
-		end if
-
-		if (delta .lt. 0) then
-			delta = 0
-		end if
-
-			bacteria(i,j)%numspecies = bacteria(i,j)%numspecies + int(real(delta)*mixpress)
-
-	end do
-
-end do
 
 end subroutine
 

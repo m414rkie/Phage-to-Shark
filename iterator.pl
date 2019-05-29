@@ -13,7 +13,6 @@ my $timeVar = localtime -> strftime('%d%m%y');
 
 print "Single run, range, or statistical run (10 runs)? (s/r/t) \n";
 my $runnum = <>;
-#my $runnum = <STDIN>;
 chomp $runnum;
 
 $grid = 100;
@@ -31,14 +30,17 @@ $bacBurst = 100;
 $phagedie = 0.8;
 $fisheatmult = 1.0;
 $fgrowfact = 0.7;
+$diffco = 0.015;
 $disFlagin = 'N';
 $disLevel = 5;
 
-my @iterArray = ($grid, $numtime, $percentcover, $threshold, $sharkmass, $dayavg, $rate, $corBacNew, $corBacGrow, $adsorpFac, $bacDeath, $bacBurst, $phagedie, $fisheatmult, $fgrowfact, $disFlagin, $disLevel);
+my @iterArray = ($grid, $numtime, $percentcover, $threshold, $sharkmass, $dayavg,
+								$rate, $corBacNew, $corBacGrow, $adsorpFac, $bacDeath, $bacBurst,
+								$phagedie, $fisheatmult, $fgrowfact, $diffco, $disFlagin, $disLevel);
 
 my @nameArray = ("Gridpoints", "Number of Timesteps", "Coral Percentage", "New Coral Threshold", "Shark Biomass", "Avg Number of Days Between Shark Events",
 				 "Bacterial Growth Rate", "Bacteria-New Coral Intensity", "Bacteria-Coral Growth Intensity", "Adsorption Factor Coefficient", "Rate of Bacterial Death", "Phage Burst Count", "Phage Decay Rate",
-				 "Fish-Algae Intensity", "Fish Growth Rate", "Disaster Flag", "Disaster Intensity");
+				 "Fish-Algae Intensity", "Fish Growth Rate","Diffusion Coefficient", "Disaster Flag", "Disaster Intensity");
 
 my @fileArray = ("avgcortime.dat", "bacttime.dat","Corgrowth.dat","cortottime.dat","fishtottime.dat","perctime.dat","phagelysratio.dat","vmr.dat");
 
@@ -160,10 +162,12 @@ for (my $i = 1; $i <= $numruns+1; $i++) {
 	system("mv phagelysratio.dat phagelysratio$i.dat");
 	system("mv vmr.dat vmr$i.dat");
 	system("mv vmrmic.dat vmrmic$i.dat");
+	system("mv vmrpha.dat vmrpha$i.dat");
 	system("mv fdelftot.dat fdelftot$i.dat");
 	system("mv algftot.dat algftot$i.dat");
-	system("mv algfdelt.dat algfel$i.dat");
+	system("mv algfdel.dat algfdel$i.dat");
 	system("mv miclys.dat miclys$i.dat");
+	system("mv vmrshark.dat vmrshark$i.dat");
 
 
 	my $dir = '/home/jon/Desktop/Phage2Shark';
@@ -429,8 +433,9 @@ print $fh "@arrin[12]\n";
 print $fh "@arrin[13]\n";
 print $fh "@arrin[14]\n";
 print $fh "@arrin[15]\n";
+print $fh "@arrin[16]\n";
 if (@arrin[15] ne 'N') {
-	print $fh "@arrin[16]\n";
+	print $fh "@arrin[17]\n";
 }
 
 close $fh;
@@ -515,80 +520,60 @@ my $curname = @arrin[2];
 my $multflag = @arrin[3] ;
 
 my $dirgen = '/home/jon/Desktop/Phage2Shark/General';
-my $batchpath = '/home/jon/Desktop/Phage2Shark/gnubatchfiles/genfiles.batch.temp';
-my $batchout = "/home/jon/Desktop/Phage2Shark/General/gnucur.batch";
+my $gnufile = "gnu.batch";
+
+print "Graphing $curfile \n";
 
 chdir($dirgen);
 
-$FHT = open (TEMP, $batchpath);
+unless (open FILE, '>'.$gnufile){
+	die "\n Failed to create batch file for plotting $curfile. \n";
+}
 
-# Error check for file open
-	if (!$FHT){
-		print "Gnu batch template (Average coral) file missing from directory, unable to complete process. \n";
-		exit;
-	}
-
-# Open file for final gnuplot batch
-$FHF = open ( BATCH, '>'.$batchout );
-
-# Error check for file open
-	if (!$FHF){
-		print "Unable to open gnu.batch file (Average coral). Exiting. \n";
-		exit;
-	}
 
 if ($multflag eq 1) {
-# Write chenges to file.
-	while (<TEMP>) {
-		s/XTITLEX/$curtitle/ge;
-		s/XNAMEX/$curname/ge;
-		s/XLINE1X/datafile = '$curfile' /;
-		s/XLINE2X/firstrow = system('head -1 '.datafile) /;
-		s/XLINE3X/set xlabel word(firstrow,1) /;
-		s/XLINE4X/set ylabel word(firstrow,2) /;
-		s/XLINE5X/ plot datafile using 1:2 with lines /;
-		print BATCH;
-	}
+
+print FILE "set terminal png \n
+		set datafile separator whitespace \n
+		set autoscale \n
+		set title \"$curtitle\"  \n
+		set output \"$curname\"  \n
+		datafile = \"$curfile\"  \n
+		firstrow = system('head -1 '.datafile)  \n
+		set xlabel word(firstrow,1)  \n
+		set ylabel word(firstrow,2)  \n
+		plot datafile using 1:2 with lines";
 
 } elsif ($multflag eq 2) {
 
-	while (<TEMP>) {
-		s/XDX/$numtime/;
-		s/XTITLEX/$curtitle/ge;
-		s/XNAMEX/$curname/ge;
-		s/XLINE1X/set key autotitle columnhead/;
-		s/XLINE2X/plot for [col=2:4] "$curfile" using 1:col with lines/;
-		s/XLINE3X/ /;
-		s/XLINE4X/ /;
-		s/XLINE5X/ /;
-		print BATCH;
-	}
+	print FILE "set terminal png \n
+			set datafile separator whitespace \n
+			set autoscale \n
+			set key autotitle columnhead \n
+			set title \"$curtitle\"  \n
+			set output \"$curname\"  \n
+			plot for [col=2:4] \"$curfile\" using 1:col with lines";
 
 } else {
 
-	while (<TEMP>) {
-		s/XDX/$numtime/;
-		s/XTITLEX/$curtitle/ge;
-		s/XNAMEX/$curname/ge;
-		s/XLINE1X/set key autotitle columnhead/;
-		s/XLINE2X/plot "$curfile" using 1:2 with lines, "$curfile" using 1:3 pt 7 ps 0.2/;
-		s/XLINE3X/ /;
-		s/XLINE4X/ /;
-		s/XLINE5X/ /;
-		print BATCH;
-	}
+	print FILE "set terminal png \n
+			set datafile separator whitespace \n
+			set autoscale \n
+			set key autotitle columnhead \n
+			set title \"$curtitle\"  \n
+			set output \"$curname\"  \n
+			plot \"$curfile\" using 1:2 with lines, \"$curfile\" using 1:3 pt7 ps 0.2";
 
 }
 
-system("gnuplot gnucur.batch");
+system("gnuplot $gnufile");
 system("mv $curname /home/jon/Desktop/Phage2Shark/Outputs");
 
-# Close the files
-close(TEMP);
-close(BATCH);
+# Close the file
+close(FILE);
 
-system("rm gnucur.batch");
-
+close FILE;
+system("rm $gnufile");
 
 }
 
@@ -626,110 +611,142 @@ my $batchpathmic = '/home/jon/Desktop/Phage2Shark/gnubatchfiles/genfilesmultmicr
 my $batchout = "/home/jon/Desktop/Phage2Shark/General/gnucur.batch";
 my $batchout2 = "/home/jon/Desktop/Phage2Shark/General/gnucurmic.batch";
 
+my $gnufile = "gnu.batch";
+
 chdir($dirgen);
+
+print "Graphing $curfile";
 
 if ($multflag eq 1) {
 
-$FHT = open (TEMP, $batchpath);
-
-# Error check for file open
-	if (!$FHT){
-		print "Gnu batch template file missing from directory, unable to complete process. \n";
-		exit;
-	}
-
 # Open file for final gnuplot batch
-$FHF = open ( BATCH, '>'.$batchout );
+unless (open FILE, '>'.$gnufile){
+	die "\n Failed to create batch file for plotting $curfile. \n";
+}
 
-# Error check for file open
-	if (!$FHF){
-		print "Unable to open gnu.batch file. Exiting. \n";
-		exit;
-	}
+print FILE "set terminal png \n
+						set key autotitle colmnhead \n
+						set terminal size 1280,760 \n
+						set style line 2 lc rgbcolor \"blue\" lt 1 lw 1
+						set style line 3 lc rgbcolor \"dark-blue\" lt 1 lw 1
+						set style line 4 lc rgbcolor \"web-blue\" lt 1 lw 1
 
-# Write chenges to file.
-	while (<TEMP>) {
-		s/XDX/$numtime/;
-		s/XTITLEX/$curtitle/ge;
-		s/XNAMEX/$curname/ge;
-		s/XLINE1X/ datafile = "$curfile1"/;
-		s/XLABEL1X/ firstrow = system('head -1 '.datafile)/;
-		s/XLINE2X/  set xlabel word(firstrow, 1)/;
-		s/XLABEL2X/ set ylabel word(firstrow, 2)/;
-		s/XLINE3X/ 	/;
-		s/XLABEL3X/plot datafile using 1:2 title "$varIter = $varVal1" with lines,  \\/;
-		s/XLINE4X/    "$curfile2" using 1:2 title "$varIter = $varVal2" with lines,  \\/;
-		s/XLABEL4X/     "$curfile3" using 1:2 title "$varIter = $varVal3" with lines,  \\/;
-		s/XLINE5X/    "$curfile4" using 1:2 title "$varIter = $varVal4" with lines,  \\/;
-		s/XLABEL5X/     "$curfile5" using 1:2 title "$varIter = $varVal5" with lines		/;
-		s/XLINE6X/ /;
-		print BATCH;
-	}
+						set style line 5 lc rgbcolor \"red\" lt 1 lw 1
+						set style line 6 lc rgbcolor \"dark-red\" lt 1 lw 1
+						set style line 7 lc rgbcolor \"light-red\" lt 1 lw 1
+
+						set style line 8 lc rgbcolor \"green\" lt 1 lw 1
+						set style line 9 lc rgbcolor \"dark-green\" lt 1 lw 1
+						set style line 10 lc rgbcolor \"web-green\" lt 1 lw 1
+
+						set style line 11 lc rgbcolor \"gold\" lt 1 lw 1
+						set style line 12 lc rgbcolor \"orange-red\" lt 1 lw 1
+						set style line 13 lc rgbcolor \"orange\" lt 1 lw 1
+
+						set style line 14 lc rgbcolor \"black\" lt 1 lw 1
+						set style line 15 lc rgbcolor \"dark-grey\" lt 1 lw 1
+						set style line 16 lc rgbcolor \"slategrey\" lt 1 lw 1
+
+						set xrange [0:$numtime]
+						set title \"$curtitle\"
+						set output \"$curname\"
+
+						datafile = \"$curfile1\"
+						firstrow = system('head -1 '.datafile)
+						set xlabel word(firstrow, 1)
+						set ylabel word(firstrow, 1)
+						plot datafile using 1:2 title \"$varIter = $varVal1\" with lines, \"$curfile2\" using 1:2 title \"$varIter = $varVal2\" with lines, \"$curfile3\" using 1:2 title \"$varIter = $varVal3\" with lines, \"$curfile4\" using 1:2 title \"$varIter = $varVal4\" with lines, \"$curfile5\" using 1:2 title \"$varIter = $varVal5\" with lines"
 
 # Close the files
-close(TEMP);
-close(BATCH);
+close(FILE);
 
 } elsif ($multflag eq 2) {
 
-$FHT = open (TEMP, $batchpath);
-$FHF = open ( BATCH, '>'.$batchout );
-
-
-	while (<TEMP>) {
-		s/XDX/$numtime/;
-		s/XTITLEX/$curtitle/ge;
-		s/XNAMEX/$curname/ge;
-		s/XLINE1X/set key outside /;
-		s/XLABEL1X/plot 1\/0 with points pt -1 t "$varIter = $varVal1", \\/;
-		s/XLINE2X/      for [col=2:4] "$curfile1" using 1:col with lines lt col, \\/;
-		s/XLABEL2X/ 		1\/0 with points pt -1 t "$varIter = $varVal2", \\/;
-		s/XLINE3X/	    for [col=2:4] "$curfile2" using 1:col with lines lt col+3, \\/;
-		s/XLABEL3X/ 		1\/0 with points pt -1 t "$varIter = $varVal3", \\/;
-		s/XLINE4X/	    for [col=2:4] "$curfile3" using 1:col with lines lt col+6, \\/;
-		s/XLABEL4X/ 		1\/0 with points pt -1 t "$varIter = $varVal4", \\/;
-		s/XLINE5X/      for [col=2:4] "$curfile4" using 1:col with lines lt col+9, \\/;
-		s/XLABEL5X/ 		1\/0 with points pt -1 t "$varIter = $varVal5", \\/;
-		s/XLINE6X/	    for [col=2:4] "$curfile5" using 1:col with lines lt col+12/;
-		print BATCH;
+	# Open file for final gnuplot batch
+	unless (open FILE, '>'.$gnufile){
+		die "\n Failed to create batch file for plotting $curfile. \n";
 	}
 
-close(TEMP);
-close(BATCH);
+	print FILE "set terminal png \n
+							set key autotitle colmnhead \n
+							set terminal size 1280,760 \n
+							set style line 2 lc rgbcolor \"blue\" lt 1 lw 1
+							set style line 3 lc rgbcolor \"dark-blue\" lt 1 lw 1
+							set style line 4 lc rgbcolor \"web-blue\" lt 1 lw 1
 
+							set style line 5 lc rgbcolor \"red\" lt 1 lw 1
+							set style line 6 lc rgbcolor \"dark-red\" lt 1 lw 1
+							set style line 7 lc rgbcolor \"light-red\" lt 1 lw 1
+
+							set style line 8 lc rgbcolor \"green\" lt 1 lw 1
+							set style line 9 lc rgbcolor \"dark-green\" lt 1 lw 1
+							set style line 10 lc rgbcolor \"web-green\" lt 1 lw 1
+
+							set style line 11 lc rgbcolor \"gold\" lt 1 lw 1
+							set style line 12 lc rgbcolor \"orange-red\" lt 1 lw 1
+							set style line 13 lc rgbcolor \"orange\" lt 1 lw 1
+
+							set style line 14 lc rgbcolor \"black\" lt 1 lw 1
+							set style line 15 lc rgbcolor \"dark-grey\" lt 1 lw 1
+							set style line 16 lc rgbcolor \"slategrey\" lt 1 lw 1
+
+							set xrange [0:$numtime]
+							set title \"$curtitle\"
+							set output \"$curname\"
+
+							datafile = \"$curfile1\"
+							firstrow = system('head -1 '.datafile)
+							set xlabel word(firstrow, 1)
+							set ylabel word(firstrow, 1)
+							plot 1\/0 with points pt -1 t \"$varIter = $varVal1\", for [col=2:4] \"$curfile1\" using 1:col with lines lt col, 1\/0 with points pt -1 t \"$varIter = $varVal2\", for [col=2:4] \"$curfile2\" using 1:col with lines lt col+3, 1\/0 with points pt -1 t \"$varIter = $varVal3\", for [col=2:4] \"$curfile3\" using 1:col with lines lt col+6, 1\/0 with points pt -1 t \"$varIter = $varVal4\", for [col=2:4] \"$curfile4\" using 1:col with lines lt col+9, 1\/0 with points pt -1 t "$varIter = $varVal5", for [col=2:4] \"$curfile5\" using 1:col with lines lt col+12";
+
+close(FILE);
 
 } elsif ($multflag eq 3) {
 
-$FHT = open (TEMP, $batchpath);
-$FHF = open ( BATCH, '>'.$batchout );
-
-	while (<TEMP>) {
-		s/XDX/$numtime/;
-		s/XTITLEX/$curtitle/ge;
-		s/XNAMEX/$curname/ge;
-		s/XLINE1X/set key outside /;
-		s/XLABEL1X/plot 1\/0 with points pt -1 t "$varIter = $varVal1", \\/;
-		s/XLINE2X/     "$curfile1" using 1:2 with lines lc rgbcolor "green", "$curfile1" using 1:3 pt 7 ps 0.6 lc rgbcolor "green", \\/;
-		s/XLABEL2X/ 		1\/0 with points pt -1 t "$varIter = $varVal2", \\/;
-		s/XLINE3X/     "$curfile2" using 1:2 with lines lc rgbcolor "red", "$curfile2" using 1:3 pt 7 ps 0.6 lc rgbcolor "red", \\/;
-		s/XLABEL3X/ 		1\/0 with points pt -1 t "$varIter = $varVal3", \\/;
-		s/XLINE4X/     "$curfile3" using 1:2 with lines lc rgbcolor "blue", "$curfile3" using 1:3 pt 7 ps 0.6 lc rgbcolor "blue", \\/;
-		s/XLABEL4X/ 		1\/0 with points pt -1 t "$varIter = $varVal4", \\/;
-		s/XLINE5X/     "$curfile4" using 1:2 with lines lc rgbcolor "black", "$curfile4" using 1:3 pt 7 ps 0.6 lc rgbcolor "black", \\/;
-		s/XLABEL5X/ 		1\/0 with points pt -1 t "$varIter = $varVal5", \\/;
-		s/XLINE6X/     "$curfile5" using 1:2 with lines lc rgbcolor "orange", "$curfile5" using 1:3 pt 7 ps 0.6 lc rgbcolor "orange" /;
-		print BATCH;
+	# Open file for final gnuplot batch
+	unless (open FILE, '>'.$gnufile){
+		die "\n Failed to create batch file for plotting $curfile. \n";
 	}
 
-close(TEMP);
-close(BATCH);
+	print FILE "set terminal png \n
+							set key autotitle colmnhead \n
+							set terminal size 1280,760 \n
+							set style line 2 lc rgbcolor \"blue\" lt 1 lw 1
+							set style line 3 lc rgbcolor \"dark-blue\" lt 1 lw 1
+							set style line 4 lc rgbcolor \"web-blue\" lt 1 lw 1
+
+							set style line 5 lc rgbcolor \"red\" lt 1 lw 1
+							set style line 6 lc rgbcolor \"dark-red\" lt 1 lw 1
+							set style line 7 lc rgbcolor \"light-red\" lt 1 lw 1
+
+							set style line 8 lc rgbcolor \"green\" lt 1 lw 1
+							set style line 9 lc rgbcolor \"dark-green\" lt 1 lw 1
+							set style line 10 lc rgbcolor \"web-green\" lt 1 lw 1
+
+							set style line 11 lc rgbcolor \"gold\" lt 1 lw 1
+							set style line 12 lc rgbcolor \"orange-red\" lt 1 lw 1
+							set style line 13 lc rgbcolor \"orange\" lt 1 lw 1
+
+							set style line 14 lc rgbcolor \"black\" lt 1 lw 1
+							set style line 15 lc rgbcolor \"dark-grey\" lt 1 lw 1
+							set style line 16 lc rgbcolor \"slategrey\" lt 1 lw 1
+
+							set xrange [0:$numtime]
+							set title \"$curtitle\"
+							set output \"$curname\"
+							set key outside
+							plot 1\/0 with points pt -1 t \"$varIter = $varVal1\", \"$curfile1\" using 1:2 with lines lc rgbcolor \"green\", \"$curfile1\" using 1:3 pt 7 ps 0.6 lc rgbcolor \"green\", 1\/0 with points pt -1 t \"$varIter = $varVal2\", \"$curfile2\" using 1:2 with lines lc rgbcolor \"red\", \"$curfile2\" using 1:3 pt 7 ps 0.6 lc rgbcolor \"red"\, 1\/0 with points pt -1 t \"$varIter = $varVal3\", \"$curfile3\" using 1:2 with lines lc rgbcolor \"blue\", \"$curfile3\" using 1:3 pt 7 ps 0.6 lc rgbcolor \"blue\", 1\/0 with points pt -1 t \"$varIter = $varVal4\", \"$curfile4\" using 1:2 with lines lc rgbcolor \"black\", \"$curfile4\" using 1:3 pt 7 ps 0.6 lc rgbcolor \"black\", 1\/0 with points pt -1 t \"$varIter = $varVal5\", \"$curfile5\" using 1:2 with lines lc rgbcolor \"orange\", \"$curfile5\" using 1:3 pt 7 ps 0.6 lc rgbcolor \"orange\"
+							";
+
+close(FILE);
 
 }
 
-system("gnuplot gnucur.batch");
+system("gnuplot $gnufile");
 system("mv $curname /home/jon/Desktop/Phage2Shark/Outputs");
 
-system("rm gnucur.batch");
+system("rm $gnufile");
 
 }
 #####################################################################################################################################################
@@ -748,20 +765,11 @@ my $varIter = @arrin[4];
 
 my $dirgen = '/home/jon/Desktop/Phage2Shark/General';
 my $dirout = '/home/jon/Desktop/Phage2Shark/Outputs';
-my $batchpath = '/home/jon/Desktop/Phage2Shark/gnubatchfiles/genfilesmult.batch.temp';
-my $batchpathmic = '/home/jon/Desktop/Phage2Shark/gnubatchfiles/statfiles.batch.temp';
 my $batchout = "/home/jon/Desktop/Phage2Shark/Outputs/gnucur.batch";
-my $batchout2 = "/home/jon/Desktop/Phage2Shark/General/gnucurmic.batch";
 
 chdir($dirgen);
 
-$FHT = open (TEMP, $batchpathmic);
-
-# Error check for file open
-	if (!$FHT){
-		print "Gnu batch template file missing from directory, unable to complete process. \n";
-		exit;
-	}
+print "Graphing $curfile";
 
 # Open file for final gnuplot batch
 $FHF = open ( BATCH, '>' .$batchout );
@@ -788,7 +796,6 @@ close(BATCH);
 chdir($dirout);
 
 system("gnuplot gnucur.batch");
-#system("mv $curname /home/jon/Desktop/Phage2Shark/Outputs");
 
 system("rm gnucur.batch");
 
@@ -811,65 +818,51 @@ my $curname = @arrin[4];
 my $tflag = @arrin[5];
 
 my $dirgen = '/home/jon/Desktop/Phage2Shark/General';
-my $batchpath = '/home/jon/Desktop/Phage2Shark/gnubatchfiles/genfiles.batch.temp';
-my $batchout = "/home/jon/Desktop/Phage2Shark/General/gnucur.batch";
+
+my $gnufile = "gnu.batch";
 
 chdir($dirgen);
 
-$FHT = open (TEMP, $batchpath);
+unless (open FILE, '>'.$gnufile){
+	die "\n Failed to create batch file for plotting $curfile. \n";
+}
 
-# Error check for file open
-	if (!$FHT){
-		print "Gnu batch template (Average coral) file missing from directory, unable to complete process. \n";
-		exit;
-	}
+print "Plotting $curname \n";
 
-# Open file for final gnuplot batch
-$FHF = open ( BATCH, '>'.$batchout );
-
-# Error check for file open
-	if (!$FHF){
-		print "Unable to open gnu.batch file (Average coral). Exiting. \n";
-		exit;
-	}
+unless (open FILE, '>'.$gnufile){
+	die "\n Failed to create batch file for plotting $curname. \n";
+}
 
 if ($tflag eq 1) {
 # Write chenges to file.
-	while (<TEMP>) {
-		s/XTITLEX/$curtitle/ge;
-		s/XNAMEX/$curname/ge;
-		s/XLINE1X/plot  "$curfile1" with lines title columnheader, \\/;
-		s/XLINE2X/ 		1\/0 with points -1 t "Coral Domain", \\/;
-		s/XLINE3X/	  "$curfile2"  with lines title columnheader, \\/;
-		s/XLINE4X/ 		1\/0 with points pt -1 t "Barrier Domain", \\/;
-		s/XLINE5X/	  "$curfile3" with lines title columnheader /;
-		print BATCH;
-	}
+
+print FILE "set terminal png \n
+		set datafile separator whitespace \n
+		set autoscale \n
+		set title \"$curtitle\" \n
+		set output \"$curname\" \n
+		set key autotitle columnhead \n
+		plot \"$curfile1\" with lines, \"$curfile2\" with lines, \"$curfile3\" with lines";
 
 } elsif	($tflag eq 2){
 
-# Write chenges to file.
-	while (<TEMP>) {
-		s/XTITLEX/$curtitle/ge;
-		s/XNAMEX/$curname/ge;
-		s/XLINE1X/plot for [col=2:4] "$curfile1" using 1:col with lines title columnheader, \\/;
-		s/XLINE2X/ 		1\/0 with points -1 t "Coral Domain", \\/;
-		s/XLINE3X/	  for [col=2:4] "$curfile2" using 1:col with lines title columnheader, \\/;
-		s/XLINE4X/ 		1\/0 with points pt -1 t "Barrier Domain", \\/;
-		s/XLINE5X/	  for [col=2:4] "$curfile3" using 1:col with lines title columnheader /;
-		print BATCH;
-	}
+print FILE "set terminal png \n
+		set datafile separator whitespace \n
+		set autoscale \n
+		set title \"$curtitle\"  \n
+		set output \"$curname\"  \n
+		set key autotitle columnhead \n
+		plot \"$curfile1\" using 1:2 with lines, \"$curfile1\" using 1:3 with lines, \"$curfile1\" using 1:4 with lines, \"$curfile2\" using 1:2 with lines, \"$curfile2\" using 1:3 with lines, \"$curfile2\" using 1:4 with lines, \"$curfile3\" using 1:2 with lines,	\"$curfile3\" using 1:3 with lines, \"$curfile3\" using 1:4 with lines";
 
 }
 
-system("gnuplot gnucur.batch");
+system("gnuplot $gnufile");
 system("mv $curname /home/jon/Desktop/Phage2Shark/Outputs");
 
 # Close the files
-close(TEMP);
-close(BATCH);
+close(FILE);
 
-system("rm gnucur.batch");
+system("rm $gnufile");
 
 
 }
