@@ -1,13 +1,13 @@
-## Phage to Shark
-# Code Map
+# Phage to Shark
+## Code Map
 
-A listing of files and the subroutines/functions contained within.
+A listing of files and the subroutines/functions contained within. \
 
-Code written by: Jon Parsons
-Primary investigators: Dr. P. Katira
-                       Dr. C. Silveira
-                       Dr. A. Luque
-
+Code written by: Jon Parsons \
+Primary investigators: Dr. P. Katira \
+                       Dr. C. Silveira \
+                       Dr. A. Luque \
+\
 __P2Smain.f90__
 Contains the master loop. No subroutines or functions contained.
 
