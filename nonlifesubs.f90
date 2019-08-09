@@ -1,5 +1,4 @@
 subroutine printer(arr,big)
-
 ! Printing subroutine for arrays of two dimensions
 
 implicit none
@@ -17,7 +16,7 @@ end do
 
 end subroutine
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 subroutine printtofile(arrin,size,file)
 
@@ -44,16 +43,17 @@ close(19)
 
 end subroutine
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 subroutine printbact(filea,fileb,filec)
 
-! Prints to a file in x-y-int-int format. Column 3 totalpop, Column 4 number of species
+! Prints to a file in x-y-int-int format. Column 3 totalpop,
+! Column 4 number of species
 
 use globalvars
 
 implicit none
-	character*50, intent(in)					:: filea, fileb, filec
+	character*50, intent(in)	:: filea, fileb, filec
 	integer 									:: i, j
 
 open(unit=16,file=trim(filea),status="replace",position="append")
@@ -74,9 +74,11 @@ close(18)
 
 end subroutine
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 subroutine dircheck(path)
+! Checks to see if a directoy exists.
+! Creates directory if not already there
 
 implicit none
 	character(len=*)		:: path
@@ -93,45 +95,78 @@ implicit none
 
 end subroutine
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 subroutine datacollect(tim)
+! Data collection subroutine. Reef averages and totals
 
 use globalvars
 use functions
 
 implicit none
 	integer			  :: tim
-	real				  :: avgcoral, avgbact
+	real (kind=8) :: avgcoral, lysum, bacspec, phagespec
 	real (kind=8)	:: phagelysratio, phagesum, bacsum
-	real (kind=8) :: lyssum
+	real (kind=8) :: cordelt, lysspec
 	character*50	:: corfile
-	character*50	:: percfile
 	character*50	:: corpath
 	character*50	:: genpath
-	character*50	:: totbactfile, totfishfile
-	character*50	:: avgcoralfile, phlyratiofile
-	character*50	:: micropopfile, microspecfile, microratiofile
-	character*50	:: cortotfile, corgrowfile
-	character*50	:: vmr_micab_file, fgrow_fbio_file
-	character*50	:: algae_fbio_file, cor_fbio_file
-	character*50	:: algae_fdel_file, micab_lys_file
-	character*50	:: vmr_phage_file, vmr_shark_file
+	character*50	:: cor_perc_file
+	character*50	:: cor_tot_file
+	character*50	:: bact_pop_file, fish_tot_file
+	character*50	:: cor_avg_file, phage_lys_rat_file
+	character*50	:: phage_pop_file, lys_pop_file, phage_spec_file
+	character*50	:: lys_spec_file, bact_spec_file, cor_delt_file
+	character*50	:: fish_delt_file, alg_perc_file, vmr_file
+	character*50	:: shark_evt_file, time_file
 	real				  :: fdel
 	real				  :: alg
-	real(kind=8)	:: vmr, lysperc
+	real (kind=8)	:: vmr, lysperc
+
+	integer				:: i, j
 
 ! Data manipulation
+phagesum = 0.0
+bacsum = 0.0
+lysum = 0.0
+bacspec = 0.0
+phagespec = 0.0
+lysspec = 0.0
+
+! Find microbe populations and species
+do i = 1, 2*grid, 1
+	do j = 1, 2*grid, 1
+		phagesum = phagesum + phage(i,j)%totalpop
+		bacsum = bacsum + bacteria(i,j)%totalpop
+		lysum = lysum + lys(i,j)%totalpop
+		bacspec = bacspec + bacteria(i,j)%numspecies
+		phagespec = phagespec + phage(i,j)%numspecies
+		lysspec = lysspec + lys(i,j)%numspecies
+	end do
+end do
+
+! Average them. factor of 0.04 to normalize from 25 cm^3 to 1 ml
+bacsum = bacsum*0.04/(real(2*grid,8)**2)
+phagesum = phagesum*0.04/(real(2*grid,8)**2)
+lysum = lysum*0.04/(real(2*grid,8)**2)
+bacspec = bacspec*0.04/(real(2*grid,8)**2)
+phagespec = phagespec*0.04/(real(2*grid,8)**2)
+lysspec = lysspec*0.04/(real(2*grid,8)**2)
+
+! Average coral value over the reef
 avgcoral = sum(coral)/(real(grid)**2)
-avgbact = real(sum(bacteria%totalpop))*0.1/(real(2*grid)**2)
-phagesum = real(sum(phage%totalpop))*0.1
-bacsum = real(sum(bacteria%totalpop))*0.1
-lyssum = real(sum(lys%totalpop))*0.1
+! Phage - lysogen ratio
 phagelysratio = real(phagesum)/real(sum(lys%totalpop))
+! VMR
 vmr = phagesum/bacsum
+! Change in fish population
 fdel = fishdelta(fish)
+! Percentage of algal cover
 alg = 1.0 - percentcor(grid)
-lysperc = real(sum(lys%totalpop),8)/bacsum
+! Fraction of lysogenic population
+lysperc = lysum/bacsum
+! Change in coral overall
+cordelt = (sum(coral) - sum(holding))
 
 ! Format statements
 50 format ("Coral/coraltime",1i4,".dat")
@@ -143,138 +178,103 @@ genpath   = "~/Desktop/Phage2Shark/General"
 call dircheck(corpath)
 call dircheck(genpath)
 
-! Time domain
-percfile	  = "General/perctime.dat"
-totbactfile   = "General/bacttime.dat"
-totfishfile   = "General/fishtottime.dat"
-avgcoralfile  = "General/avgcortime.dat"
-phlyratiofile = "General/phagelysratio.dat"
-micropopfile  = "General/microbepops.dat"
-microspecfile = "General/microbespecs.dat"
-cortotfile 	  = "General/cortottime.dat"
-corgrowfile	  = "General/Corgrowth.dat"
-microratiofile = "General/vmr.dat"
+! File names
+cor_perc_file = "General/coral_percentage.dat"
+cor_tot_file = "General/coral_total.dat"
+bact_pop_file = "General/bact_pop.dat"
+fish_tot_file = "General/fish_pop.dat"
+cor_avg_file = "General/coral_average.dat"
+phage_lys_rat_file = "General/phage_lys_rat.dat"
+phage_pop_file = "General/phage_pop.dat"
+lys_pop_file = "General/lys_pop.dat"
+phage_spec_file = "General/phage_spec.dat"
+lys_spec_file = "General/lys_spec.dat"
+bact_spec_file = "General/bact_spec.dat"
+cor_delt_file = "General/coral_delta.dat"
+fish_delt_file = "General/fish_delta.dat"
+alg_perc_file = "General/algae_perc.dat"
+vmr_file = "General/vmr.dat"
+shark_evt_file = "General/shark_evt.dat"
+time_file = "General/time.dat"
 
-! Comparison domain
-vmr_micab_file = "General/vmrmic.dat"
-fgrow_fbio_file = "General/fdelftot.dat"
-algae_fbio_file = "General/algftot.dat"
-algae_fdel_file = "General/algfdel.dat"
-micab_lys_file = "General/miclys.dat"
-cor_fbio_file = "General/corftot.dat"
-vmr_phage_file = "General/vmrpha.dat"
-vmr_shark_file = "General/vmrshark.dat"
-
-
+! Statements to control output of reef picture
 if (tim .eq. 0) then
 	corfile   = "Coral/coraltime00.dat"
 else if (tim .ne. 0) then
 	write(corfile,50) tim
 end if
 
+! Prints out coral array in xyz
 call printtofile(coral,grid,corfile)
-! Time domain
-	open(unit=15,file=percfile,status="unknown",position="append")
-	open(unit=20,file=totbactfile,status="unknown",position="append")
-	open(unit=21,file=totfishfile,status="unknown",position="append")
-	open(unit=22,file=avgcoralfile,status="unknown",position="append")
-	open(unit=23,file=phlyratiofile,status="unknown",position="append")
-	open(unit=24,file=micropopfile,status="unknown",position="append")
-	open(unit=25,file=microspecfile,status="unknown",position="append")
-	open(unit=26,file=cortotfile,status="unknown",position="append")
-	open(unit=27,file=corgrowfile,status="unknown",position="append")
-	open(unit=28,file=microratiofile,status="unknown",position="append")
-! Comparison domains
-	open(unit=30,file=vmr_micab_file,status="unknown",position="append")
-	open(unit=31,file=fgrow_fbio_file,status="unknown",position="append")
-	open(unit=32,file=algae_fbio_file,status="unknown",position="append")
-	open(unit=33,file=algae_fdel_file,status="unknown",position="append")
-	open(unit=34,file=micab_lys_file,status="unknown",position="append")
-	open(unit=35,file=cor_fbio_file,status="unknown",position="append")
-	open(unit=36,file=vmr_phage_file,status="unknown",position="append")
-	open(unit=37,file=vmr_shark_file,status="unknown",position="append")
 
-if (tim .eq. 0) then
-	write(15,*) "Time Percentage-of-Coral"
-	write(20,*) "Time Bacteria-Pop."
-	write(21,*) "Time Total-Fish-Mass"
-	write(22,*) "Time Average-Coral"
-	write(23,*) "Time Phage/Lysogen-Ratio"
-	write(24,*) "Time Bacteria Lytic Lysogenic"
-	write(25,*) "Time Bacteria Lytic Lysogenic"
-	write(26,*) "Time Total-Coral-Mass"
-	write(27,*) "Time Growth Shark-Event"
-	write(28,*) "Time VMR"
-	write(30,*) "Microbes VMR"
-	write(31,*) "Fish FDelta"
-	write(32,*) "Algae Fish"
-	write(33,*) "Algae FDelta"
-	write(34,*) "Bacteria LysRatio(Lys/Bac)"
-	write(35,*) "Coral	Fish"
-	write(36,*) "VMR	Phage(total)"
-	write(37,*) "VMR	Shark"
-end if
+! Open files
+open(unit=15,file=cor_perc_file,status="unknown",position="append")
+open(unit=20,file=cor_tot_file,status="unknown",position="append")
+open(unit=21,file=bact_pop_file,status="unknown",position="append")
+open(unit=22,file=fish_tot_file,status="unknown",position="append")
+open(unit=23,file=cor_avg_file,status="unknown",position="append")
+open(unit=24,file=phage_lys_rat_file,status="unknown",position="append")
+open(unit=25,file=phage_pop_file,status="unknown",position="append")
+open(unit=26,file=lys_spec_file,status="unknown",position="append")
+open(unit=27,file=bact_spec_file,status="unknown",position="append")
+open(unit=28,file=cor_delt_file,status="unknown",position="append")
+open(unit=29,file=fish_delt_file,status="unknown",position="append")
+open(unit=30,file=alg_perc_file,status="unknown",position="append")
+open(unit=31,file=vmr_file,status="unknown",position="append")
+open(unit=32,file=shark_evt_file,status="unknown",position="append")
+open(unit=33,file=time_file,status="unknown",position="append")
+open(unit=34,file=lys_pop_file,status="unknown",position="append")
 
+! Write to files
+write(15,*) percentcor(grid) ! Coral percentage
+write(20,*) sum(coral) ! Coral total
+write(21,*) bacsum ! Bacteria pop
+write(22,*) fish ! fish pop
+write(23,*) avgcoral ! average coral
+write(24,*) phagelysratio ! Phage-lysogen ratio
+write(25,*) phagesum ! Phage pop
+write(26,*) lysspec ! lysogen species
+write(27,*) bacspec ! bacteria species
+write(28,*) cordelt ! change in coral
+write(29,*) fdel ! change in fish
+write(30,*) alg ! algae percentage
+write(31,*) vmr ! VMR
+write(32,*) shrkevt ! If a shark hunt was succesful, prints 1, else 0
+write(33,*) tim ! current timesep
+write(34,*) lysum ! lysogen pop
 
-!!! Bacteria/Phage prefactors are based on a 100x100 grid, with each grid being 10cm a side.
-!!!  For calculation purposes the values are normalized by dividing by 1e8. With the above grid
-!!!  and accounting for a 10m water column, we work out to a final 1/10 division.
-write(15,*) tim, percentcor(grid)
-write(20,*) tim, bacsum
-write(21,*) tim, fish
-write(22,*) tim, avgcoral
-write(23,*) tim, phagelysratio
-write(24,*) tim, bacsum, phagesum, lyssum
-write(25,*) tim, sum(bacteria%numspecies)/(grid*grid), sum(phage%numspecies)/(grid*grid), sum(lys%numspecies)/(grid*grid)
-write(26,*) tim, sum(coral)
-if (shrkevt .eq. 0.0) then
-	write(27,*) tim, (sum(coral)-sum(holding))/sum(coral)
-else
-	write(27,*) tim, (sum(coral)-sum(holding))/sum(coral), shrkevt/1000.0
-end if
-write(28,*) tim, vmr
-write(30,*) bacsum, vmr
-write(31,*) fish, fdel
-write(32,*) alg, fish
-write(33,*) alg, fdel
-write(34,*) bacsum, lysperc
-write(35,*) percentcor(grid), fish
-write(36,*) vmr, phagesum
-write(37,*) vmr, sharkMass
-
-	close(15)
-	close(20)
-	close(21)
-	close(22)
-	close(23)
-	close(24)
-	close(25)
-	close(26)
-	close(27)
-	close(28)
-	close(30)
-	close(31)
-	close(32)
-	close(33)
-	close(34)
-	close(35)
-	close(36)
-	close(37)
+! Close files
+close(15)
+close(20)
+close(21)
+close(22)
+close(23)
+close(24)
+close(25)
+close(26)
+close(27)
+close(28)
+close(30)
+close(31)
+close(32)
+close(33)
+close(34)
 
 end subroutine
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 subroutine inputs
+! User inputs, sort of self-documenting
 
 use globalvars
 
 implicit none
-	character*1		:: disFlagin
+	character*1		:: disFlagin, var_adjust_flagin ! Flags for disasters and adjustments
 
-disFlag = "N"
+disFlag = "N" ! default
 
-! User Inputs
+! User Inputs - First section
 write(*,*) "Enter the dimension of the grid (square):"
 read(*,*) grid
 write(*,*) "Enter the number of time steps :"
@@ -307,9 +307,48 @@ write(*,*) "Enter the rate of fish growth."
 read(*,*) fgrowfact
 write(*,*) "Enter the diffusion coefficient."
 read(*,*) diffco
+write(*,*) "Enter the algal decay constant"
+read(*,*) decayconst
 write(*,*) "Enter 'H' for a hurricane, or 'D' for a disease."
 write(*,*) "Any other entry will result in neither."
 read(*,*) disFlagin
+! User inputs - Second section
+write(*,*) "To adjust variables on the second half, enter 'D.'"
+write(*,*) "Any other entry will result in no value change"
+read(*,*) var_adjust_flagin
+
+call chartoup(var_adjust_flagin,var_adjust_flag)
+
+if (var_adjust_flag .eq. "D") then
+	write(*,*) "New coral threshold?"
+	read(*,*) threshold_2nd
+	write(*,*) "Enter the mass of Piscivores."
+	read(*,*) sharkMass_2nd
+	write(*,*) "Enter the average number of days between shark attacks."
+	read(*,*) dayavg_2nd
+	write(*,*) "Enter the value of the bacterial growth rate."
+	read(*,*) rate_2nd
+	write(*,*) "Enter the effect of bacteria on new coral."
+	read(*,*) corBacNew_2nd
+	write(*,*) "Enter the effect of bacteria on growing coral."
+	read(*,*) corBacGrow_2nd
+	write(*,*) "Enter the adsorption coefficient factor."
+	read(*,*) adsorpFac_2nd
+	write(*,*) "Enter the ratio of bacteria that die each timestep."
+	read(*,*) bacDeath_2nd
+	write(*,*) "Enter the burst size of infected bacteria."
+	read(*,*) bacBurst_2nd
+	write(*,*) "Enter the ratio of phage that die each timestep."
+	read(*,*) phagedie_2nd
+	write(*,*) "Enter the fish impact multiplier on algae."
+	read(*,*) fisheatmult_2nd
+	write(*,*) "Enter the rate of fish growth."
+	read(*,*) fgrowfact_2nd
+	write(*,*) "Enter the diffusion coefficient."
+	read(*,*) diffco_2nd
+	write(*,*) "Enter the algal decay constant"
+	read(*,*) decayconst_2nd
+end if
 
 call chartoup(disFlagin,disFlag)
 
@@ -329,7 +368,7 @@ end if
 
 end subroutine
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 subroutine chartoup(stringin,stringout)
 
@@ -352,62 +391,123 @@ end do
 end subroutine
 
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine domainout(tim)
+subroutine domainout
+! Collects data and outputs for coral, algae, and interface regions
 
 use globalvars
 
 implicit none
-	integer				:: tim
-	character*50	:: mic_algFile, mic_corFile, mic_barFile
-	character*50	:: vmr_algFile, vmr_corFile, vmr_barFile
-	integer				:: algCount, corCount, barCount
+	integer				:: algCount, corCount, barCount, sumCount
 	logical				:: kcounter(2*grid,2*grid)
-	real(kind=8)	:: vmrAlgSum, vmrCorSum, vmrBarSum
-	real(kind=8)	:: bmicAlgSum, pmicAlgSum, lmicAlgSum
-	real(kind=8)	:: bmicCorSum, pmicCorSum, lmicCorSum
-	real(kind=8)	:: bmicBarSum, pmicBarSum, lmicBarSum
-	real(kind=8)	:: AvgBactCapUse
+	real(kind=8)	:: AvgBactCapUse ! Holds average bacteria carrying capacity usage
+	real(kind=8)	:: bact_pop_cor, bact_pop_alg, bact_pop_bar ! bact pop
+	real(kind=8)	:: lys_pop_cor, lys_pop_alg, lys_pop_bar ! lys pop
+	real(kind=8)	:: phage_pop_cor, phage_pop_alg, phage_pop_bar ! phage pop
+	real(kind=8)	:: bact_spec_cor, bact_spec_alg, bact_spec_bar ! bact spec
+	real(kind=8)	:: lys_spec_cor, lys_spec_alg, lys_spec_bar ! lys spec
+	real(kind=8)	:: phage_spec_cor, phage_spec_alg, phage_spec_bar ! phage spec
+	real(kind=8)	:: phage_lys_rat_cor, phage_lys_rat_alg, phage_lys_rat_bar ! phage lys ratio
+	real(kind=8)	:: vmr_cor, vmr_alg, vmr_bar ! vmr
 
-	integer				:: i, j
+	character*50	:: bact_pop_cor_file, bact_pop_alg_file, bact_pop_bar_file ! Bact pop
+	character*50	:: phage_lys_rat_cor_file, phage_lys_rat_alg_file, phage_lys_rat_bar_file ! phage lys ratio
+	character*50	:: phage_pop_cor_file, phage_pop_alg_file, phage_pop_bar_file ! phage pop
+	character*50 	:: lys_pop_cor_file, lys_pop_alg_file, lys_pop_bar_file ! pys pop
+  character*50	:: phage_spec_cor_file, phage_spec_alg_file, phage_spec_bar_file ! Phage spec
+	character*50	:: lys_spec_cor_file, lys_spec_alg_file, lys_spec_bar_file ! lys spec
+  character*50	:: bact_spec_cor_file, bact_spec_alg_file, bact_spec_bar_file  ! bact spec
+	character*50	:: vmr_cor_file, vmr_alg_file, vmr_bar_file ! vmr
+	character*50	:: area_cor_file, area_alg_file, area_bar_file ! Percs. of area
 
-mic_algFile = "General/microbes_algdom.dat"
-mic_corFile = "General/microbes_cordom.dat"
-mic_barFile = "General/microbes_bardom.dat"
-vmr_algFile = "General/vmr_algdom.dat"
-vmr_corFile = "General/vmr_cordom.dat"
-vmr_barFile = "General/vmr_bardom.dat"
+	integer				:: i, j ! Looping integers
 
-bmicAlgSum = 0.0
-pmicAlgSum = 0.0
-lmicAlgSum = 0.0
-bmicCorSum = 0.0
-pmicCorSum = 0.0
-lmicCorSum = 0.0
-bmicBarSum = 0.0
-pmicBarSum = 0.0
-lmicBarSum = 0.0
-vmrAlgSum = 0.0
-vmrCorSum = 0.0
-vmrBarSum = 0.0
+! File names
+bact_pop_cor_file = "General/bact_pop_cor.dat"
+bact_pop_alg_file = "General/bact_pop_alg.dat"
+bact_pop_bar_file = "General/bact_pop_bar.dat"
+phage_lys_rat_cor_file = "General/phage_lys_rat_cor.dat"
+phage_lys_rat_alg_file = "General/phage_lys_rat_alg.dat"
+phage_lys_rat_bar_file = "General/phage_lys_rat_bar.dat"
+phage_pop_cor_file = "General/phage_pop_cor.dat"
+phage_pop_alg_file = "General/phage_pop_alg.dat"
+phage_pop_bar_file = "General/phage_pop_bar.dat"
+lys_pop_cor_file = "General/lys_pop_cor.dat"
+lys_pop_alg_file = "General/lys_pop_alg.dat"
+lys_pop_bar_file = "General/lys_pop_bar.dat"
+phage_spec_cor_file = "General/phage_spec_cor.dat"
+phage_spec_alg_file = "General/phage_spec_alg.dat"
+phage_spec_bar_file = "General/phage_spec_bar.dat"
+lys_spec_cor_file = "General/lys_spec_cor.dat"
+lys_spec_alg_file = "General/lys_spec_alg.dat"
+lys_spec_bar_file = "General/lys_spec_bar.dat"
+bact_spec_cor_file = "General/bact_spec_cor.dat"
+bact_spec_alg_file = "General/bact_spec_alg.dat"
+bact_spec_bar_file = "General/bact_spec_bar.dat"
+vmr_cor_file = "General/vmr_cor.dat"
+vmr_alg_file = "General/vmr_alg.dat"
+vmr_bar_file = "General/vmr_bar.dat"
+area_cor_file = "General/area_cor.dat"
+area_alg_file = "General/area_alg.dat"
+area_bar_file = "General/area_bar.dat"
 
-open(unit=41,file=mic_algFile,status="unknown",position="append")
-open(unit=42,file=mic_corFile,status="unknown",position="append")
-open(unit=43,file=mic_barFile,status="unknown",position="append")
-open(unit=44,file=vmr_algFile,status="unknown",position="append")
-open(unit=45,file=vmr_corFile,status="unknown",position="append")
-open(unit=46,file=vmr_barFile,status="unknown",position="append")
+! Initializations
+bact_pop_cor = 0.0
+bact_pop_alg = 0.0
+bact_pop_bar = 0.0
+lys_pop_cor = 0.0
+lys_pop_alg = 0.0
+lys_pop_bar = 0.0
+phage_pop_cor = 0.0
+phage_pop_alg = 0.0
+phage_pop_bar = 0.0
+bact_spec_cor = 0.0
+bact_spec_alg = 0.0
+bact_spec_bar = 0.0
+lys_spec_cor = 0.0
+lys_spec_alg = 0.0
+lys_spec_bar = 0.0
+phage_spec_cor = 0.0
+phage_spec_alg = 0.0
+phage_spec_bar = 0.0
+phage_lys_rat_cor = 0.0
+phage_lys_rat_alg = 0.0
+phage_lys_rat_bar = 0.0
+vmr_cor = 0.0
+vmr_alg = 0.0
+vmr_bar = 0.0
 
-if (tim .eq. 0) then
-	write(41,*) "Time	Bacteria	Lytic	Lysogenic"
-	write(42,*) "Time	Bacteria	Lytic	Lysogenic"
-	write(43,*) "Time	Bacteria	Lytic	Lysogenic"
-	write(44,*) "Time	VMR"
-	write(45,*) "Time	VMR"
-	write(46,*) "Time	VMR"
-end if
+! Open the files
+open(unit=41,file=bact_pop_cor_file,status="unknown",position="append")
+open(unit=42,file=bact_pop_alg_file,status="unknown",position="append")
+open(unit=43,file=bact_pop_bar_file,status="unknown",position="append")
+open(unit=44,file=phage_lys_rat_cor_file,status="unknown",position="append")
+open(unit=45,file=phage_lys_rat_alg_file,status="unknown",position="append")
+open(unit=46,file=phage_lys_rat_bar_file,status="unknown",position="append")
+open(unit=47,file=phage_pop_cor_file,status="unknown",position="append")
+open(unit=48,file=phage_pop_alg_file,status="unknown",position="append")
+open(unit=49,file=phage_pop_bar_file,status="unknown",position="append")
+open(unit=50,file=lys_pop_cor_file,status="unknown",position="append")
+open(unit=51,file=lys_pop_alg_file,status="unknown",position="append")
+open(unit=52,file=lys_pop_bar_file,status="unknown",position="append")
+open(unit=53,file=phage_spec_cor_file,status="unknown",position="append")
+open(unit=54,file=phage_spec_alg_file,status="unknown",position="append")
+open(unit=55,file=phage_spec_bar_file,status="unknown",position="append")
+open(unit=56,file=lys_spec_cor_file,status="unknown",position="append")
+open(unit=57,file=lys_spec_alg_file,status="unknown",position="append")
+open(unit=58,file=lys_spec_bar_file,status="unknown",position="append")
+open(unit=59,file=bact_spec_cor_file,status="unknown",position="append")
+open(unit=60,file=bact_spec_alg_file,status="unknown",position="append")
+open(unit=61,file=bact_spec_bar_file,status="unknown",position="append")
+open(unit=62,file=vmr_cor_file,status="unknown",position="append")
+open(unit=63,file=vmr_alg_file,status="unknown",position="append")
+open(unit=64,file=vmr_bar_file,status="unknown",position="append")
+open(unit=65,file=area_cor_file,status="unknown",position="append")
+open(unit=66,file=area_alg_file,status="unknown",position="append")
+open(unit=67,file=area_bar_file,status="unknown",position="append")
 
+! Count grid locations of each region
 kcounter = (kbact .eq. kalg)
 
 algCount = count(kcounter)
@@ -422,64 +522,173 @@ barCount = count(kcounter)
 
 AvgBactCapUse = 0.0
 
+sumCount = algCount + corCount + barCount
+
+write(65,*) float(corCount)/(4*grid*grid)
+write(66,*) float(algCount)/(4*grid*grid)
+write(67,*) float(barCount)/(4*grid*grid)
+
+! Ensure things are working out
+if (sumCount .ne. (4*grid*grid)) then
+	write(*,*) "Issue in Domain outputs"
+end if
 
 do i = 1, 2*grid, 1
 
 yloop:	do j = 1, 2*grid, 1
 
+		! The two statements below are useful for testing, should not occur else
 		if(bacteria(i,j)%totalpop .eq. 0) then
-			write(*,*) "Bacteria pop zero at ", i, j
+		!	write(*,*) "Bacteria pop zero at ", i, j
 			cycle yloop
 		end if
 
 		if(kbact(i,j) .eq. 0) then
-			write(*,*) "Bacteria carrying capacity zero at ", i, j
+		!	write(*,*) "Bacteria carrying capacity zero at ", i, j
 			cycle yloop
 		end if
 
+		! sum variables for algal region
 		if (kbact(i,j) .eq. kalg) then
-			bmicAlgSum = bmicAlgSum + bacteria(i,j)%totalpop
-			lmicAlgSum = lmicAlgSum + lys(i,j)%totalpop
-			pmicAlgSum = pmicAlgSum + phage(i,j)%totalpop
-			vmrAlgSum = vmrAlgSum + phage(i,j)%totalpop/bacteria(i,j)%totalpop
+			bact_pop_alg = bact_pop_alg + bacteria(i,j)%totalpop
+			lys_pop_alg = lys_pop_alg + lys(i,j)%totalpop
+			phage_pop_alg = phage_pop_alg + phage(i,j)%totalpop
+			bact_spec_alg = bact_spec_alg + bacteria(i,j)%numspecies
+			lys_spec_alg = lys_spec_alg + lys(i,j)%numspecies
+			phage_spec_alg = phage_spec_alg + phage(i,j)%numspecies
+			phage_lys_rat_alg = phage_lys_rat_alg + (real(phage(i,j)%totalpop,8)/real(lys(i,j)%totalpop,8))
+			vmr_alg = vmr_alg + (real(phage(i,j)%totalpop,8)/real(bacteria(i,j)%totalpop,8))
 		end if
 
+		! sum variables for coral region
 		if (kbact(i,j) .eq. kcor) then
-			bmicCorSum = bmicCorSum + bacteria(i,j)%totalpop
-			lmicCorSum = lmicCorSum + lys(i,j)%totalpop
-			pmicCorSum = pmicCorSum + phage(i,j)%totalpop
-			vmrCorSum = vmrCorSum + phage(i,j)%totalpop/bacteria(i,j)%totalpop
+			bact_pop_cor = bact_pop_cor + bacteria(i,j)%totalpop
+			lys_pop_cor = lys_pop_cor + lys(i,j)%totalpop
+			phage_pop_cor = phage_pop_cor + phage(i,j)%totalpop
+			bact_spec_cor = bact_spec_cor + bacteria(i,j)%numspecies
+			lys_spec_cor = lys_spec_cor + lys(i,j)%numspecies
+			phage_spec_cor = phage_spec_cor + phage(i,j)%numspecies
+			phage_lys_rat_cor = phage_lys_rat_cor + (real(phage(i,j)%totalpop,8)/real(lys(i,j)%totalpop,8))
+			vmr_cor = vmr_cor + (real(phage(i,j)%totalpop,8)/real(bacteria(i,j)%totalpop,8))
 		end if
 
+		! Sum variables for barrier region
 		if (kbact(i,j) .eq. kbar) then
-			bmicBarSum = bmicBarSum + bacteria(i,j)%totalpop
-			lmicBarSum = lmicBarSum + lys(i,j)%totalpop
-			pmicBarSum = pmicBarSum + phage(i,j)%totalpop
-			vmrBarSum = vmrBarSum + phage(i,j)%totalpop/bacteria(i,j)%totalpop
+			bact_pop_bar = bact_pop_bar + bacteria(i,j)%totalpop
+			lys_pop_bar = lys_pop_bar + lys(i,j)%totalpop
+			phage_pop_bar = phage_pop_bar + phage(i,j)%totalpop
+			bact_spec_bar = bact_spec_bar + bacteria(i,j)%numspecies
+			lys_spec_bar = lys_spec_bar + lys(i,j)%numspecies
+			phage_spec_bar = phage_spec_bar + phage(i,j)%numspecies
+			phage_lys_rat_bar = phage_lys_rat_bar + (real(phage(i,j)%totalpop,8)/real(lys(i,j)%totalpop,8))
+			vmr_bar = vmr_bar + (real(phage(i,j)%totalpop,8)/real(bacteria(i,j)%totalpop,8))
 		end if
 
+		! Sum capacity use
 		AvgBactCapUse = AvgBactCapUse + bacteria(i,j)%totalpop/kbact(i,j)
 
 	end do yloop
 
 end do
 
+! Average capacity utilization
 AvgBactCapUse = AvgBactCapUse/float(4*grid*grid)
-
 write(*,*) "Average bacteria carrying capacity utilization: ", AvgBactCapUse
 
-write(41,*) tim, bmicAlgSum/float(algCount), pmicAlgSum/float(algCount), lmicAlgSum/float(algCount)
-write(42,*) tim, bmicCorSum/float(corCount), pmicCorSum/float(corCount), lmicCorSum/float(corCount)
-write(43,*) tim, bmicBarSum/float(barCount), pmicBarSum/float(barCount), lmicBarSum/float(barCount)
-write(44,*) tim, vmrAlgSum/float(algCount)
-write(45,*) tim, vmrCorSum/float(corCount)
-write(46,*) tim, vmrBarSum/float(corCount)
+! Normalize values
+bact_pop_cor = bact_pop_cor*0.04/real(corCount,8)
+bact_pop_alg = bact_pop_alg*0.04/real(algCount,8)
+bact_pop_bar = bact_pop_bar*0.04/real(barCount,8)
+lys_pop_cor = lys_pop_cor*0.04/real(corCount,8)
+lys_pop_alg = lys_pop_alg*0.04/real(algCount,8)
+lys_pop_bar = lys_pop_bar*0.04/real(barCount,8)
+phage_pop_cor = phage_pop_cor*0.04/real(corCount,8)
+phage_pop_alg = phage_pop_alg*0.04/real(algCount,8)
+phage_pop_bar = phage_pop_bar*0.04/real(barCount,8)
+bact_spec_cor = bact_spec_cor*0.04/real(corCount,8)
+bact_spec_alg = bact_spec_alg*0.04/real(algCount,8)
+bact_spec_bar = bact_spec_bar*0.04/real(barCount,8)
+lys_spec_cor = lys_spec_cor*0.04/real(corCount,8)
+lys_spec_alg = lys_spec_alg*0.04/real(algCount,8)
+lys_spec_bar = lys_spec_bar*0.04/real(barCount,8)
+phage_spec_cor = phage_spec_cor*0.04/real(corCount,8)
+phage_spec_alg = phage_spec_alg*0.04/real(algCount,8)
+phage_spec_bar = phage_spec_bar*0.04/real(barCount,8)
+phage_lys_rat_cor = phage_lys_rat_cor/real(corCount,8)
+phage_lys_rat_alg = phage_lys_rat_cor/real(algCount,8)
+phage_lys_rat_bar = phage_lys_rat_bar/real(barCount,8)
+vmr_cor = vmr_cor/real(corCount,8)
+vmr_alg = vmr_alg/real(algCount,8)
+vmr_bar = vmr_bar/real(barCount,8)
 
-close(41)
-close(42)
-close(43)
-close(44)
-close(45)
-close(46)
+! write to files
+write(41,*) bact_pop_cor
+write(42,*) bact_pop_alg
+write(43,*) bact_pop_bar
+write(44,*) phage_lys_rat_cor
+write(45,*) phage_lys_rat_alg
+write(46,*) phage_lys_rat_bar
+write(47,*) phage_pop_cor
+write(48,*) phage_pop_alg
+write(49,*) phage_pop_bar
+write(50,*) lys_pop_cor
+write(51,*) lys_pop_alg
+write(52,*) lys_pop_bar
+write(53,*) phage_spec_cor
+write(54,*) phage_spec_alg
+write(55,*) phage_spec_bar
+write(56,*) lys_spec_cor
+write(57,*) lys_spec_alg
+write(58,*) lys_spec_bar
+write(59,*) bact_spec_cor
+write(60,*) bact_spec_alg
+write(61,*) bact_spec_bar
+write(62,*) vmr_cor
+write(63,*) vmr_alg
+write(64,*) vmr_bar
+
+! Close files
+close(41) ; close(42) ; close(43)
+close(44) ; close(45) ; close(46)
+close(47) ; close(48) ; close(49)
+close(50) ; close(51) ; close(52)
+close(53) ; close(54) ; close(55)
+close(56) ; close(57) ; close(58)
+close(59) ; close(60) ; close(61)
+close(62) ; close(63) ; close(64)
+close(65) ; close(66) ; close(67)
 
 end subroutine
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+subroutine var_adjuster(tflag)
+! Adjusts variables from initial values to the values set for the second half
+! of the run
+
+use globalvars
+
+implicit none
+	integer		:: tflag ! Tells what timestep this happens in
+
+write(*,*) "Adjusting parameters at time", tflag
+
+! Adjust parameters to those set by user inputs
+threshold = threshold_2nd
+sharkMass = sharkMass_2nd
+dayavg = dayavg_2nd
+rate = rate_2nd
+corBacNew = corBacNew_2nd
+corBacGrow = corBacGrow_2nd
+adsorpFac = adsorpFac_2nd
+bacDeath = bacDeath_2nd
+bacBurst = bacBurst_2nd
+phagedie = phagedie_2nd
+fisheatmult = fisheatmult_2nd
+fgrowfact = fgrowfact_2nd
+diffco = diffco_2nd
+decayconst = decayconst_2nd
+
+end subroutine
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

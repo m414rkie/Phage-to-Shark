@@ -7,14 +7,14 @@ use globalvars
 implicit none
 	integer							:: i, j								! Looping integers
 
-kalg = 9000.0
-kcor = 3000.0
-kbar = 12000.0
+kalg = 225.0E9 ! 25*9e9 ! Factor of 25 since our grid is 5cm X 5cm at the microbe
+kcor = 75.0E9 ! 25*3e9     level
+kbar = 300.0E9 ! 25*12e9
 
-! Initializations
+! Initialize to all algae
 kbact = kalg
 
-! Loops for initial set up, no barrier interaction
+! Set coral locations
 do i = 1, grid, 1
 
 	do j = 1, grid, 1
@@ -42,7 +42,7 @@ do i = 1, 2*grid, 1
 		end if
 
 		if (j .lt. 2*grid) then
-			if ((j .gt. 2*grid) .and. (kbact(i,j) .ne. kbact(i,j+1))) then
+			if ((j .lt. 2*grid) .and. (kbact(i,j) .ne. kbact(i,j+1))) then
 				kbact(i,j) = kbar
 			end if
 		end if
@@ -57,7 +57,7 @@ end subroutine
 
 subroutine diffuse
 
-! Diffusion subroutine. Primary driver is population pressure
+! Diffusion subroutine. Primary driver is population difference
 
 use globalvars
 
@@ -151,36 +151,53 @@ end subroutine
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 subroutine bactgrowptw
+! Subroutine to evolve the microbial population using the steady state solutions
+! of the lotka-volterra eqns.
 
 use globalvars
 use functions
 
 implicit none
-	real    :: temratio
-	integer :: i, j
-	integer :: bactdelta, phagetot
-	real 	  :: bactchange, phlyratio
+	real*8    :: temratio ! Temperance ratio
+	integer   :: i, j ! Looping integers
+	integer*8 :: bactdelta, phagetot ! Change in bact. pop; total phage pop
+	real*8 	  :: bactchange, phlyratio ! Normalized bact change; phage-lysogen ration
+	real*8		:: lys_frac ! Fraction of bacteria that are lysogenic
+	real*8		:: Adsorp_eff ! Adjusted adsorption coefficient
+	real*8		:: adsorp = 4.8E-10 ! Unadjusted adsorption coefficient
 
+! Loops
 do i = 1, 2*grid, 1
 
 	do j = 1, 2*grid, 1
 
-		temratio = tempratio(i,j)
-		adsorp =(adsorpFac/real(lys(i,j)%totalpop))
-		bactdelta = 0.0
-	! PTW Model steady-state
-	!	bacteria(i,j)%totalpop = int(sqrt((kbact(i,j)*phagedie)/(bacBurst*adsorp)))
+		! Determine lysogenic fraction of bacteria, function in P2Smod.f90
+		lys_frac = lysratio(i,j)
 
-	! Standard model steady state
-		bacteria(i,j)%totalpop = ceiling(phagedie/(bacBurst*adsorp))
-		if (bacteria(i,j)%totalpop .gt. nint(kbact(i,j))) then
-			bacteria(i,j)%totalpop = nint(kbact(i,j))
+		! Determine the effective adsorption coefficient. Higher lys_frac -> lower
+		! adsorption coefficient. Minimum of 1/6 default value
+		Adsorp_eff = adsorp*((1.0/(1.0 + 5.0*lys_frac)))
+
+		! Determine the temperance ratio, function in P2Smod.f90
+		temratio = tempratio(i,j)
+
+		! Initialize bacteria change
+		bactdelta = 0.0
+
+  	! Standard model steady state for bacteria
+		bacteria(i,j)%totalpop = nint(phagedie/(bacBurst*Adsorp_eff),8)
+
+		! Limit population to carrying capacity
+		if (bacteria(i,j)%totalpop .gt. int(kbact(i,j),8)) then
+			bacteria(i,j)%totalpop = int(kbact(i,j),8)
 		end if
 
+    ! Absolute population change
 		bactdelta = bacteria(i,j)%totalpop - bacthold(i,j)%totalpop
+		! Normalized to original population
+		bactchange = bactdelta/bacteria(i,j)%totalpop
 
-		bactchange = bactdelta/real(kbact(i,j))))
-
+		! Adjust phage-lysogen ratio based on the change in bacteria population
 		if (temratio .le. 3.0) then
 			phlyratio = 0.05 + bactchange
 		else if ((temratio .gt. 3.0) .and. (temratio .le. 11.0)) then
@@ -189,15 +206,24 @@ do i = 1, 2*grid, 1
 			phlyratio = 0.9	+ bactchange
 		end if
 
-		if (phlyratio .gt. 0.95) then
-			phlyratio = 0.95
+		! Maximum value
+		if (phlyratio .gt. 0.91) then
+			phlyratio = 0.91
 		end if
 
-		phagetot = nint(virpopptw(kbact(i,j),float(bacteria(i,j)%totalpop)))
+		! Minimum value
+		if (phlyratio .lt. 0.0) then
+			phlyratio = 0.0
+		end if
 
+		! Free phage population determined by steady state solution. Function in P2Smod.f90
+		phagetot = int(virpopptw(kbact(i,j),real(bacteria(i,j)%totalpop,8),Adsorp_eff),8)
 		phage(i,j)%totalpop = phagetot
-		lys(i,j)%totalpop = int(abs(phlyratio*real(bacteria(i,j)%totalpop)))
 
+		! Set number of lysogenic bacteria
+		lys(i,j)%totalpop = int(abs(phlyratio*real(bacteria(i,j)%totalpop,8)),8)
+
+		! Determine the species count from population
 		lys(i,j)%numspecies = int(75.374*float(lys(i,j)%totalpop)**alpha)
 		phage(i,j)%numspecies = int(75.374*float(phage(i,j)%totalpop)**alpha)
 		bacteria(i,j)%numspecies = int(75.374*float(bacteria(i,j)%totalpop)**alpha)
@@ -206,29 +232,33 @@ do i = 1, 2*grid, 1
 
 end do
 
+! Remove any negatives
 where (phage%totalpop .lt. 0) phage%totalpop = 0
 where (lys%totalpop .lt. 0) lys%totalpop = 0
+where (bacteria%totalpop .lt. 0) bacteria%totalpop = 0
 
 end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 subroutine microbepopptw
+! Initial microbe layer populations
 
 use globalvars
 
 implicit none
-	real	:: area, average
+	real*8	:: area, average
 	integer :: i, j
 
 
 area = real((2*grid)**2)
 
-bacteria%totalpop = int(0.6*kbact)
+bacteria%totalpop = int(0.05*kbact,8)
 
 phage%totalpop = 5*bacteria%totalpop
 
-lys%totalpop = int(0.8*real(bacteria%totalpop))
+lys%totalpop = int(0.5*real(bacteria%totalpop),8)
+
 do i = 1, 2*grid, 1
 	do j = 1, 2*grid, 1
 		lys(i,j)%numspecies = int(75.374*float(lys(i,j)%totalpop)**alpha)

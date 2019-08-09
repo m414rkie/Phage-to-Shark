@@ -1,0 +1,9 @@
+# Data folders
+
+Documents/
+OutputsH/
+Runs/
+
+# Various things
+*.mod
+*.x
