@@ -1,7 +1,7 @@
 # Phage to Shark
 ## Code Map
 
-A listing of files and the subroutines/functions contained within. \
+A listing of files and the subroutines/functions contained within the Phage to Shark code.
 
 Code written by: Jon Parsons \
 Primary investigators: Dr. P. Katira \
