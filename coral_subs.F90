@@ -304,7 +304,7 @@ end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine growth(arrin,arrout,growpercin)
+subroutine growth(arrin,arrout)
 
 ! Grows the input grid location based on value and neighbors.
 
@@ -314,7 +314,6 @@ use functions
 implicit none
 	real,dimension(grid,grid), intent(in) 		:: arrin ! Input array
 	real,dimension(grid,grid), intent(out)		:: arrout	! Output array
-	real,intent(in)														:: growpercin ! Natural growth rate
 	real*8																		:: bactcoral, grow, bacteff ! Bacterial influences
 	integer																		:: x, y ! Looping integers
 
@@ -385,16 +384,19 @@ yloop:	do y = 1, grid, 1
     growpercent = exp(-growpercent**0.25) - exp(-1.0)
 
 		! Growth with bacterial influence
-		grow = 1.0 + growpercent*(1.0 - bacteff)
-		if (grow .lt. 1.0) then
-			grow = 1.0
-		end if
+		!grow = 1.0 + growpercent*(1.0 - bacteff)
+		!if (grow .lt. 1.0) then
+		!	grow = 1.0
+		!end if
+
+		grow = growpercent
 
 		! Sum to average
 		growavg = growavg + sngl(growpercent*(1.0-bacteff))
 
 		! Grow location
-		arrout(x,y) = arrin(x,y)*sngl(grow)
+		!arrout(x,y) = arrin(x,y)*sngl(grow)
+		arrout(x,y) = arrout(x,y) + sngl(grow)
 
 	end do yloop
 
@@ -501,7 +503,8 @@ yloop:	do y = 1, grid, 1
 		end if
 		! Coral less the algae eating it
 		if (decay_loc .gt. 0.0) then
-			arrout(x,y) = arrin(x,y)*(1.0 - decay_loc)
+			 arrout(x,y) = arrin(x,y) - decay_loc
+			!arrout(x,y) = arrin(x,y)*(1.0 - decay_loc)
 		end if
 
 		! Sum for averaging

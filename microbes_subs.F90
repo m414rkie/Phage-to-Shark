@@ -173,10 +173,35 @@ do i = 1, 2*grid, 1
 
 		! Determine lysogenic fraction of bacteria, function in P2Smod.f90
 		lys_frac = lysratio(i,j)
-
+		! Current inverse relationship
 		! Determine the effective adsorption coefficient. Higher lys_frac -> lower
 		! adsorption coefficient. Minimum of 1/6 default value
-		Adsorp_eff = adsorp*((1.0/(1.0 + 5.0*lys_frac)))
+		!Adsorp_eff = adsorp*((1.0/(1.0 + 5.0*lys_frac)))
+
+		! low values
+		!Adsorp_eff = adsorp*((1.0/(1.0 + lys_frac)))
+
+		! No adjustment - std.
+		! Adsorp_eff = adsorp
+
+		! No adjustment - Low
+		! Adsorp_eff = adsorp*0.1
+
+		! No adjustment - hi
+		! Adsorp_eff = adsorp*1.5
+
+		! Linear adjustment - decreasing
+		! Adsorp_eff = adsorp*(1.0 - lys_frac)
+
+		! Linear adjustment - decreasing with factor
+		! Adsorp_eff = adsorp*(1.0 - 0.5*lys_frac)
+
+
+		! Linear adjustment - increasing
+		! Adsorp_eff = adsorp*lys_frac
+
+		! Using bact. pop
+		 Adsorp_eff = adsorp*(1.0 + adfinder(real(bacteria(i,j)%totalpop,8))) 
 
 		! Determine the temperance ratio, function in P2Smod.f90
 		temratio = tempratio(i,j)
@@ -185,7 +210,7 @@ do i = 1, 2*grid, 1
 		bactdelta = 0.0
 
   	! Standard model steady state for bacteria
-		bacteria(i,j)%totalpop = nint(phagedie/(bacBurst*Adsorp_eff),8)
+		bacteria(i,j)%totalpop = int(phagedie/(bacBurst*Adsorp_eff),8)
 
 		! Limit population to carrying capacity
 		if (bacteria(i,j)%totalpop .gt. int(kbact(i,j),8)) then
@@ -194,6 +219,7 @@ do i = 1, 2*grid, 1
 
     ! Absolute population change
 		bactdelta = bacteria(i,j)%totalpop - bacthold(i,j)%totalpop
+
 		! Normalized to original population
 		bactchange = bactdelta/bacteria(i,j)%totalpop
 
@@ -221,7 +247,7 @@ do i = 1, 2*grid, 1
 		phage(i,j)%totalpop = phagetot
 
 		! Set number of lysogenic bacteria
-		lys(i,j)%totalpop = int(abs(phlyratio*real(bacteria(i,j)%totalpop,8)),8)
+		lys(i,j)%totalpop = int(phlyratio*real(bacteria(i,j)%totalpop,8),8)
 
 		! Determine the species count from population
 		lys(i,j)%numspecies = int(75.374*float(lys(i,j)%totalpop)**alpha)
@@ -253,11 +279,11 @@ implicit none
 
 area = real((2*grid)**2)
 
-bacteria%totalpop = int(0.05*kbact,8)
+bacteria%totalpop = int(0.01*kbact,8)
 
 phage%totalpop = 5*bacteria%totalpop
 
-lys%totalpop = int(0.5*real(bacteria%totalpop),8)
+lys%totalpop = int(0.4*real(bacteria%totalpop),8)
 
 do i = 1, 2*grid, 1
 	do j = 1, 2*grid, 1

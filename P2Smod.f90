@@ -160,6 +160,16 @@ implicit none
 ! Lysogen pop over bacteria pop
 lysratio = (real(lys(i,j)%totalpop,8)/real(bacteria(i,j)%totalpop,8))
 
+if (lysratio .lt. 0) then
+	lysratio = 0.0
+end if
+
+if (lysratio .gt. 1.0) then
+	lysratio = 1.0
+end if
+
+
+
 end function
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -187,7 +197,37 @@ end if
 if (pop .gt. maxpop) then
 	bactouch = 1.0
 else
-	bactouch = slope*pop
+	bactouch = slope*pop*corBacGrow
+end if
+
+end function
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+real*8 function adfinder(pop)
+! Determines level of bacterial influence for a given population
+
+use globalvars
+
+implicit none
+	real*8	:: pop, slope ! local population, damage slope
+	real*8	:: maxpop, minpop ! Determine max or min influence
+
+! Initiallize values
+maxpop = 5E09
+minpop = 25.0*1.0E5
+slope = 2.0/(maxpop-minpop)
+
+! Limit minimum output
+if (pop .lt. minpop) then
+	adfinder = -1.0
+end if
+
+! Limit maximum output. Set general output if not at extremes
+if (pop .gt. maxpop) then
+	adfinder = 1.0
+else
+	adfinder = slope*pop - 1.0
 end if
 
 end function

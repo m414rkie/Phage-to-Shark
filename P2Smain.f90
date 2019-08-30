@@ -269,7 +269,7 @@ do t = 1, numtime, 1
 	sickDays = sickDays - 1
 
 	! At the halfway point, adjust parameters
-	if (t .eq. (numTime/2)) then
+	if ((t .eq. (numTime/2)).and.(var_adjust_flag .eq. "D")) then
 		call var_adjuster(t)
 	end if
 

@@ -105,7 +105,7 @@ lysspec = lysspec*0.04/(real(2*grid,8)**2)
 ! Average coral value over the reef
 avgcoral = sum(coral)/(real(grid)**2)
 ! Phage - lysogen ratio
-phagelysratio = real(phagesum)/real(sum(lys%totalpop))
+phagelysratio = real(phagesum,8)/real(sum(lys%totalpop),8)
 ! VMR
 vmr = phagesum/bacsum
 ! Change in fish population

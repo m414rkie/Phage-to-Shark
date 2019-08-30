@@ -24,41 +24,42 @@ $numtime = 800;
 $percentcover = 0.5;
 $threshold = 1.0;
 $sharkmass = 40;
-$dayavg = 5;
-$rate = 1.0;
+$dayavg = 6;
+$rate = 0.6;
 $corBacNew = 1.0;
 $corBacGrow = 1.0;
 $adsorpFac = 1.0;
 $bacDeath = 0.5;
 $bacBurst = 75;
 $phagedie = 0.5;
-$fisheatmult = 1000.0;
+$fisheatmult = 500.0;
 $fgrowfact = 0.003;
 $diffco = 0.015;
-$deconst = 0.005;
+$deconst = 0.007;
 $disFlagin = 'N';
 $disLevel = 5;
 
-$adj_flag = 'D';
+$adj_flag = 'N';
 
 $threshold_2nd = 1.0;
 $sharkmass_2nd = 40;
-$dayavg_2nd = 5;
-$rate_2nd = 1.0;
+$dayavg_2nd = 6;
+$rate_2nd = 0.55;
 $corBacNew_2nd = 1.0;
 $corBacGrow_2nd = 1.0;
 $adsorpFac_2nd = 1.0;
 $bacDeath_2nd = 0.5;
 $bacBurst_2nd = 75;
 $phagedie_2nd = 0.5;
-$fisheatmult_2nd = 1000.0;
+$fisheatmult_2nd = 5000.0;
 $fgrowfact_2nd = 0.003;
 $diffco_2nd = 0.015;
-$deconst_2nd = 0.005;
+$deconst_2nd = 0.02;
 
 $shift_2nd = 17;
 
 # Population injection/removal for fish and microbes. microbes over entire reef?
+# Fish effect switch to dF/F instead of Fk.
 
 my @iterArray = ($grid, $numtime, $percentcover, $threshold, $sharkmass, $dayavg,
 								$rate, $corBacNew, $corBacGrow, $adsorpFac, $bacDeath, $bacBurst,

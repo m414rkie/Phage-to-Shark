@@ -9,7 +9,6 @@ use globalvars
 
 	! Ratio of change in fish population to carrying capacity
 	fisheat = fisheatmult*fishdelta(fish)/(1000.0*percentcor(grid))
-
 	! Set maximal values
 	if (fisheat .lt. 0.0) then
 		fisheat = 0.0
