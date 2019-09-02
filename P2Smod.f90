@@ -119,22 +119,22 @@ percentcor = float(corcount)/(float(size)**2)
 end function
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-real*8 function virpopptw(carry,bacpop,ad_eff)
+real*8 function virpop_dom(carry,bacpop,ad_eff,richness)
 ! Steady state solution for the phage population
 ! Uses LK equations as a base
 
 use globalvars
 
 implicit none
-	real*8	:: carry, bacpop, ad_eff
-						 ! capacity; bacteria pop; effective adsorption coefficient
+	real*8	:: carry, bacpop, ad_eff, spec
+						 ! capacity; bacteria pop; effective adsorption coefficient, richness
 
-virpopptw = (rate*(1.0 - (bacpop/carry)) - bacdeath)/ad_eff
+virpopptw = spec*(rate*(1.0 - (bacpop/carry)) - bacdeath)/ad_eff
 
 end function
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-real*8 function tempratio(i,j)
+real*8 function vmr_calc(i,j)
 ! Finds the temperance ratio
 
 use globalvars
@@ -144,6 +144,35 @@ implicit none
 
 ! Phage population over bacteria population
 tempratio = (real(phage(i,j)%totalpop,8)/real(bacteria(i,j)%totalpop,8))
+
+end function
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+real*8 function comp_carry(k_diff,spec,pop)
+! Calculates the effective lysogen carrying capacity
+
+use globalvars
+
+implicit none
+	integer*8		:: K_diff, spec, pop
+
+comp_carry = K_diff*(spec*pop/int(kalg,8))
+
+end function
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+integer*8 function lys_pop(lys_carry_loc)
+! Calculates the lysogen population
+
+use globalvars
+
+implicit none
+	real*8		:: lys_carry_loc
+	real*8		:: ir = 4.167E-8
+
+lys_pop = int((1.0 - ir/rate)*lys_carry_loc,8) 
 
 end function
 

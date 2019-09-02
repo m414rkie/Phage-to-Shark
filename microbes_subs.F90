@@ -150,7 +150,7 @@ end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine bactgrowptw
+subroutine bactgrow_dom
 ! Subroutine to evolve the microbial population using the steady state solutions
 ! of the lotka-volterra eqns.
 
@@ -158,7 +158,10 @@ use globalvars
 use functions
 
 implicit none
-	real*8    :: temratio ! Temperance ratio
+	real*8    :: vmr_loc ! VMR at current grid point
+	real*8		:: lys_carry_loc ! Local lysogen carrying capacity
+	real*8		:: K_del ! Difference in carrying capacity and usage
+	integer*8	:: bact_spec
 	integer   :: i, j ! Looping integers
 	integer*8 :: bactdelta, phagetot ! Change in bact. pop; total phage pop
 	real*8 	  :: bactchange, phlyratio ! Normalized bact change; phage-lysogen ration
@@ -173,81 +176,35 @@ do i = 1, 2*grid, 1
 
 		! Determine lysogenic fraction of bacteria, function in P2Smod.f90
 		lys_frac = lysratio(i,j)
-		! Current inverse relationship
-		! Determine the effective adsorption coefficient. Higher lys_frac -> lower
-		! adsorption coefficient. Minimum of 1/6 default value
-		!Adsorp_eff = adsorp*((1.0/(1.0 + 5.0*lys_frac)))
-
-		! low values
-		!Adsorp_eff = adsorp*((1.0/(1.0 + lys_frac)))
-
-		! No adjustment - std.
-		! Adsorp_eff = adsorp
-
-		! No adjustment - Low
-		! Adsorp_eff = adsorp*0.1
-
-		! No adjustment - hi
-		! Adsorp_eff = adsorp*1.5
-
-		! Linear adjustment - decreasing
-		! Adsorp_eff = adsorp*(1.0 - lys_frac)
-
-		! Linear adjustment - decreasing with factor
-		! Adsorp_eff = adsorp*(1.0 - 0.5*lys_frac)
-
-
-		! Linear adjustment - increasing
-		! Adsorp_eff = adsorp*lys_frac
-
-		! Using bact. pop
-		 Adsorp_eff = adsorp*(1.0 + adfinder(real(bacteria(i,j)%totalpop,8))) 
 
 		! Determine the temperance ratio, function in P2Smod.f90
-		temratio = tempratio(i,j)
+		vmr_loc = vmr_calc(i,j)
 
-		! Initialize bacteria change
-		bactdelta = 0.0
+		bact_spec = bacteria(i,j)%numspecies
 
-  	! Standard model steady state for bacteria
-		bacteria(i,j)%totalpop = int(phagedie/(bacBurst*Adsorp_eff),8)
+		! Adsorption coefficient
+		Adsorp_eff = adsorp
+
+  	! Bacteria - Steady State, Compartment model
+		bacteria(i,j)%totalpop = int(bact_spec*(phagedie/(bacBurst*Adsorp_eff)),8)
 
 		! Limit population to carrying capacity
 		if (bacteria(i,j)%totalpop .gt. int(kbact(i,j),8)) then
 			bacteria(i,j)%totalpop = int(kbact(i,j),8)
 		end if
 
-    ! Absolute population change
-		bactdelta = bacteria(i,j)%totalpop - bacthold(i,j)%totalpop
+		! Phage - Steady State, Compartment model. Function in P2Smod.f90
+		phagetot = int(virpop_dom(kbact(i,j),real(bacteria(i,j)%totalpop,8), &
+										Adsorp_eff,bact_spec),8)
 
-		! Normalized to original population
-		bactchange = bactdelta/bacteria(i,j)%totalpop
-
-		! Adjust phage-lysogen ratio based on the change in bacteria population
-		if (temratio .le. 3.0) then
-			phlyratio = 0.05 + bactchange
-		else if ((temratio .gt. 3.0) .and. (temratio .le. 11.0)) then
-			phlyratio = 0.4 + bactchange
-		else if (temratio .gt. 11.0) then
-			phlyratio = 0.9	+ bactchange
-		end if
-
-		! Maximum value
-		if (phlyratio .gt. 0.91) then
-			phlyratio = 0.91
-		end if
-
-		! Minimum value
-		if (phlyratio .lt. 0.0) then
-			phlyratio = 0.0
-		end if
-
-		! Free phage population determined by steady state solution. Function in P2Smod.f90
-		phagetot = int(virpopptw(kbact(i,j),real(bacteria(i,j)%totalpop,8),Adsorp_eff),8)
 		phage(i,j)%totalpop = phagetot
 
+		K_del = (kbact(i,j) - bacteria(i,j)%totalpop)
+
+		lys_carry_loc = comp_carry(K_del,bact_spec,bacteria(i,j)%totalpop)
+
 		! Set number of lysogenic bacteria
-		lys(i,j)%totalpop = int(phlyratio*real(bacteria(i,j)%totalpop,8),8)
+		lys(i,j)%totalpop = lys_pop(lys_carry_loc)
 
 		! Determine the species count from population
 		lys(i,j)%numspecies = int(75.374*float(lys(i,j)%totalpop)**alpha)
@@ -267,7 +224,7 @@ end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine microbepopptw
+subroutine microbepop_dom
 ! Initial microbe layer populations
 
 use globalvars

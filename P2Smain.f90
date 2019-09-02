@@ -93,7 +93,7 @@ fish = 990.0*percentcor(grid)
 
 ! Populating initital bacteria layer - microbe_subs.F90
 call kgrid
-call microbepopptw
+call microbepop_dom
 
 ! Initiallize bacteria holding layer
 bacthold = bacteria
@@ -157,7 +157,7 @@ end if
 		! Adjust microbial carrying capacity-  microbe_subs.F90
 		call kgrid
 		! Grow the microbial community - microbe_subs.F90
-		call bactgrowptw
+		call bactgrow_dom
 
 		! Update holding layers
  		holding = coral
@@ -254,7 +254,7 @@ do t = 1, numtime, 1
 	! Update microbe carying capacity
 	call kgrid
 	! Grow microbe layer
-	call bactgrowptw
+	call bactgrow_dom
 
 	! Update holding layers
 	holding = coral
