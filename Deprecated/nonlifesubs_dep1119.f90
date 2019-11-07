@@ -243,6 +243,8 @@ write(*,*) "Enter the value of the bacterial growth rate."
 read(*,*) rate
 write(*,*) "Enter the effect of bacteria on new coral."
 read(*,*) corBacNew
+write(*,*) "Enter the effect of bacteria on growing coral."
+read(*,*) corBacGrow
 write(*,*) "Enter the adsorption coefficient factor."
 read(*,*) adsorpFac
 write(*,*) "Enter the ratio of bacteria that die each timestep."
@@ -257,6 +259,8 @@ write(*,*) "Enter the rate of fish growth."
 read(*,*) fgrowfact
 write(*,*) "Enter the diffusion coefficient."
 read(*,*) diffco
+write(*,*) "Enter the algal decay constant"
+read(*,*) decayconst
 write(*,*) "Enter the multiplier for the Lysogen Growth Rate"
 read(*,*) ly_mod
 write(*,*) "Enter 'H' for a hurricane, or 'D' for a disease."
@@ -280,6 +284,8 @@ if (var_adjust_flag .eq. "D") then
 	read(*,*) rate_2nd
 	write(*,*) "Enter the effect of bacteria on new coral."
 	read(*,*) corBacNew_2nd
+	write(*,*) "Enter the effect of bacteria on growing coral."
+	read(*,*) corBacGrow_2nd
 	write(*,*) "Enter the adsorption coefficient factor."
 	read(*,*) adsorpFac_2nd
 	write(*,*) "Enter the ratio of bacteria that die each timestep."
@@ -294,6 +300,8 @@ if (var_adjust_flag .eq. "D") then
 	read(*,*) fgrowfact_2nd
 	write(*,*) "Enter the diffusion coefficient."
 	read(*,*) diffco_2nd
+	write(*,*) "Enter the algal decay constant"
+	read(*,*) decayconst_2nd
 end if
 
 call chartoup(disFlagin,disFlag)
@@ -625,6 +633,7 @@ sharkMass = sharkMass_2nd
 dayavg = dayavg_2nd
 rate = rate_2nd
 corBacNew = corBacNew_2nd
+corBacGrow = corBacGrow_2nd
 adsorpFac = adsorpFac_2nd
 bacDeath = bacDeath_2nd
 bacBurst = bacBurst_2nd
@@ -632,6 +641,7 @@ phagedie = phagedie_2nd
 fisheatmult = fisheatmult_2nd
 fgrowfact = fgrowfact_2nd
 diffco = diffco_2nd
+decayconst = decayconst_2nd
 
 end subroutine
 

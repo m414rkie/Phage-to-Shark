@@ -7,9 +7,7 @@
 # Author: Jon Parsons
 # Date: 1-11-19
 
-## Bug in microbe pops?
-## Bug in phage - lys naming?
-## iteration runs - IC's and variables
+## Issue with VMR graphing
 
 use Time::Piece;
 
@@ -20,21 +18,21 @@ my $runnum = <>;
 chomp $runnum;
 
 $grid = 100;
-$numtime = 800;
+$numtime = 2000;
 $percentcover = 0.5;
 $threshold = 1.0;
-$sharkmass = 40;
+$sharkmass = 20;
 $dayavg = 6;
-$rate = 0.6;
+$rate = 1.0;
 $corBacNew = 1.0;
 $corBacGrow = 1.0;
 $adsorpFac = 1.0;
 $bacDeath = 0.5;
-$bacBurst = 75;
+$bacBurst = 50;
 $phagedie = 0.5;
-$fisheatmult = 500.0;
+$fisheatmult = 260.0;
 $fgrowfact = 0.003;
-$diffco = 0.015;
+$diffco = 0.01;
 $deconst = 0.007;
 $disFlagin = 'N';
 $disLevel = 5;
@@ -71,13 +69,13 @@ my @iterArray = ($grid, $numtime, $percentcover, $threshold, $sharkmass, $dayavg
 
 
 
-my @nameArray = ("Gridpoints", "Number-of-Timesteps", "Coral-Percentage", "New-Coral-Threshold",
- 								 "Shark-Biomass", "Avg-Number-of-Days-Between-Shark-Events",
-				         "Bacterial-Growth-Rate", "Bacteria-New-Coral-Intensity",
-				  		 	 "Bacteria-Coral-Growth-Intensity", "Adsorption-Factor-Coefficient",
-								 "Rate-of-Bacterial-Death", "Phage-Burst-Count", "Phage-Decay-Rate",
-								 "Fish-Algae-Intensity", "Fish-Growth-Rate","Diffusion-Coefficient",
-								 "Algae-Pressure", "Disaster-Flag", "Disaster-Intensity");
+my @nameArray = ("Gridpoints", "Number_of_Timesteps", "Coral_Percentage", "New_Coral_Threshold",
+ 								 "Shark_Biomass", "Avg_Days_Between_Shark_Events",
+				         "Bacterial_Growth_Rate", "Bacteria_New_Coral_Intensity",
+				  		 	 "Bacteria_Coral_Growth_Intensity", "Adsorption_Factor_Coefficient",
+								 "Rate_of_Bacterial_Death", "Phage_Burst_Count", "Phage_Decay_Rate",
+								 "Fish_Algae_Intensity", "Fish_Growth_Rate","Diffusion_Coefficient",
+								 "Algae_Pressure", "Disaster_Flag", "Disaster_Intensity");
 
 if ($runnum eq 's') {
 
@@ -570,6 +568,10 @@ my @dom_bar_names = ("Bact Pop Barr","Phage Pop Barr","Lys Pop Barr","Bact. Spec
 										"Phage Spec. Barr","Lys Spec. Barr","Phage Lys Ratio Barr",
 										"VMR Barr","Barr Area Percentage","time");
 
+my @units = (" ", "(BU)","(BU Per 25 cm sq)","(dBU Per 25 cm sq)","(1/ml)","(1/ml)",
+							"(1/ml)","(1/ml)","(1/ml)","(1/ml)","(FM)","(dFM)"," ", " "," "," ",
+							"(Days)");
+
 my $dirgen = '/home/jon/Desktop/Phage2Shark/General';
 my $gnufile = "gnu.batch";
 chdir($dirgen);
@@ -626,8 +628,8 @@ if ($choice_one lt 20){
 			set autoscale \n
 			set title \"$title\"  \n
 			set output \"$output\"  \n
-			set xlabel \"@title_names[$choice_one]\" \n
-			set ylabel \"@title_names[$choice_two]\" \n
+			set xlabel \"@title_names[$choice_one] @units[$choice_one]\" \n
+			set ylabel \"@title_names[$choice_two] @units[$choice_two]\" \n
 			plot \"< paste $file_one $file_two\" using 1:2 title \"$title\" with lines";
 # Coral
 } elsif ($choice_one gt 19 && $choice_one le 29) {
@@ -687,7 +689,7 @@ if ($choice_one lt 20){
 close(FILE);
 
 system("gnuplot $gnufile");
-system("mv \"$output\" /home/jon/Desktop/Phage2Shark/Outputs");
+system("mv *.png /home/jon/Desktop/Phage2Shark/Outputs");
 
 system("rm $gnufile");
 
@@ -726,11 +728,11 @@ sub rangerun {
 											"phage_spec_bar","lys_spec_bar","phage_lys_rat_bar",
 											"vmr_bar","area_bar","time");
 
-my @title_names = ("Coral Percentage","Coral Total","Coral Average",
-									"Coral Delta","Bacteria Population","Phage Population","Lysogen Population",
-									"Bacteria Species","Phage Species","Lysogen Species","Fish Population",
-									"Fish Delta","Algae Percentage","Phage Lysogen Ratio",
-									"Shark Events","VMR","Time");
+my @title_names = ("Coral_Percentage","Coral_Total","Coral_Average",
+									"Coral_Delta","Bacteria_Population","Phage_Population","Lysogen_Population",
+									"Bacteria_Species","Phage_Species","Lysogen_Species","Fish_Population",
+									"Fish_Delta","Algae_Percentage","Phage_Lysogen_Ratio",
+									"Shark_Events","VMR","Time");
 
 my @dom_cor_names = ("Bact Pop Coral","Phage Pop Coral","Lys Pop Coral","Bact. Spec. Coral",
 										"Phage Spec. Coral","Lys Spec. Coral","Phage Lys Ratio Coral",

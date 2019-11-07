@@ -68,7 +68,7 @@ end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine corexp
+subroutine corexp(new)
 
 ! Subroutine grows the coral into new spots
 
@@ -76,11 +76,14 @@ use globalvars
 use functions
 
 implicit none
+	integer,intent(in)	:: new
+	integer							:: spawned(2,new)
 	real								:: temp	! Holds a random number which checks to see if a new coral is generated
 	real								:: coord ! Holds the coordinates of the new coral
 	integer							:: x, y, i, j, l, c	! Integers for coordinates, looping, and algae locations
 	integer,allocatable	:: algaeloc(:,:)	! Holds the locations where there is algae and not coral
 	real*8							:: bactfact, neighbors ! Bacterial influence factor, holds number of coral neighbors
+	real*8							:: bact_imp, totbact
 
 ! Initialize the 'counting' integer to update algaeloc locations
 c = 0
@@ -148,31 +151,47 @@ do i = 1, grid, 1
 
 end do
 
+spawned = 0
+
 ! Logic statements for coordinates
-call random_number(coord)
+do i = 1, new, 1
 
-x = algaeloc(1,floor(c*coord))
-y = algaeloc(2,floor(c*coord))
+102	call random_number(coord)
 
-! Check for bounds
-if (x .lt. 1) x = 1
-if (y .lt. 1) y = 1
-if (x .gt. grid) x = grid
-if (y .gt. grid) y = grid
+	x = algaeloc(1,floor(c*coord))
+	y = algaeloc(2,floor(c*coord))
 
-call random_number(temp)
-! Bactfact = sum of all bacteria on location new coral may be placed as a ratio of  bacteria pop to carrycing capacity
-bactfact = corBacNew*real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
-	+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop),8)/real(kbact(2*x,2*y) &
-	+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1),8)
+	do j = 1, new, 1
+			if ((x .eq. spawned(1,i)).or.(y .eq. spawned(2,i))) then
+				goto 102
+			end if
+	end do
 
-! Set new coral if bacteria is not enough to prevent
-if (temp .ge. bactfact) then
-	numnew = numnew + 1
+	spawned(1,i) = x
+	spawned(2,i) = y
 
-	coral(x,y) = 3.5
+	! Check for bounds
+	if (x .lt. 1) x = 1
+	if (y .lt. 1) y = 1
+	if (x .gt. grid) x = grid
+	if (y .gt. grid) y = grid
 
-end if
+	call random_number(temp)
+	! Bactfact = sum of all bacteria on location new coral may be placed as a ratio of  bacteria pop to carrycing capacity
+	bactfact = corBacNew*real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
+		+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop),8)
+
+	totbact = bactfact + real((lys(2*x,2*y)%totalpop+lys(2*x-1,2*y)%totalpop &
+		+lys(2*x-1,2*y-1)%totalpop+lys(2*x,2*y-1)%totalpop),8)
+
+	bact_imp = bactouch(totbact)
+	! Set new coral if bacteria is not enough to prevent
+	if (temp .ge. bact_imp) then
+		numnew = numnew + 1
+		coral(x,y) = 2.5
+	end if
+
+end do
 
 deallocate(algaeloc)
 
@@ -180,132 +199,8 @@ end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine newcoral
-
-! Subroutine generates new coral when the average coral of the grid is above a user-input threshold. Does not trigger each time,
-! there is a check do determine if a new coral is made.
-
-use globalvars
+subroutine growth(arrin,arrout,deconst)
 use functions
-
-implicit none
-	real								:: avgcoral	! The average coral in the reef
-	real								:: temp	! Holds a random number which checks to see if a new coral is generated
-	real								:: coord	! Holds the coordinates of the new coral
-	integer							:: x, y, i, j, l, c	! Integers for coordinates, looping, and algae locations
-	integer,allocatable	:: algaeloc(:,:)	! Holds the locations where there is algae and not coral
-	real*8							:: bactfact, neighbors ! bacterial influence factor, number of neighbors
-
-
-! Finds average coral
-avgcoral  = sum(coral)/(percentcor(grid)*(float(grid)**2))
-
-! Initialize the 'counting' integer to update algaeloc locations
-c = 0
-
-! Determines how many locations are not coral
-check = (coral .eq. 0.0)
-
-! Sends the count to an integer and allocates algaeloc
-l = count(check)
-allocate(algaeloc(2,l))
-algaeloc = 0
-
-! Checks coral average against threshold, checks against probability of generation, if pass calls random
-! locations in algaeloc and places coral.
-if (avgcoral .ge. threshold) then
-
-	call random_number(temp)
-
-! Do loops to find exact coordinates of algae
-do i = 1, grid, 1
-
-	do j = 1, grid, 1
-
-		neighbors = 0
-		x=i ; y=j
-		! Checks for coral around the input gridpoint and out-of-bounds
-		if ((x .gt. 1) .and. (coral(x-1,y) .ne. 0.0)) then
-			neighbors = 1.0
-		end if
-
-		if ((x .lt. grid) .and. (coral(x+1,y) .ne. 0.0)) then
-			neighbors = neighbors + 1.0
-		end if
-
-		if ((y .lt. grid) .and. (coral(x,y+1) .ne. 0.0)) then
-			neighbors = neighbors + 1.0
-		end if
-
-		if ((y .gt. 1) .and. (coral(x,y-1) .ne. 0.0)) then
-			neighbors = neighbors + 1.0
-		end if
-
-		if ((x .lt. grid) .and. (y .lt. grid) .and. (coral(x+1,y+1) .ne. 0.0)) then
-			neighbors = neighbors + 1.0
-		end if
-
-		if ((x .gt. 1) .and. (y .gt. 1) .and. (coral(x-1,y-1) .ne. 0.0)) then
-			neighbors = neighbors + 1.0
-		end if
-
-		if ((x .lt. grid) .and. (y .gt. 1) .and.(coral(x+1,y-1) .ne. 0.0)) then
-			neighbors = neighbors + 1.0
-		end if
-
-		if ((x .gt. 1) .and. (y .lt. grid) .and. (coral(x-1,y+1) .ne. 0.0)) then
-			neighbors = neighbors + 1.0
-		end if
-
-		if ((coral(i,j) .eq. 0.0) .and. (neighbors .ne. 0.0)) then
-
-			! Saves the locations
-			c = c + 1
-			algaeloc(1,c) = i
-			algaeloc(2,c) = j
-
-		end if
-
-	end do
-
-end do
-
-		! Logic statements for coordinates
-		call random_number(coord)
-
-		x = algaeloc(1,floor(l*coord))
-		y = algaeloc(2,floor(l*coord))
-
-		! Boundary conditions
-		if (x .lt. 1) x = 1
-		if (y .lt. 1) y = 1
-		if (x .gt. grid) x = grid
-		if (y .gt. grid) y = grid
-
-		! Bacteria factor, bacteria pop / carrying capacity
-		bactfact = corBacNew*real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
-			+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop),8)/real(kbact(2*x,2*y) &
-			+kbact(2*x-1,2*y)+kbact(2*x-1,2*y-1)+kbact(2*x,2*y-1),8)
-
-		! New coral unless bacteria prevent
-		if (temp .ge. bactfact) then
-
-			numnew = numnew + 1
-
-			coral(x,y) = 3.5
-
-			deallocate(algaeloc)
-
-		end if
-
-end if
-
-end subroutine
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-subroutine growth(arrin,arrout)
-
 ! Grows the input grid location based on value and neighbors.
 
 use globalvars
@@ -313,216 +208,86 @@ use functions
 
 implicit none
 	real,dimension(grid,grid), intent(in) 		:: arrin ! Input array
+	real,intent(in)														:: deconst ! growth modifier for disease
 	real,dimension(grid,grid), intent(out)		:: arrout	! Output array
-	real*8																		:: bactcoral, grow, bacteff ! Bacterial influences
+	real*8																		:: bactcoral, lyscoral, tot_bac
+	real*8																		:: grow, bacteff ! Bacterial influences
 	integer																		:: x, y ! Looping integers
+	real																			:: cur_perc, growpercent, ran
+	real																			:: fish_imp
 
 ! Initialize
 growavg = 0.0
+
+fish_imp = 1.0
+
+call fishinteraction(fish_imp)
+
+if (fish_imp .lt. 0.0) then
+	fish_imp = 0.0
+end if
 
 ! Loops
 do x = 1, grid, 1
 
 yloop:	do y = 1, grid, 1
 
-		! Cycle if location is too unhealthy
-		if (arrin(x,y) .lt. 0.05) then
-			cycle yloop
-		end if
-
-		! Cycle if location is too healthy
-		if (arrin(x,y) .ge. 5.0) then
-			cycle yloop
-		end if
-
 		! Reset
 		bactcoral = 0.0
+		lyscoral = 0.0
 
 		! bact. pop on coral directly
 		bactcoral = real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
 								+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop),8)
-
-		! Adjacent to the coral square on the lower bounds
-		! x
-		if (y .gt. 1) then
-			bactcoral = bactcoral + real(bacteria(2*x,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop,8)
-		end if
-
-		! y
-		if (x .gt. 1) then
-			bactcoral = bactcoral + real(bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop,8)
-		end if
-
-		! Adjacent to the coral square on the upper bounds
-		! y
-		if (x .lt. grid) then
-			bactcoral = bactcoral + real(bacteria(2*x+1,2*y)%totalpop+bacteria(2*x+1,2*y-1)%totalpop,8)
-		end if
-
-		! x
-		if (y .lt. grid) then
-			bactcoral = bactcoral + real(bacteria(2*x,2*y+1)%totalpop+bacteria(2*x-1,2*y+1)%totalpop,8)
-		end if
+		lyscoral = real((lys(2*x,2*y)%totalpop+lys(2*x-1,2*y)%totalpop &
+								+lys(2*x-1,2*y-1)%totalpop+lys(2*x,2*y-1)%totalpop),8)
 
 		! normalize to area of region covered
-		bactcoral = bactcoral/(12.0)
+		tot_bac = bactcoral + lyscoral
 
 		! Edge cases
 		if (bactcoral .lt. 0.0) then
 			bactcoral = 0.0
 		end if
 
-		! Check amount of influence
-		bacteff = bactouch(bactcoral)
-		if (bacteff .gt. 1.0) then
-			bacteff = 1.0
-		end if
+		! Check amount of influence from bacteria
+		bacteff = bactouch(tot_bac)
 
 		call random_number(growpercent)
+		call random_number(ran)
 
-		! Set to favor lower growth amounts, centers on 0.05 percent growth
-    growpercent = exp(-growpercent**0.25) - exp(-1.0)
+		! Determine growth
+		if (ran .lt. 0.5) then
+			growpercent = 0.2 + 0.075*growpercent
+		else
+			growpercent = 0.2 - 0.085*growpercent
+		end if
 
-		! Growth with bacterial influence
-		!grow = 1.0 + growpercent*(1.0 - bacteff)
-		!if (grow .lt. 1.0) then
-		!	grow = 1.0
-		!end if
+! Fish impact should affect the carrying capacity in the algae. Shift to
+!	k-subroutine
 
-		grow = growpercent
+		grow = 1.0 + (deconst*growpercent - 0.25*fish_imp*(bacteff))
+		!write(*,*) fish_imp, growpercent, bacteff, grow, tot_bac
 
 		! Sum to average
-		growavg = growavg + sngl(growpercent*(1.0-bacteff))
+		growavg = growavg + sngl(grow)
 
 		! Grow location
-		!arrout(x,y) = arrin(x,y)*sngl(grow)
-		arrout(x,y) = arrout(x,y) + sngl(grow)
+		arrout(x,y) = arrin(x,y)*sngl(grow)
 
 	end do yloop
 
 end do
 
-! Normalize the average growth
-growavg = growavg/(grid*grid)
+write(*,*) "Fish Parameter: ", fish_imp, grow
 
+! Normalize the average growth
+cur_perc = percentcor(grid)
+growavg = growavg/(grid*grid*cur_perc)
 ! Set to maximum
 where (arrout .gt. 5.0) arrout = 5.0
+where (arrout .lt. 0.05) arrout = 0.0
 
 end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-subroutine decay(arrin,arrout)
-
-! Represents the algae killing the coral.
-
-use globalvars
-
-implicit none
-	real,dimension(grid,grid)	:: arrin, arrout ! Input array
-	integer					 					:: algcount	! Amount of algae near input coordinates
-	integer										:: x, y ! Location being examined
-	real											:: decay_loc, decay_loc_ini ! decay factor; initial decay
-
-! Initialize
-decavg = 0.0
-
-! Initialize the decay constant to initial value
-decay_loc_ini = decayconst
-
-! Determine the fish influence, in fish_subs.F90
-call fishinteraction(decay_loc_ini)
-
-do x = 1, grid, 1
-
-yloop:	do y = 1, grid, 1
-
-		! Cycle if coral is below threshold
-		if (arrin(x,y) .lt. 0.05) then
-			cycle yloop
-		end if
-
-		! Initialize the algae location
-		algcount = 0
-
-		! Set local decay factor
-		decay_loc = decay_loc_ini
-
-		! Checks for algae around the input gridpoint and out-of-bounds
-		! x lower bound
-		if ((x .gt. 1) .and. (holding(x-1,y) .eq. 0.0)) then
-			algcount = algcount + 1
-		end if
-
-		! x upper bound
-		if ((x .lt. grid) .and. (holding(x+1,y) .eq. 0.0)) then
-			algcount = algcount + 1
-		end if
-
-		! y upper bound
-		if ((y .lt. grid) .and. (holding(x,y+1) .eq. 0.0)) then
-			algcount = algcount + 1
-		end if
-
-		! y lower bound
-		if ((y .gt. 1) .and. (holding(x,y-1) .eq. 0.0)) then
-			algcount = algcount + 1
-		end if
-
-		! top right corner
-		if ((x .lt. grid) .and. (y .lt. grid) .and. (holding(x+1,y+1) .eq. 0.0)) then
-			algcount = algcount + 1
-		end if
-
-		! bottom left corner
-		if ((x .gt. 1) .and. (y .gt. 1) .and. (holding(x-1,y-1) .eq. 0.0)) then
-			algcount = algcount + 1
-		end if
-
-		! top left corner
-		if ((x .lt. grid) .and. (y .gt. 1) .and.(holding(x+1,y-1) .eq. 0.0)) then
-			algcount = algcount + 1
-		end if
-
-		! top right corner
-		if ((x .gt. 1) .and. (y .lt. grid) .and. (holding(x-1,y+1) .eq. 0.0)) then
-			algcount = algcount + 1
-		end if
-
-		! cycle if this location has no algal neighbors
-		if (algcount .lt. 1) then
-			cycle yloop
-		end if
-
-		! Multiply decay factor by number of algal neighbors
-		decay_loc = decay_loc*float(algcount)
-
-		! Coral being eaten.
-		if (decay_loc .gt. 1.0) then
-			decay_loc = 1.0 ! Maximal value
-		end if
-		! Coral less the algae eating it
-		if (decay_loc .gt. 0.0) then
-			 arrout(x,y) = arrin(x,y) - decay_loc
-			!arrout(x,y) = arrin(x,y)*(1.0 - decay_loc)
-		end if
-
-		! Sum for averaging
-		decavg = decavg + decay_loc
-
-		! Resets extreme values
-		if (arrout(x,y) .le. 0.05) then
-			arrout(x,y) = 0.0
-		end if
-		if (arrout(x,y) .gt. 5.0) then
-			arrout(x,y) = 5.0
-		end if
-
-	end do yloop
-
-end do
-
-! Find average of decay
-decavg = decavg/(grid*grid)
-
-end subroutine

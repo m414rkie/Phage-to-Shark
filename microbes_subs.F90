@@ -158,15 +158,11 @@ use globalvars
 use functions
 
 implicit none
-	real*8    :: vmr_loc ! VMR at current grid point
 	real*8		:: lys_carry_loc ! Local lysogen carrying capacity
-	real*8		:: K_del ! Difference in carrying capacity and usage
-	integer*8	:: bact_spec
+	integer*8	:: K_del ! Difference in carrying capacity and usage
+	real*8		:: bact_spec ! Dummy variable
 	integer   :: i, j ! Looping integers
-	integer*8 :: bactdelta, phagetot ! Change in bact. pop; total phage pop
-	real*8 	  :: bactchange, phlyratio ! Normalized bact change; phage-lysogen ration
-	real*8		:: lys_frac ! Fraction of bacteria that are lysogenic
-	real*8		:: Adsorp_eff ! Adjusted adsorption coefficient
+	integer*8 :: phagetot ! Change in bact. pop; total phage pop
 	real*8		:: adsorp = 4.8E-10 ! Unadjusted adsorption coefficient
 
 ! Loops
@@ -174,42 +170,39 @@ do i = 1, 2*grid, 1
 
 	do j = 1, 2*grid, 1
 
-		! Determine lysogenic fraction of bacteria, function in P2Smod.f90
-		lys_frac = lysratio(i,j)
+		! Species count update. The 5.0 prefix is reduced from the fitted value of
+		! 51.215.
+		phage(i,j)%numspecies = int(5.0*(float(phage(i,j)%totalpop)**0.0336))
+		bacteria(i,j)%numspecies = int(5.0*(float(bacthold(i,j)%totalpop)**0.0336))
 
-		! Determine the temperance ratio, function in P2Smod.f90
-		vmr_loc = vmr_calc(i,j)
-
-		bact_spec = bacteria(i,j)%numspecies
-
-		! Adsorption coefficient
-		Adsorp_eff = adsorp
+		bact_spec = real(bacteria(i,j)%numspecies,8)
 
   	! Bacteria - Steady State, Compartment model
-		bacteria(i,j)%totalpop = int(bact_spec*(phagedie/(bacBurst*Adsorp_eff)),8)
+		bacteria(i,j)%totalpop = int(bact_spec*(phagedie/(bacBurst*adsorp)),8)
 
 		! Limit population to carrying capacity
 		if (bacteria(i,j)%totalpop .gt. int(kbact(i,j),8)) then
 			bacteria(i,j)%totalpop = int(kbact(i,j),8)
 		end if
 
-		! Phage - Steady State, Compartment model. Function in P2Smod.f90
-		phagetot = int(virpop_dom(kbact(i,j),real(bacteria(i,j)%totalpop,8), &
-										Adsorp_eff,bact_spec),8)
 
+		! Phage - Steady State, Compartment model. Function in P2Smod.f90
+		phagetot = int(virpop_dom(kbact(i,j),real(bacthold(i,j)%totalpop,8), &
+										adsorp,real(phage(i,j)%numspecies,8)),8)
+
+		! Assign to phage array
 		phage(i,j)%totalpop = phagetot
 
-		K_del = (kbact(i,j) - bacteria(i,j)%totalpop)
+		!! Lysogenic compartment
+		! Find difference between carrying capacity and bacteria population
+		K_del = (int(kbact(i,j),8) - bacteria(i,j)%totalpop)
 
+		! Determine carrying capacity in lysogenic compartment.
+		! Function in P2Smod.F90
 		lys_carry_loc = comp_carry(K_del,bact_spec,bacteria(i,j)%totalpop)
 
 		! Set number of lysogenic bacteria
 		lys(i,j)%totalpop = lys_pop(lys_carry_loc)
-
-		! Determine the species count from population
-		lys(i,j)%numspecies = int(75.374*float(lys(i,j)%totalpop)**alpha)
-		phage(i,j)%numspecies = int(75.374*float(phage(i,j)%totalpop)**alpha)
-		bacteria(i,j)%numspecies = int(75.374*float(bacteria(i,j)%totalpop)**alpha)
 
 	end do
 
@@ -231,8 +224,7 @@ use globalvars
 
 implicit none
 	real*8	:: area, average
-	integer :: i, j
-
+	integer	:: t
 
 area = real((2*grid)**2)
 
@@ -240,15 +232,23 @@ bacteria%totalpop = int(0.01*kbact,8)
 
 phage%totalpop = 5*bacteria%totalpop
 
-lys%totalpop = int(0.4*real(bacteria%totalpop),8)
+lys%totalpop = int(0.1*real(bacteria%totalpop),8)
 
-do i = 1, 2*grid, 1
-	do j = 1, 2*grid, 1
-		lys(i,j)%numspecies = int(75.374*float(lys(i,j)%totalpop)**alpha)
-		phage(i,j)%numspecies = int(75.374*float(phage(i,j)%totalpop)**alpha)
-		bacteria(i,j)%numspecies = int(75.374*float(bacteria(i,j)%totalpop)**alpha)
-	end do
+lys%numspecies = 1
+phage%numspecies = int(5.0*float(phage%totalpop)**0.0336)
+bacteria%numspecies = int(5.0*float(bacteria%totalpop)**0.0336)
+
+bacthold = bacteria
+
+! Cycle to remove instabilities
+do t = 1, 5, 1
+
+	call bactgrow_dom
+
 end do
+
+bacthold = bacteria
+
 
 ! Write statements
 average = sum(bacteria%numspecies)/area

@@ -27,7 +27,7 @@ use globalvars
 use functions
 
 implicit none
-	integer					:: i, t, l	! Looping integers
+	integer					:: t	! Looping integers
 	integer					:: allck ! Error flag
 	integer					:: fertile, buds, mstime(8) ! flags for coral ferility
 																							! Number of coral buds; timing array
@@ -68,16 +68,15 @@ holding 			= 0.0
 bacteria%totalpop 	= 0
 bacteria%numspecies = 0
 ! Sub Variables
-alpha			= 0.0336
 fertile 	= 0
 numday 		= 0
 numnew 		= 0
-def_mod		= 0.1
+def_mod		= 1.0
 
 call date_and_time(values=mstime)
-seed = 2
-!seed = (mstime(8)) ! New seed each run
-call random_seed(put=seed) ! Consistent seed
+!seed = 4 ! Consistent Seed
+seed = (mstime(8)) ! New seed each run
+call random_seed(put=seed)
 
 ! Populates initial coral layer - coral_subs.F90
 call corpop
@@ -89,85 +88,18 @@ write(*,*) "0.0 represents pure algae; greater than zero represents coral, highe
 write(*,*) "Files are written as (x,y,z) where z is the population/biomass"
 
 ! initial fish population, P2Smod.f90
-fish = 990.0*percentcor(grid)
+fish = 1000.0*percentcor(grid)
 
-! Populating initital bacteria layer - microbe_subs.F90
+! Determining bacterial carrying capacity
 call kgrid
-call microbepop_dom
 
 ! Initiallize bacteria holding layer
+call microbepop_dom
 bacthold = bacteria
 
 ! Initillizations
 fertile = 0
 sickDays = 0
-t = 0
-
-write(*,*) "Beginning Equilibration"
-
-! Equilibration loops. Data is not output
-do t = 1, 300, 1
-
-if (t .eq. 60) then
-	write(*,*) "Equilibration 20% Complete."
-else if (t .eq. 120) then
-	write(*,*) "Equilibration 40% Complete."
-else if (t .eq. 180) then
-	write(*,*) "Equilibration 60% Complete."
-else if (t .eq. 240) then
-	write(*,*) "Equilibration 80% Complete."
-end if
-
-		! Determine how many coral may potentially spawn
-		buds = nint(percentcor(grid)*10.0)
-
-		! Bacteria diffusion - microbe_subs.F90
-		call diffuse
-
-		! Set coral growth percentage
-		growpercmod = def_mod
-
-		! Coral growth and coral loss subroutines - coral_subs.F90
-		call growth(holding,coral,growpercmod)
-		call decay(holding,coral)
-
-		! This section for determining spawning season. 2 'weeks' twice a 'year'
-		if ((t .gt. 181).and.(mod(t,182) .eq. 0)) then
-			write(*,*) "Coral spawning begins"
-			fertile = 14
-		end if
-
-		! spawning season. More chances of coral spawning during this time
-		if (fertile .gt. 0) then
-			do l = 1, 5*buds, 1
-				call newcoral
-			end do
-		end if
-
-		! Shark event subroutine
-		call shark(0)
-		! Adjust fish population
-		fish = fish + fishdelta(fish)
-
-		! Code for new coral without spawning season bonus
-		do i = 1, buds, 1
-			call corexp
-		end do
-
-		! Adjust microbial carrying capacity-  microbe_subs.F90
-		call kgrid
-		! Grow the microbial community - microbe_subs.F90
-		call bactgrow_dom
-
-		! Update holding layers
- 		holding = coral
-		bacthold = bacteria
-
-end do
-
-write(*,*) "Equilibration Complete"
-
-! Set flag to indicate data collection is about to begin
 t = 0
 
 ! Beginning of data collection - nonlifesubs.f90
@@ -184,6 +116,8 @@ do t = 1, numtime, 1
 	write(*,*) "Beginning timestep", t
 
 	write(*,*) "Fish population:", fish
+	fish_carry = 1000.0*percentcor(grid) + 100.0
+
 
 	if ((t .gt. 181).and.(mod(t,182) .eq. 0)) then
 		write(*,*) "Coral spawning begins"
@@ -207,6 +141,11 @@ do t = 1, numtime, 1
 		goto 103
 	end if
 
+	if (percentcor(grid) .gt. 0.99) then
+		write(*,*) "Algae has been removed"
+		goto 103
+	end if
+
 	! Determine number of potential new coral buds
 	buds = nint(percentcor(grid)*10.0)
 
@@ -222,17 +161,13 @@ do t = 1, numtime, 1
 
 	! Coral growth and decay
 	call growth(holding,coral,growpercmod)
-	call decay(holding,coral)
 
 	! User output
-	write(*,*) "Average coral loss:", decavg
 	write(*,*) "Average coral Growth:", growavg
 
 	! Spawning season code
 	if (fertile .gt. 0) then
-		do l = 1, 5*buds, 1
-			call newcoral
-		end do
+			call corexp(4*buds)
 	end if
 
 	! Shark events
@@ -246,9 +181,7 @@ do t = 1, numtime, 1
 
 	! Disallow spawning during disease
 	if (sickDays .lt. 1) then
-	  do i = 1, buds, 1
-	  	call corexp
-	  end do
+	  	call corexp(1*buds)
 	end if
 
 	! Update microbe carying capacity
