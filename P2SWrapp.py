@@ -215,19 +215,18 @@ def ranged(inputs,outfiles,time):
 
     vars = ["Initial Coral","New Coral Threshold","Piscivore Mass",
     "Days Between Hunts","Bacterial Growth Rate","Bacteria/New Coral Interaction",
-    "Bacterial/Coral Growth Interaction","Adsorption Factor","Bacterial Decay Rate",
-    "Burst Size","Phage Decay Rate","Fish Multiplier","Fish Growth Rate",
-    "Diffusion Coefficient","Algal Pressure","Lysogen Growth Rate"]
+    "Adsorption Factor","Bacterial Decay Rate","Burst Size","Phage Decay Rate",
+    "Fish Multiplier","Fish Growth Rate","Diffusion Coefficient",
+    "Lysogen Growth Rate"]
 
     print("Please select the variable to range over:")
     print("Initial Coral Coverage - 1  | New Coral Threshold        - 2")
     print("Piscivore Mass         - 3  | Hunting Success Average    - 4")
     print("Bacterial Growth Rate  - 5  | Bact/New coral interaction - 6")
-    print("Bact/Coral Growth Int. - 7  | Adsorption Factor          - 8")
-    print("Bacterial Decay Rate   - 9  | Burst Size                 - 10")
-    print("Phage Decay Rate       - 11 | Fish Impact Multiplier     - 12")
-    print("Fish Growth Rate       - 13 | Diffusion Coefficient      - 14")
-    print("Lysogen Growth Modifier- 15")
+    print("Adsorption Factor      - 7  | Bacterial Decay Rate       - 8")
+    print("Burst Size             - 9  | Phage Decay Rate           - 10")
+    print("Fish Impact Multiplier - 11 | Fish Growth Rate           - 12")
+    print("Diffusion Coefficient  - 13 | Lysogen Growth Modifier    - 14")
 
     try:
         var_it = int(input("Variable Choice: \n") or '0')
@@ -288,19 +287,18 @@ def stats_run(inputs,outfiles,time):
 
     vars = ["Initial Coral","New Coral Threshold","Piscivore Mass",
     "Days Between Hunts","Bacterial Growth Rate","Bacteria/New Coral Interaction",
-    "Bacterial/Coral Growth Interaction","Adsorption Factor","Bacterial Decay Rate",
-    "Burst Size","Phage Decay Rate","Fish Multiplier","Fish Growth Rate",
-    "Diffusion Coefficient","Algal Pressure","Lysogen Growth Rate"]
+    "Adsorption Factor","Bacterial Decay Rate","Burst Size","Phage Decay Rate",
+    "Fish Multiplier","Fish Growth Rate","Diffusion Coefficient",
+    "Lysogen Growth Rate"]
 
     print("Please select the variable to range over:")
     print("Initial Coral Coverage - 1  | New Coral Threshold        - 2")
     print("Piscivore Mass         - 3  | Hunting Success Average    - 4")
     print("Bacterial Growth Rate  - 5  | Bact/New coral interaction - 6")
-    print("Bact/Coral Growth Int. - 7  | Adsorption Factor          - 8")
-    print("Bacterial Decay Rate   - 9  | Burst Size                 - 10")
-    print("Phage Decay Rate       - 11 | Fish Impact Multiplier     - 12")
-    print("Fish Growth Rate       - 13 | Diffusion Coefficient      - 14")
-    print("Lysogen Growth Modifier- 15")
+    print("Adsorption Factor      - 7  | Bacterial Decay Rate       - 8")
+    print("Burst Size             - 9  | Phage Decay Rate           - 10")
+    print("Fish Impact Multiplier - 11 | Fish Growth Rate           - 12")
+    print("Diffusion Coefficient  - 13 | Lysogen Growth Modifier    - 14")
 
     try:
         var_it = int(input("Variable Choice: \n") or '0')
@@ -391,7 +389,7 @@ p_death = 0.5 # Natural rate of phage decay
 f_eat = 500 # Multiplier of fish effects on algae
 f_Grate = 0.003 # Fish growth rate
 diff_co = 0.01 # Diffusion pressure for bacterial layer
-ly_mod = 1.0 # Modifier for Lysogen growth rate
+ly_mod = 1.5 # Modifier for Lysogen growth rate
 dis_flag = 'N' # Flag for disaster events N - None
 dis_lev = 5 # Severity of disasters
 adj_flag = 'N' # Flag to indicate a change in values at the half-way point
@@ -409,7 +407,7 @@ f_eat_2 = 260 # Multiplier of fish effects on algae
 f_Grate_2 = 0.003 # Fish growth rate
 diff_co_2 = 0.01 # Diffusion pressure for bacterial layer
 
-shift = 17 # amt to shift for output graphing
+shift = 16 # amt to shift for output graphing
 
 in_vals = [grid,numT,corcov_ini,nwcor_thr,pisc_mass,hunt_avg,b_Grate,b_corN_str,
             Ads_fac,b_death,burst,p_death,f_eat,f_Grate,diff_co,

@@ -2,8 +2,8 @@ subroutine fishinteraction(modify)
 
 ! Interaction of fish with algae layer. Lessens the pressure of algae against coral
 
-use functions
-use globalvars
+use functions, only: fishdelta
+use globalvars, only: fish, fgrowfact, fish_carry, fisheatmult
 
 	real,intent(inout)			:: modify				! Input variable to be modified
 

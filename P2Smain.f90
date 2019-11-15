@@ -1,14 +1,4 @@
-PROGRAM concept
-!
-! This is a proof of concept for use in a program that will model
-! interaction of coral reefs
-!
-! History
-! 1.00a - Initial program construction
-! 1.00b - Coral and algae interaction
-! 1.00c - Fish layer added
-! 1.00d - Coral/Algae layer population routines
-! 1.00d - Bacteria layer added
+PROGRAM P2S
 !
 ! Jon Parsons
 ! 8-4-19
@@ -22,6 +12,10 @@ PROGRAM concept
 !
 !
 ! ------------------ Code -----------------------------
+
+! TO DO: Implement time dependant LV eqns
+! 			 Implement seperate timescales for microbial/meso scale
+! 			 Check change that makes bactgrow_dom so slow now 
 
 use globalvars
 use functions
@@ -89,13 +83,12 @@ write(*,*) "Files are written as (x,y,z) where z is the population/biomass"
 
 ! initial fish population, P2Smod.f90
 fish = 1000.0*percentcor(grid)
+fish_carry = 1000.0*percentcor(grid) + 100.0
 
 ! Determining bacterial carrying capacity
 call kgrid
-
 ! Initiallize bacteria holding layer
 call microbepop_dom
-bacthold = bacteria
 
 ! Initillizations
 fertile = 0
@@ -186,6 +179,7 @@ do t = 1, numtime, 1
 
 	! Update microbe carying capacity
 	call kgrid
+
 	! Grow microbe layer
 	call bactgrow_dom
 

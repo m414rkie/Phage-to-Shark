@@ -53,7 +53,7 @@ end type microbevar
 	integer														:: distance	! radial distance of coral clusters
 	real															:: fisheat	! amount of pressure fish puts on algae
 	real															:: fishtot, growavg ! Data holding variables
-	real(kind=8)											:: kalg, kcor, kbar ! Microbial carrying capacity. algae/coral/interface
+	real*8														:: kalg, kcor, kbar ! Microbial carrying capacity. algae/coral/interface
 	real															:: hunger, shrkevt ! Shark variables
 	integer														:: numnew ! Holds number of coral growths total
 	real															:: avgspec ! Avg. num species
@@ -122,7 +122,7 @@ real*8 function virpop_dom(carry,bacpop,ad,spec)
 use globalvars
 
 implicit none
-	real*8	:: carry, bacpop, ad_eff, spec
+	real*8	:: carry, bacpop, ad, spec
 					 ! capacity; bacteria pop; effective adsorption coefficient, richness
 
 virpop_dom = spec*(rate*(1.0 - (bacpop/carry)) - bacdeath)/ad

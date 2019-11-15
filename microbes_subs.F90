@@ -2,17 +2,30 @@ subroutine kgrid
 
 ! Finds the carrying capacity of each gridpoint for the bacteria layer
 
-use globalvars
+use globalvars, only: kbact, grid, coral, kalg, kcor, kbar
 
 implicit none
-	integer							:: i, j								! Looping integers
+	integer			:: i, j			! Looping integers
+	real				:: fish_imp	! Holds fish impact parameters
+	real*8			:: kalg_adj, kcor_adj, kbar_adj ! Adjusted carrying capacities
+																					! adjusted by the fish parameters
+
+fish_imp = 1.0
+call fishinteraction(fish_imp)
+
+write(*,*)  fish_imp
+
 
 kalg = 225.0E9 ! 25*9e9 ! Factor of 25 since our grid is 5cm X 5cm at the microbe
 kcor = 75.0E9 ! 25*3e9     level
 kbar = 300.0E9 ! 25*12e9
 
+kalg_adj = kalg*fish_imp
+kcor_adj = kcor*fish_imp
+kbar_adj = kbar*fish_imp
+
 ! Initialize to all algae
-kbact = kalg
+kbact = kalg_adj
 
 ! Set coral locations
 do i = 1, grid, 1
@@ -20,10 +33,10 @@ do i = 1, grid, 1
 	do j = 1, grid, 1
 
 		if (coral(i,j) .ne. 0) then
-			kbact(2*i-1,2*j-1) = kcor
-			kbact(2*i-1,2*j) = kcor
-			kbact(2*i,2*j) = kcor
-			kbact(2*i,2*j-1) = kcor
+			kbact(2*i-1,2*j-1) = kcor_adj
+			kbact(2*i-1,2*j) = kcor_adj
+			kbact(2*i,2*j) = kcor_adj
+			kbact(2*i,2*j-1) = kcor_adj
 		end if
 
 	end do
@@ -37,13 +50,13 @@ do i = 1, 2*grid, 1
 
 		if (i .lt. 2*grid) then
 			if ((i .lt. 2*grid) .and. (kbact(i,j) .ne. kbact(i+1,j))) then
-				kbact(i,j) = kbar
+				kbact(i,j) = kbar_adj
 			end if
 		end if
 
 		if (j .lt. 2*grid) then
 			if ((j .lt. 2*grid) .and. (kbact(i,j) .ne. kbact(i,j+1))) then
-				kbact(i,j) = kbar
+				kbact(i,j) = kbar_adj
 			end if
 		end if
 
@@ -59,7 +72,7 @@ subroutine diffuse
 
 ! Diffusion subroutine. Primary driver is population difference
 
-use globalvars
+use globalvars, only: bacteria, grid, diffco
 
 implicit none
 	real, dimension(2*grid,2*grid)	:: delta		! Holds overall change from diffusion
@@ -155,14 +168,14 @@ subroutine bactgrow_dom
 ! of the lotka-volterra eqns.
 
 use globalvars
-use functions
+use functions, only: virpop_dom, comp_carry, lys_pop
 
 implicit none
 	real*8		:: lys_carry_loc ! Local lysogen carrying capacity
 	integer*8	:: K_del ! Difference in carrying capacity and usage
 	real*8		:: bact_spec ! Dummy variable
 	integer   :: i, j ! Looping integers
-	integer*8 :: phagetot ! Change in bact. pop; total phage pop
+	integer*8 :: phagetot ! total phage pop
 	real*8		:: adsorp = 4.8E-10 ! Unadjusted adsorption coefficient
 
 ! Loops
@@ -172,6 +185,7 @@ do i = 1, 2*grid, 1
 
 		! Species count update. The 5.0 prefix is reduced from the fitted value of
 		! 51.215.
+		lys%numspecies = 1
 		phage(i,j)%numspecies = int(5.0*(float(phage(i,j)%totalpop)**0.0336))
 		bacteria(i,j)%numspecies = int(5.0*(float(bacthold(i,j)%totalpop)**0.0336))
 
@@ -184,7 +198,6 @@ do i = 1, 2*grid, 1
 		if (bacteria(i,j)%totalpop .gt. int(kbact(i,j),8)) then
 			bacteria(i,j)%totalpop = int(kbact(i,j),8)
 		end if
-
 
 		! Phage - Steady State, Compartment model. Function in P2Smod.f90
 		phagetot = int(virpop_dom(kbact(i,j),real(bacthold(i,j)%totalpop,8), &
@@ -228,11 +241,11 @@ implicit none
 
 area = real((2*grid)**2)
 
-bacteria%totalpop = int(0.01*kbact,8)
+bacteria%totalpop = int(0.001*kbact,8)
 
 phage%totalpop = 5*bacteria%totalpop
 
-lys%totalpop = int(0.1*real(bacteria%totalpop),8)
+lys%totalpop = int(0.01*real(bacteria%totalpop),8)
 
 lys%numspecies = 1
 phage%numspecies = int(5.0*float(phage%totalpop)**0.0336)
@@ -244,11 +257,11 @@ bacthold = bacteria
 do t = 1, 5, 1
 
 	call bactgrow_dom
+	bacthold = bacteria
 
 end do
 
 bacthold = bacteria
-
 
 ! Write statements
 average = sum(bacteria%numspecies)/area

@@ -223,6 +223,8 @@ fish_imp = 1.0
 
 call fishinteraction(fish_imp)
 
+fish_imp = fish_imp/fish
+write(*,*) "Fish param", (0.003 - fish_imp)/0.003
 if (fish_imp .lt. 0.0) then
 	fish_imp = 0.0
 end if
@@ -258,15 +260,15 @@ yloop:	do y = 1, grid, 1
 
 		! Determine growth
 		if (ran .lt. 0.5) then
-			growpercent = 0.2 + 0.075*growpercent
+			growpercent = 0.1 + 0.05*growpercent
 		else
-			growpercent = 0.2 - 0.085*growpercent
+			growpercent = 0.1 - 0.05*growpercent
 		end if
 
 ! Fish impact should affect the carrying capacity in the algae. Shift to
 !	k-subroutine
 
-		grow = 1.0 + (deconst*growpercent - 0.25*fish_imp*(bacteff))
+		grow = 1.0 + (deconst*growpercent - 0.3*bacteff)
 		!write(*,*) fish_imp, growpercent, bacteff, grow, tot_bac
 
 		! Sum to average
@@ -278,8 +280,6 @@ yloop:	do y = 1, grid, 1
 	end do yloop
 
 end do
-
-write(*,*) "Fish Parameter: ", fish_imp, grow
 
 ! Normalize the average growth
 cur_perc = percentcor(grid)
