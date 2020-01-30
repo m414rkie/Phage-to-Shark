@@ -56,6 +56,7 @@ def graph(xfil,yfil,xnum,ynum,flg,vals,dire,vr_nm):
     x_lab = xfil + " " + units[xnum]
     y_lab = yfil + " " + units[ynum]
     plt_name = "{}{}.png".format(xfil,yfil)
+    plt.ticklabel_format(useOffset=False)
     plt.title(plt_title)
     plt.xlabel(x_lab)
     plt.ylabel(y_lab)
