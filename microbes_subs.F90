@@ -6,23 +6,17 @@ use globalvars, only: kbact, grid, coral, kalg, kcor, kbar
 
 implicit none
 	integer			:: i, j			! Looping integers
-	real				:: fish_imp	! Holds fish impact parameters
 	real*8			:: kalg_adj, kcor_adj, kbar_adj ! Adjusted carrying capacities
 																					! adjusted by the fish parameters
-
-fish_imp = 1.0
-call fishinteraction(fish_imp)
-
-write(*,*)  fish_imp
 
 
 kalg = 225.0E9 ! 25*9e9 ! Factor of 25 since our grid is 5cm X 5cm at the microbe
 kcor = 75.0E9 ! 25*3e9     level
 kbar = 300.0E9 ! 25*12e9
 
-kalg_adj = kalg*fish_imp
-kcor_adj = kcor*fish_imp
-kbar_adj = kbar*fish_imp
+kalg_adj = kalg
+kcor_adj = kcor
+kbar_adj = kbar
 
 ! Initialize to all algae
 kbact = kalg_adj
@@ -176,7 +170,11 @@ implicit none
 	real*8		:: bact_spec ! Dummy variable
 	integer   :: i, j ! Looping integers
 	integer*8 :: phagetot ! total phage pop
-	real*8		:: adsorp = 4.8E-10 ! Unadjusted adsorption coefficient
+	real*8		:: adsorp = 4.8E-10 ! Adsorption coefficient
+	real			:: fish_imp ! Holds fish impact parameter
+
+fish_imp = 1.0
+call fishinteraction(fish_imp)
 
 ! Loops
 do i = 1, 2*grid, 1
@@ -186,7 +184,7 @@ do i = 1, 2*grid, 1
 		! Species count update. The 5.0 prefix is reduced from the fitted value of
 		! 51.215.
 		lys%numspecies = 1
-		phage(i,j)%numspecies = int(5.0*(float(phage(i,j)%totalpop)**0.0336))
+		phage(i,j)%numspecies = int(3.0*(float(phage(i,j)%totalpop)**0.0336))
 		bacteria(i,j)%numspecies = int(5.0*(float(bacthold(i,j)%totalpop)**0.0336))
 
 		bact_spec = real(bacteria(i,j)%numspecies,8)
@@ -195,8 +193,8 @@ do i = 1, 2*grid, 1
 		bacteria(i,j)%totalpop = int(bact_spec*(phagedie/(bacBurst*adsorp)),8)
 
 		! Limit population to carrying capacity
-		if (bacteria(i,j)%totalpop .gt. int(kbact(i,j),8)) then
-			bacteria(i,j)%totalpop = int(kbact(i,j),8)
+		if (bacteria(i,j)%totalpop .gt. int(kbact(i,j)*fish_imp,8)) then
+			bacteria(i,j)%totalpop = int(kbact(i,j)*fish_imp,8)
 		end if
 
 		! Phage - Steady State, Compartment model. Function in P2Smod.f90
@@ -208,7 +206,7 @@ do i = 1, 2*grid, 1
 
 		!! Lysogenic compartment
 		! Find difference between carrying capacity and bacteria population
-		K_del = (int(kbact(i,j),8) - bacteria(i,j)%totalpop)
+		K_del = (int(kbact(i,j)*fish_imp,8) - bacteria(i,j)%totalpop)
 
 		! Determine carrying capacity in lysogenic compartment.
 		! Function in P2Smod.F90

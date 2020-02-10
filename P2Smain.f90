@@ -13,9 +13,11 @@ PROGRAM P2S
 !
 ! ------------------ Code -----------------------------
 
-! TO DO: Implement time dependant LV eqns
-! 			 Implement seperate timescales for microbial/meso scale
-! 			 Check change that makes bactgrow_dom so slow now 
+! TO DO:
+! Initial fish population is user input
+! Clean deprecated inputs
+! New method for adjustment of carrying capacity
+! 		- keep cc array clean and shift adjustment to the bacterial subs
 
 use globalvars
 use functions
@@ -56,7 +58,7 @@ allocate(seed(33), stat=allck)
 	if (allck .ne. 0) stop "Seed Allocation Failed"
 
 ! Initializing grids and variables
-fish 					= 0.0
+fish 					= fish_ini
 coral 				= 0.0
 holding 			= 0.0
 bacteria%totalpop 	= 0
@@ -82,7 +84,6 @@ write(*,*) "0.0 represents pure algae; greater than zero represents coral, highe
 write(*,*) "Files are written as (x,y,z) where z is the population/biomass"
 
 ! initial fish population, P2Smod.f90
-fish = 1000.0*percentcor(grid)
 fish_carry = 1000.0*percentcor(grid) + 100.0
 
 ! Determining bacterial carrying capacity
@@ -196,8 +197,9 @@ do t = 1, numtime, 1
 	sickDays = sickDays - 1
 
 	! At the halfway point, adjust parameters
-	if ((t .eq. (numTime/2)).and.(var_adjust_flag .eq. "D")) then
+	if ((t .eq. t_adj).and.(var_adjust_flag .eq. "D")) then
 		call var_adjuster(t)
+		fish = fish_ini_2nd
 	end if
 
 ! End of main loop

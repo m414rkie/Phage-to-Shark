@@ -22,12 +22,13 @@ end type microbevar
 	real															:: bacDeath ! Natural rate of bacterial death
 	real															:: bacBurst ! Number of phage that emerge from a lysis event
 	real															:: phagedie	! Natural rate of phage death
-	real															:: fisheatmult ! Fish influence multiplier
+	real															:: fish_ini ! Initial population of fish
 	real															:: fgrowfact ! Rate of fish growth
 	real															:: diffco ! Diffusion coefficient
 	real															:: ly_mod ! Lysogen growth rate modifier
   ! Second values
 	character*1												:: var_adjust_flag ! Flag determines if values will change
+	integer														:: t_adj ! Holds the time that the variables will adjust
 	real															:: threshold_2nd ! Avg. coral requirement for new coral
 	real															:: sharkMass_2nd ! Mass of piscivores in reef
   real															:: dayavg_2nd ! Avg. number of days between shark events
@@ -37,7 +38,7 @@ end type microbevar
 	real															:: bacDeath_2nd ! Natural rate of bacterial death
 	real															:: bacBurst_2nd ! Number of phage that emerge from a lysis event
 	real															:: phagedie_2nd	! Natural rate of phage death
-	real															:: fisheatmult_2nd ! Fish influence multiplier
+	real															:: fish_ini_2nd ! fish population, adjusted
 	real															:: fgrowfact_2nd ! Rate of fish growth
 	real															:: diffco_2nd ! Diffusion coefficient
 	real															:: decayconst_2nd	! Percent of coral loss per nearby algae
@@ -215,8 +216,8 @@ implicit none
 	real*8	:: maxpop, minpop ! Determine max or min influence
 
 ! Initialize values - Based on in vivo measurements
-maxpop = 100.0*1.0E7
-minpop = 100.0*1.0E5
+maxpop = 25.0*1.0E7
+minpop = 25.0*1.0E5
 slope = 1.0/(maxpop-minpop)
 
 ! Limit minimum output
