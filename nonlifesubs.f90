@@ -233,30 +233,18 @@ write(*,*) "Enter the number of time steps :"
 read(*,*) numtime
 write(*,*) "Enter percentage of bed with coral:"
 read(*,*) percentcover
-write(*,*) "New coral threshold?"
-read(*,*) threshold
 write(*,*) "Enter the mass of Piscivores."
 read(*,*) sharkMass
 write(*,*) "Enter the average number of days between shark attacks."
 read(*,*) dayavg
-write(*,*) "Enter the value of the bacterial growth rate."
-read(*,*) rate
-write(*,*) "Enter the effect of bacteria on new coral."
-read(*,*) corBacNew
-write(*,*) "Enter the ratio of bacteria that die each timestep."
-read(*,*) bacDeath
 write(*,*) "Enter the burst size of infected bacteria."
 read(*,*) bacBurst
-write(*,*) "Enter the ratio of phage that die each timestep."
-read(*,*) phagedie
 write(*,*) "Enter the initial fish population."
 read(*,*) fish_ini
 write(*,*) "Enter the rate of fish growth."
 read(*,*) fgrowfact
 write(*,*) "Enter the diffusion coefficient."
 read(*,*) diffco
-write(*,*) "Enter the multiplier for the Lysogen Growth Rate"
-read(*,*) ly_mod
 write(*,*) "Enter 'H' for a hurricane, or 'D' for a disease."
 write(*,*) "Any other entry will result in neither."
 read(*,*) disFlagin
@@ -270,22 +258,12 @@ call chartoup(var_adjust_flagin,var_adjust_flag)
 if (var_adjust_flag .eq. "D") then
 	write(*,*) "Time to change values?"
 	read(*,*) t_adj
-	write(*,*) "New coral threshold?"
-	read(*,*) threshold_2nd
 	write(*,*) "Enter the mass of Piscivores."
 	read(*,*) sharkMass_2nd
 	write(*,*) "Enter the average number of days between shark attacks."
 	read(*,*) dayavg_2nd
-	write(*,*) "Enter the value of the bacterial growth rate."
-	read(*,*) rate_2nd
-	write(*,*) "Enter the effect of bacteria on new coral."
-	read(*,*) corBacNew_2nd
-	write(*,*) "Enter the ratio of bacteria that die each timestep."
-	read(*,*) bacDeath_2nd
 	write(*,*) "Enter the burst size of infected bacteria."
 	read(*,*) bacBurst_2nd
-	write(*,*) "Enter the ratio of phage that die each timestep."
-	read(*,*) phagedie_2nd
 	write(*,*) "Enter the population of fish"
 	read(*,*) fish_ini_2nd
 	write(*,*) "Enter the rate of fish growth."
@@ -621,11 +599,7 @@ write(*,*) "Adjusting parameters at time", tflag
 threshold = threshold_2nd
 sharkMass = sharkMass_2nd
 dayavg = dayavg_2nd
-rate = rate_2nd
-corBacNew = corBacNew_2nd
-bacDeath = bacDeath_2nd
 bacBurst = bacBurst_2nd
-phagedie = phagedie_2nd
 fgrowfact = fgrowfact_2nd
 diffco = diffco_2nd
 

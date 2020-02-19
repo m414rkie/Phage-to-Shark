@@ -20,7 +20,7 @@ use globalvars, only: fish, fgrowfact, fish_carry
 
 	! Adjust input values
 	modify = modify*(1.0 - fisheat)
-	write(*,*) "Fish Modifiers", fisheat, modify
+	write(*,*) "Fish Modifiers", fisheat, modify 
 
 end subroutine
 

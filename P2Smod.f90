@@ -13,35 +13,21 @@ end type microbevar
 	integer														:: grid ! Size of grid
 	integer														:: numtime ! Number of time steps
 	real															:: percentcover	! Initial percentage of coral cover
-	real															:: threshold ! Avg. coral requirement for new coral
 	real															:: sharkMass ! Mass of piscivores in reef
   real															:: dayavg ! Avg. number of days between shark events
-	real															:: rate	! Bacteria Growth rate adjuster
-	real															:: corBacNew ! Influence of bacteria on new coral/coral growth
-	real															:: adsorpFac ! Factor influencing adsorption coefficient
-	real															:: bacDeath ! Natural rate of bacterial death
 	real															:: bacBurst ! Number of phage that emerge from a lysis event
-	real															:: phagedie	! Natural rate of phage death
 	real															:: fish_ini ! Initial population of fish
 	real															:: fgrowfact ! Rate of fish growth
 	real															:: diffco ! Diffusion coefficient
-	real															:: ly_mod ! Lysogen growth rate modifier
   ! Second values
 	character*1												:: var_adjust_flag ! Flag determines if values will change
 	integer														:: t_adj ! Holds the time that the variables will adjust
-	real															:: threshold_2nd ! Avg. coral requirement for new coral
 	real															:: sharkMass_2nd ! Mass of piscivores in reef
   real															:: dayavg_2nd ! Avg. number of days between shark events
-	real															:: rate_2nd	! Bacteria Growth rate adjuster
-	real															:: corBacNew_2nd ! Influence of bacteria on new coral/coral growth
-	real															:: adsorpFac_2nd ! Factor influencing adsorption coefficient
-	real															:: bacDeath_2nd ! Natural rate of bacterial death
 	real															:: bacBurst_2nd ! Number of phage that emerge from a lysis event
-	real															:: phagedie_2nd	! Natural rate of phage death
 	real															:: fish_ini_2nd ! fish population, adjusted
 	real															:: fgrowfact_2nd ! Rate of fish growth
 	real															:: diffco_2nd ! Diffusion coefficient
-	real															:: decayconst_2nd	! Percent of coral loss per nearby algae
 
 	integer														:: clusnum ! Array size
 	real															:: norm, nearsum, test	! Variables for interactions
@@ -176,7 +162,7 @@ implicit none
 ! Adjust based on user input. Base is lytic growth rate
 rate_l = rate*ly_mod
 
-lys_pop = int(lys_carry_loc-(lys_carry_loc/rate_l)*(ir-bacdeath),8)
+lys_pop = int(lys_carry_loc-(lys_carry_loc/rate_l)*(ir),8)!-bacdeath),8)
 
 end function
 

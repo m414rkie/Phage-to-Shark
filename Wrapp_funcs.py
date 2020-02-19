@@ -214,20 +214,15 @@ def ranged(inputs,outfiles,time):
 
     dir = "/home/jon/Desktop/Phage2Shark/General/"
 
-    vars = ["Initial Coral","New Coral Threshold","Piscivore Mass",
-    "Days Between Hunts","Bacterial Growth Rate","Bacteria/New Coral Interaction",
-    "Adsorption Factor","Bacterial Decay Rate","Burst Size","Phage Decay Rate",
-    "Fish Multiplier","Fish Growth Rate","Diffusion Coefficient",
-    "Lysogen Growth Rate"]
+    vars = ["Initial Coral","Piscivore Mass","Days Between Hunts",
+            "Average Burst Size","Initial Fish Population",
+            "Fish Growth Rate","Diffusion Coefficient",]
 
     print("Please select the variable to range over:")
-    print("Initial Coral Coverage - 1  | New Coral Threshold        - 2")
-    print("Piscivore Mass         - 3  | Hunting Success Average    - 4")
-    print("Bacterial Growth Rate  - 5  | Bact/New coral interaction - 6")
-    print("Adsorption Factor      - 7  | Bacterial Decay Rate       - 8")
-    print("Burst Size             - 9  | Phage Decay Rate           - 10")
-    print("Fish Impact Multiplier - 11 | Fish Growth Rate           - 12")
-    print("Diffusion Coefficient  - 13 | Lysogen Growth Modifier    - 14")
+    print("Initial Coral Coverage  - 1  | Piscivore Mass             - 2")
+    print("Hunting Success Average - 3  | Burst Size                 - 4")
+    print("Initial Fish Population - 5  | Fish Growth Rate           - 6")
+    print("Diffusion Coefficient   - 7")
 
     try:
         var_it = int(input("Variable Choice: \n") or '0')
@@ -286,21 +281,15 @@ def stats_run(inputs,outfiles,time):
 
     dir = "/home/jon/Desktop/Phage2Shark/General/"
 
-    vars = ["Initial Coral","New Coral Threshold","Piscivore Mass",
-    "Days Between Hunts","Bacterial Growth Rate","Bacteria/New Coral Interaction",
-    "Adsorption Factor","Bacterial Decay Rate","Burst Size","Phage Decay Rate",
-    "Fish Multiplier","Fish Growth Rate","Diffusion Coefficient",
-    "Lysogen Growth Rate"]
+    vars = ["Initial Coral","Piscivore Mass","Days Between Hunts",
+            "Average Burst Size","Initial Fish Population",
+            "Fish Growth Rate","Diffusion Coefficient",]
 
     print("Please select the variable to range over:")
-    print("Initial Coral Coverage - 1  | New Coral Threshold        - 2")
-    print("Piscivore Mass         - 3  | Hunting Success Average    - 4")
-    print("Bacterial Growth Rate  - 5  | Bact/New coral interaction - 6")
-    print("Adsorption Factor      - 7  | Bacterial Decay Rate       - 8")
-    print("Burst Size             - 9  | Phage Decay Rate           - 10")
-    print("Fish Impact Multiplier - 11 | Fish Growth Rate           - 12")
-    print("Diffusion Coefficient  - 13 | Lysogen Growth Modifier    - 14")
-
+    print("Initial Coral Coverage  - 1  | Piscivore Mass             - 2")
+    print("Hunting Success Average - 3  | Burst Size                 - 4")
+    print("Initial Fish Population - 5  | Fish Growth Rate           - 6")
+    print("Diffusion Coefficient   - 7")
     try:
         var_it = int(input("Variable Choice: \n") or '0')
     except ValueError:

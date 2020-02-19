@@ -184,8 +184,8 @@ do i = 1, 2*grid, 1
 		! Species count update. The 5.0 prefix is reduced from the fitted value of
 		! 51.215.
 		lys%numspecies = 1
-		phage(i,j)%numspecies = int(3.0*(float(phage(i,j)%totalpop)**0.0336))
-		bacteria(i,j)%numspecies = int(5.0*(float(bacthold(i,j)%totalpop)**0.0336))
+		phage(i,j)%numspecies = int(1.0*(float(phage(i,j)%totalpop)**0.0336))
+		bacteria(i,j)%numspecies = int(1.0*(float(bacthold(i,j)%totalpop+lys(i,j)%totalpop)**0.0336))
 
 		bact_spec = real(bacteria(i,j)%numspecies,8)
 
@@ -246,8 +246,8 @@ phage%totalpop = 5*bacteria%totalpop
 lys%totalpop = int(0.01*real(bacteria%totalpop),8)
 
 lys%numspecies = 1
-phage%numspecies = int(5.0*float(phage%totalpop)**0.0336)
-bacteria%numspecies = int(5.0*float(bacteria%totalpop)**0.0336)
+phage%numspecies = int(1.0*float(phage%totalpop)**0.0336)
+bacteria%numspecies = int(1.0*float(bacteria%totalpop+lys%totalpop)**0.0336)
 
 bacthold = bacteria
 
@@ -263,6 +263,6 @@ bacthold = bacteria
 
 ! Write statements
 average = sum(bacteria%numspecies)/area
-write(*,*) "Average number of species:" ,average
+write(*,*) "Average number of species:", average
 
 end subroutine

@@ -1,8 +1,8 @@
 subroutine corpop
 ! Sets initial coral distribution
 
-use globalvars
-use functions
+use globalvars, only: percentcover, grid, coral
+use functions, only: percentcor
 
 implicit none
 	real						:: perc ! Current percentage of coral
@@ -72,8 +72,8 @@ subroutine corexp(new)
 
 ! Subroutine grows the coral into new spots
 
-use globalvars
-use functions
+use globalvars, only: coral, bacteria, grid
+use functions, only: bactouch
 
 implicit none
 	integer,intent(in)	:: new
@@ -203,8 +203,8 @@ subroutine growth(arrin,arrout,deconst)
 use functions
 ! Grows the input grid location based on value and neighbors.
 
-use globalvars
-use functions
+use globalvars, only: grid
+use functions, only: bactouch, percentcor
 
 implicit none
 	real,dimension(grid,grid), intent(in) 		:: arrin ! Input array
@@ -214,20 +214,9 @@ implicit none
 	real*8																		:: grow, bacteff ! Bacterial influences
 	integer																		:: x, y ! Looping integers
 	real																			:: cur_perc, growpercent, ran
-	real																			:: fish_imp
 
 ! Initialize
 growavg = 0.0
-
-fish_imp = 1.0
-
-call fishinteraction(fish_imp)
-
-fish_imp = fish_imp/fish
-write(*,*) "Fish param", (0.003 - fish_imp)/0.003
-if (fish_imp .lt. 0.0) then
-	fish_imp = 0.0
-end if
 
 ! Loops
 do x = 1, grid, 1
