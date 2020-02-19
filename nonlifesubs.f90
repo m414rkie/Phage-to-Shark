@@ -596,7 +596,6 @@ implicit none
 write(*,*) "Adjusting parameters at time", tflag
 
 ! Adjust parameters to those set by user inputs
-threshold = threshold_2nd
 sharkMass = sharkMass_2nd
 dayavg = dayavg_2nd
 bacBurst = bacBurst_2nd

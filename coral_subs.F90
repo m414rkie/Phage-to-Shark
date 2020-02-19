@@ -72,7 +72,7 @@ subroutine corexp(new)
 
 ! Subroutine grows the coral into new spots
 
-use globalvars, only: coral, bacteria, grid
+use globalvars, only: coral, bacteria, lys, grid, check, numnew
 use functions, only: bactouch
 
 implicit none
@@ -178,7 +178,7 @@ do i = 1, new, 1
 
 	call random_number(temp)
 	! Bactfact = sum of all bacteria on location new coral may be placed as a ratio of  bacteria pop to carrycing capacity
-	bactfact = corBacNew*real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
+	bactfact = real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
 		+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop),8)
 
 	totbact = bactfact + real((lys(2*x,2*y)%totalpop+lys(2*x-1,2*y)%totalpop &
@@ -203,7 +203,7 @@ subroutine growth(arrin,arrout,deconst)
 use functions
 ! Grows the input grid location based on value and neighbors.
 
-use globalvars, only: grid
+use globalvars, only: grid, bacteria, lys, growavg
 use functions, only: bactouch, percentcor
 
 implicit none

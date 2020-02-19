@@ -58,6 +58,10 @@ allocate(seed(33), stat=allck)
 	if (allck .ne. 0) stop "Seed Allocation Failed"
 
 ! Initializing grids and variables
+rate = 1.0 ! Bacterial Growth rate
+bacdeath = 0.2 ! Bacterial death rate
+phagedie = 0.5 ! Phage death rate
+
 fish 					= fish_ini
 coral 				= 0.0
 holding 			= 0.0

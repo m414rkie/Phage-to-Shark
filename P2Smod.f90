@@ -29,6 +29,10 @@ end type microbevar
 	real															:: fgrowfact_2nd ! Rate of fish growth
 	real															:: diffco_2nd ! Diffusion coefficient
 
+! Internal Variables
+	real															:: rate !  Bacterial Growth Rate
+	real															:: bacdeath ! Natural Bacterial Death rate
+  real															:: phagedie ! Natural rate of phage death
 	integer														:: clusnum ! Array size
 	real															:: norm, nearsum, test	! Variables for interactions
 	real															:: fish ! Holds fish population.
@@ -68,7 +72,7 @@ contains
 real function fishdelta(pop)
 ! Function determines change in fish population
 
-use globalvars
+use globalvars, only: fgrowfact, fish_carry
 
 implicit none
 	real		:: pop
@@ -83,7 +87,7 @@ end function fishdelta
 real function percentcor(size)
 ! Function determines percentage of coral cover
 
-use globalvars
+use globalvars, only: coral
 
 implicit none
 	integer					:: size ! Size of square array
@@ -106,7 +110,7 @@ real*8 function virpop_dom(carry,bacpop,ad,spec)
 ! Steady state solution for the phage population
 ! Uses LK equations as a base
 
-use globalvars
+use globalvars, only: rate, bacdeath
 
 implicit none
 	real*8	:: carry, bacpop, ad, spec
@@ -121,7 +125,7 @@ real*8 function vmr_calc(i,j)
 ! Finds the temperance ratio
 !** Deprecated **
 
-use globalvars
+use globalvars, only: phage, bacteria, lys
 
 implicit none
 	integer		:: i, j
@@ -135,8 +139,6 @@ end function
 
 real*8 function comp_carry(k_diff,spec,pop)
 ! Calculates the effective lysogen carrying capacity
-
-use globalvars
 
 implicit none
 	integer*8		:: K_diff, pop
@@ -152,14 +154,15 @@ end function
 integer*8 function lys_pop(lys_carry_loc)
 ! Calculates the lysogen population
 
-use globalvars
+use globalvars, only: rate
 
 implicit none
 	real*8		:: lys_carry_loc ! Local lysogen carrying capacity
 	real*8		:: ir = 4.167E-8 ! Induction rate
-	real*8		:: rate_l ! Lysogenic growth rate
+	real*8		:: rate_l, ly_mod ! Lysogenic growth rate
 
-! Adjust based on user input. Base is lytic growth rate
+! Adjust real growth rate of lysogens
+ly_mod = 1.5
 rate_l = rate*ly_mod
 
 lys_pop = int(lys_carry_loc-(lys_carry_loc/rate_l)*(ir),8)!-bacdeath),8)
@@ -172,7 +175,7 @@ real*8 function lysratio(i,j)
 ! Finds lysogen ratio
 ! ** Deprecated **
 
-use globalvars
+use globalvars, only: lys, bacteria
 
 implicit none
 	integer		:: i, j
@@ -194,8 +197,6 @@ end function
 
 real*8 function bactouch(pop)
 ! Determines level of bacterial influence for a given population
-
-use globalvars
 
 implicit none
 	real*8	:: pop, slope ! local population, damage slope
