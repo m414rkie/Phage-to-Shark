@@ -1,9 +1,10 @@
-# Data folders
-
+# Ignoring the data files
+*.dat
+# Ignoring subdirectories
+Bact_script/
+Data/
+Deprecated/
 Documents/
-OutputsH/
 Runs/
-
-# Various things
-*.mod
-*.x
+OutputsH/
+__pycache_
