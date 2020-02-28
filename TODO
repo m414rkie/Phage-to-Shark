@@ -1,0 +1,44 @@
+2-19-20
+Implement a method of finding richness.
+	- Use carrying capacity as a variable
+
+Method of outputing effective burst size
+
+Convert everything to snake-case
+
+2-24-20
+
+Carrying capacity on the order of 10E7
+	- will impact bactouch, phage numbers, burst count
+	- Double check changeability of burst size
+	- Email CS for the paper
+	
+Burst size tied to carrying capacity
+	- Reduce VMR 
+	- three burst sizes, coral 50 algae middle barrier 10
+	- local
+	
+Compile list of things accomplished
+	- Send on Thursday
+	- How to run script finalized 
+	
+Separate the Usage from the Internals in the readme
+	- Folder containing a default values run including output graphs
+	- Seeds how to input and storage thereof
+	
+Send Dr. Luque the classes I had to take as well as short descriptions of methodology
+
+Run 27220202
+- no fish interaction with microbe layer
+- Burst count as step function
+Coral = 50 ; Algae = 30 ; Barrier = 10
+
+Run 2722020
+ - fish interaction
+ - Burst count as step function
+ Coral = 50 ; Algae = 30 ; Barrier = 10
+
+Run 27220201
+ - fish interaction reduced to growth only
+ - Burst count as step function
+ Coral = 100 ; Algae = 60 ; Barrier = 10

@@ -1,6 +1,8 @@
 # Ignoring the data files
 *.dat
 # Ignoring subdirectories
+Coral/
+General/
 Bact_script/
 Data/
 Deprecated/

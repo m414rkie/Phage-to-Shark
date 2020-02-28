@@ -252,6 +252,8 @@ read(*,*) disFlagin
 write(*,*) "To adjust variables on the second half, enter 'D.'"
 write(*,*) "Any other entry will result in no value change"
 read(*,*) var_adjust_flagin
+write(*,*) "Input the seed for use in random number generation"
+read(*,*) seed
 
 call chartoup(var_adjust_flagin,var_adjust_flag)
 

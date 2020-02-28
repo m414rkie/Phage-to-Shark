@@ -3,15 +3,15 @@ subroutine fishinteraction(modify)
 ! Interaction of fish with algae layer. Lessens the pressure of algae against coral
 
 use functions, only: fishdelta
-use globalvars, only: fish, fgrowfact, fish_carry
+use globalvars, only: fish, fish_carry
 
 	real,intent(inout)			:: modify				! Input variable to be modified
 
 	! Ratio of change in fish population to carrying capacity
-	fisheat = fishdelta(fish)/fish + fish/fish_carry
+	fisheat = fishdelta(fish)/fish + 0.25*fish/fish_carry
 	! Set maximal values
 	if (fisheat .lt. 0.0) then
-		fisheat = fgrowfact*fish/fish_carry
+		fisheat = 0.0
 	end if
 
 	if (fisheat .ge. 0.99) then
@@ -20,7 +20,6 @@ use globalvars, only: fish, fgrowfact, fish_carry
 
 	! Adjust input values
 	modify = modify*(1.0 - fisheat)
-	write(*,*) "Fish Modifiers", fisheat, modify 
 
 end subroutine
 

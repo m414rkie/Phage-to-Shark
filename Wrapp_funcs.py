@@ -24,10 +24,10 @@ def dir_find(direc):
 
     while os.path.isdir(dirchk):
         i += 1
-        dirchk = direc + "{}".format(i)
+        dirchk = direc + "_{}".format(i)
 
     if i > 1:
-        direc = direc + "{}".format(i-1)
+        direc = direc + "_{}".format(i-1)
 
     return direc
 
@@ -218,30 +218,38 @@ def ranged(inputs,outfiles,time):
             "Average Burst Size","Initial Fish Population",
             "Fish Growth Rate","Diffusion Coefficient",]
 
-    print("Please select the variable to range over:")
-    print("Initial Coral Coverage  - 1  | Piscivore Mass             - 2")
-    print("Hunting Success Average - 3  | Burst Size                 - 4")
-    print("Initial Fish Population - 5  | Fish Growth Rate           - 6")
-    print("Diffusion Coefficient   - 7")
+    _=os.system('clear')
+    print("Please select the variable to range over:\n")
+    print("Initial Coral Coverage  - 1")
+    print("Piscivore Mass          - 2")
+    print("Hunting Success Average - 3")
+    print("Burst Size              - 4")
+    print("Initial Fish Population - 5")
+    print("Fish Growth Rate        - 6")
+    print("Diffusion Coefficient   - 7\n")
 
     try:
         var_it = int(input("Variable Choice: \n") or '0')
     except ValueError:
         print("Input not recognized. \n")
 
-
     var_it += 1
     var_nm = var_it-2
 
-    print("Typical Value: {}".format(inputs[var_it]))
-    var_min = float(input("\n Lower Bound: "))
-    var_max = float(input("\n Upper Bound: "))
+    print("Typical Value: {}\n".format(inputs[var_it]))
+    var_min = float(input("Lower Bound: "))
+    var_max = float(input("Upper Bound: "))
 
     var_del = (var_max - var_min)/(num_runs)
 
-    print("Variable Max: {} \n  \
-            Variable Min: {} \n \
-            Size of step: {} \n".format(var_max,var_min,var_del))
+    print("\nVariable Max: {}".format(var_max))
+    print("Variable Min: {}".format(var_min))
+    print("Size of step: {}\n".format(var_del))
+
+    try:
+        cont = (input("Press enter to continue\n"))
+    except ValueError:
+        print("Input not recognized. \n")
 
     inputs[var_it] = var_min
     i = 0
@@ -346,7 +354,7 @@ def stats_run(inputs,outfiles,time):
         for y in range(num_iter):
             avg_vals[n][y] = avg_vals[n][y]/(num_runs + 1)
 
-    out_dir = "/home/jon/Desktop/Phage2Shark/" + "Runs/" + time + "_range"
+    out_dir = "/home/jon/Desktop/Phage2Shark/" + "Runs/" + time + "_stats"
 
     dir_make(out_dir)
 

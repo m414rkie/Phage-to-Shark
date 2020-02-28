@@ -25,8 +25,7 @@ use functions
 implicit none
 	integer					:: t	! Looping integers
 	integer					:: allck ! Error flag
-	integer					:: fertile, buds, mstime(8) ! flags for coral ferility
-																							! Number of coral buds; timing array
+	integer					:: fertile, buds ! flag for coral ferility, number of coral buds
 	real						:: growpercmod ! Adjusts coral growth percentage. For use in
 																 ! diseases
 	real						:: def_mod ! Default coral growth percentage
@@ -72,11 +71,6 @@ fertile 	= 0
 numday 		= 0
 numnew 		= 0
 def_mod		= 1.0
-
-call date_and_time(values=mstime)
-!seed = 4 ! Consistent Seed
-seed = (mstime(8)) ! New seed each run
-call random_seed(put=seed)
 
 ! Populates initial coral layer - coral_subs.F90
 call corpop

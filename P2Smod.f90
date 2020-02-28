@@ -5,7 +5,7 @@ implicit none
 type microbevar
 	sequence
 	integer*8				:: totalpop
-	integer*8 			:: numspecies
+	integer		 			:: numspecies
 end type microbevar
 
 ! Input variables
@@ -119,33 +119,17 @@ implicit none
 virpop_dom = spec*(rate*(1.0 - (bacpop/carry)) - bacdeath)/ad
 
 end function
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-real*8 function vmr_calc(i,j)
-! Finds the temperance ratio
-!** Deprecated **
-
-use globalvars, only: phage, bacteria, lys
-
-implicit none
-	integer		:: i, j
-
-! Phage population over bacteria population
-vmr_calc = (real(phage(i,j)%totalpop,8)/real(bacteria(i,j)%totalpop+lys(i,j)%totalpop,8))
-
-end function
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-real*8 function comp_carry(k_diff,spec,pop)
+real*8 function comp_carry(k_diff,pop)
 ! Calculates the effective lysogen carrying capacity
 
 implicit none
 	integer*8		:: K_diff, pop
-	real*8			:: spec ! Species Count
 	real*8			:: max_pak = 2.5E13 ! Physical limit
 
-comp_carry = real(K_diff,8)*(spec*real(pop,8)/(max_pak))
+comp_carry = real(K_diff,8)*(real(pop,8)/(max_pak))
 
 end function
 
@@ -162,37 +146,23 @@ implicit none
 	real*8		:: rate_l, ly_mod ! Lysogenic growth rate
 
 ! Adjust real growth rate of lysogens
-ly_mod = 1.5
+ly_mod = 2.0
 rate_l = rate*ly_mod
 
-lys_pop = int(lys_carry_loc-(lys_carry_loc/rate_l)*(ir),8)!-bacdeath),8)
+lys_pop = int(lys_carry_loc-(lys_carry_loc/rate_l)*(ir),8)
 
 end function
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-real*8 function lysratio(i,j)
-! Finds lysogen ratio
-! ** Deprecated **
-
-use globalvars, only: lys, bacteria
+integer function richness(k_mod,k_max)
+! Determines the richness of the microbial community
 
 implicit none
-	integer		:: i, j
+	real*8	:: k_mod, k_max ! Size of sample population
 
-! Lysogen pop over bacteria pop
-lysratio = (real(lys(i,j)%totalpop,8)/real(bacteria(i,j)%totalpop,8))
-
-if (lysratio .lt. 0) then
-	lysratio = 0.0
-end if
-
-if (lysratio .gt. 1.0) then
-	lysratio = 1.0
-end if
+richness = ceiling(10.0*(k_mod)/k_max)
 
 end function
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 real*8 function bactouch(pop)
@@ -204,7 +174,7 @@ implicit none
 
 ! Initialize values - Based on in vivo measurements
 maxpop = 25.0*1.0E7
-minpop = 25.0*1.0E5
+minpop = 25.0*1.0E4
 slope = 1.0/(maxpop-minpop)
 
 ! Limit minimum output
