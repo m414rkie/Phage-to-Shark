@@ -20,6 +20,7 @@ use globalvars, only: fish, fish_carry
 
 	! Adjust input values
 	modify = modify*(1.0 - fisheat)
+	write(*,*) "Fish Modifier", modify
 
 end subroutine
 

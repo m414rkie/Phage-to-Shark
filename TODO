@@ -42,3 +42,53 @@ Run 27220201
  - fish interaction reduced to growth only
  - Burst count as step function
  Coral = 100 ; Algae = 60 ; Barrier = 10
+ 
+Run 27220202
+ - fish interaction, second term reduced to 0.25
+ - Burst count as step function
+	 Coral = 100 ; Algae = 60 ; Barrier = 10 
+ - lysogen carrying capacity error fixed
+	
+Run 2822020 - Best 
+	- richness ceiling increased to 100 from 10
+	- Burst Count 100 - 60 - 10
+	
+Run 2922020
+	- Burst 100 - 50 - 5
+	- Bact-Coral interaction reduced 15 -> 12
+	
+Run 2922020 1
+	- richness changed to 1/(1 - k_mod/k_max) - 1
+	- results in too high of a richness
+	
+Run 2922020 2
+	- richness changed to (k_mod/k_max)^2
+	- results in compressed values
+	
+Run 2922020 3
+	- Burst 100 30 5
+	- R_lys  = 2.5
+	- richness k_mod/k_max
+	
+Run 2922020 4
+	- same as 3 R_lys = 2.0
+
+Run 2922020 5
+	- fish modifier reduced
+	- poor results
+	
+Run 2922020 6
+	- fish modifier increased
+	- continuous burst function
+
+Run 2922020 9
+	- Continuous burst function
+	- reduced fish impact
+	
+Run 2922020 10
+	- Step burst function modified by fish impact
+
+Run 2922020 11
+	- Step burst function modified by inverse fish impact
+	- bactouch cap increased to 1E8
+	

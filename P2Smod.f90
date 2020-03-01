@@ -160,11 +160,11 @@ integer function richness(k_mod,k_max)
 implicit none
 	real*8	:: k_mod, k_max ! Size of sample population
 
-richness = ceiling(10.0*(k_mod)/k_max)
+richness = ceiling(100.0*(k_mod/k_max))
 
 end function
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 real*8 function bactouch(pop)
 ! Determines level of bacterial influence for a given population
 
@@ -173,7 +173,7 @@ implicit none
 	real*8	:: maxpop, minpop ! Determine max or min influence
 
 ! Initialize values - Based on in vivo measurements
-maxpop = 25.0*1.0E7
+maxpop = 25.0*1.0E8
 minpop = 25.0*1.0E4
 slope = 1.0/(maxpop-minpop)
 

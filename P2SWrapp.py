@@ -35,7 +35,7 @@ time_vals = "{}{}{}".format(time.day,time.month,time.year)
 
 # Values for input
 grid = 100 # grid size
-numT = 200 # Number of time steps
+numT = 2000 # Number of time steps
 corcov_ini = 0.5 # Initial coral coverage
 pisc_mass = 20 # Piscivore mass
 hunt_avg = 6 # Average number of days between a succesful piscivore hunt
