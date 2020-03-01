@@ -155,7 +155,7 @@ subroutine bactgrow_dom
 ! of the lotka-volterra eqns.
 
 use globalvars
-use functions, only: virpop_dom, comp_carry, lys_pop, richness, burst
+use functions, only: virpop_dom, comp_carry, lys_pop, burst
 
 implicit none
 	real*8		:: lys_carry_loc ! Local lysogen carrying capacity
@@ -190,8 +190,6 @@ do i = 1, 2*grid, 1
 		else
 			burst_eff = 10
 		end if
-		! Effective burst size - continuous function
-		!burst_eff = burst(kbact(i,j)*real(fish_imp,8),kbar)
 
   	! Bacteria - Steady State, Compartment model
 		bacteria(i,j)%totalpop = int(real(spec,8)*(phagedie/(burst_eff*adsorp)),8)
