@@ -155,7 +155,7 @@ subroutine bactgrow_dom
 ! of the lotka-volterra eqns.
 
 use globalvars
-use functions, only: virpop_dom, comp_carry, lys_pop, burst
+use functions, only: virpop_dom, comp_carry, lys_pop, richness
 
 implicit none
 	real*8		:: lys_carry_loc ! Local lysogen carrying capacity
