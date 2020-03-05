@@ -257,7 +257,7 @@ yloop:	do y = 1, grid, 1
 ! Fish impact should affect the carrying capacity in the algae. Shift to
 !	k-subroutine
 
-		grow = 1.0 + (deconst*growpercent - 0.15*bacteff)
+		grow = 1.0 + (deconst*growpercent - 0.2*bacteff)
 		!write(*,*) fish_imp, growpercent, bacteff, grow, tot_bac
 
 		! Sum to average

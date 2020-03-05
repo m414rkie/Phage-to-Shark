@@ -179,8 +179,6 @@ do i = 1, 2*grid, 1
 
 		spec = richness(real(bacteria(i,j)%totalpop,8),kbact(i,j)*real(fish_imp,8),kbar)
 
-		if (spec .lt. 1) spec = 1
-
 		bacteria%numspecies = spec
 		phage%numspecies = spec
 		lys%numspecies = 1
