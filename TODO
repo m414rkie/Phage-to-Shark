@@ -91,4 +91,39 @@ Run 2922020 10
 Run 2922020 11
 	- Step burst function modified by inverse fish impact
 	- bactouch cap increased to 1E8
+	- inverse trends
+	
+Final run
+	- coral bact interaction reduced from 0.15 to 0.11
+
+TODO
+	- Auto graph most common outputs
+	
+MEETING 
+
+3-3-2020
+
+Notes:
+	- cc changing order of magnitude 7 - 6 based on region
+	- find steady state parameters. equilibration points and values for each. 
+	- system stability at 60%, 40% naturally 
+	- fish, microbe evolution w/out coral interaction, use outputs
+	- follow up with CS
+	- barrier cannot reasonably be highest value
+	- initial bact. pop change from 0.001 to 0.5
+	- paper with decay rate change suggests a change of 10^2 in phage decay rate. may also affect burst size
+	- run simulation with lower bacteria
+	
+TODO 
+	PRIORITY - system stability at 60% coral with all interactions running
+	richness criteria from N* where N* is determined at .5 carrying capacity cc/bac = some max N 0.5N = N*
+	steady N* or adjustable N* based on ss values of bacteria
+	add output bucket for matching to github ( default values etc.) with outputs. "Quality Control Test"
+	
+New Paper: 
+	- Burst size counts from 5 - 100
+	- viral decay rate can change from 20 - 01 1/Lhr
+	
+	
+	
 	

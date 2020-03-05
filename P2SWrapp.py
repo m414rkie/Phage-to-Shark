@@ -20,22 +20,13 @@ import Wrapp_funcs as fns
 ## Set up - input values; labels and names for outputs
 # Calls functions contained in Wrapp_funcs.py
 
-## TODO:
-# Remove the following
-# Bacterial growth
-# Phage decay rate
-# Bacterial decay rate
-# lysogen growth rate modifier
-# bacterial interactions strength
-# Newcoral Threshold
-
 # Date
 time = datetime.datetime.now()
 time_vals = "{}{}{}".format(time.day,time.month,time.year)
 
 # Values for input
 grid = 100 # grid size
-numT = 2000 # Number of time steps
+numT = 50 # Number of time steps
 corcov_ini = 0.5 # Initial coral coverage
 pisc_mass = 20 # Piscivore mass
 hunt_avg = 6 # Average number of days between a succesful piscivore hunt
@@ -107,6 +98,14 @@ if sd_flag == 'P':
     print("A random seed will be generated")
     seed = time.day+time.microsecond+time.second
     print("The random seed is {}".format(seed))
+
+
+try:
+    t_steps = int(input("Enter the number of timesteps to simulate: "))
+except ValueError:
+    print("Time requires an integer, please try again")
+
+numT = t_steps
 
 # Insert seed value to parameter list
 in_vals = [grid,numT,corcov_ini,pisc_mass,hunt_avg,burst,fish_ini,f_Grate,

@@ -103,6 +103,13 @@ def graph_choice(ndir,datfiles,t_flag,var_vals,vr_nm):
     os.chdir(ndir+"/General")
     exit_input = ' '
 
+    # Default graphs made here
+    comp_list = [11,5,6,7,8,10,9,16]
+
+    for val in comp_list:
+        graph(datfiles[0],datfiles[val-1],0,val-1,t_flag,var_vals,ndir,vr_nm)
+
+
     while True:
         _=os.system('clear')
         print("Choose 2 sets of data to plot against each other. Enter nothing \

@@ -7,9 +7,9 @@ use globalvars, only: kbact, grid, coral, kalg, kcor, kbar
 implicit none
 	integer			:: i, j			! Looping integers
 
-kalg = 225.0E7 ! 25*9e7 ! Factor of 25 since our grid is 5cm X 5cm at the microbe
-kcor = 75.0E7 ! 25*3e7     level
-kbar = 300.0E7 ! 25*12e7
+kalg = 1.25E6 ! 25*5e6 ! Factor of 25 since our grid is 5cm X 5cm at the microbe
+kcor = 25.0E6 ! 25*1e6     level
+kbar = 25.0E7 ! 25*1e7
 
 ! Initialize to all algae
 kbact = kalg
@@ -154,7 +154,7 @@ subroutine bactgrow_dom
 ! Subroutine to evolve the microbial population using the steady state solutions
 ! of the lotka-volterra eqns.
 
-use globalvars
+use globalvars, only: kbact, bacteria, phage, lys, phagedie, grid, kcor, kbar, kalg, bacthold
 use functions, only: virpop_dom, comp_carry, lys_pop, richness
 
 implicit none
@@ -164,7 +164,7 @@ implicit none
 	real*8		:: adsorp = 4.8E-10 ! Adsorption coefficient
 	real			:: fish_imp ! Holds fish impact parameter
 	real*8		:: burst_eff, cc ! Effective burst size, unmodded carrying capacity
-	integer		:: spec ! Richness of system
+	real			:: spec ! Richness of system
 
 fish_imp = 1.0
 call fishinteraction(fish_imp)
@@ -174,7 +174,12 @@ do i = 1, 2*grid, 1
 
 	do j = 1, 2*grid, 1
 
-		spec = richness(kbact(i,j)*real(fish_imp,8),kbar)
+  	! Bacteria - Steady State, Compartment model
+		bacteria(i,j)%totalpop = int((phagedie/(burst_eff*adsorp)),8)
+
+		spec = richness(real(bacteria(i,j)%totalpop,8),kbact(i,j)*real(fish_imp,8),kbar)
+
+		if (spec .lt. 1) spec = 1
 
 		bacteria%numspecies = spec
 		phage%numspecies = spec
@@ -191,14 +196,11 @@ do i = 1, 2*grid, 1
 			burst_eff = 10
 		end if
 
-  	! Bacteria - Steady State, Compartment model
-		bacteria(i,j)%totalpop = int(real(spec,8)*(phagedie/(burst_eff*adsorp)),8)
+		bacteria(i,j)%totalpop = int(real(spec,8)*bacteria(i,j)%totalpop,8)
 
 		! Limit population to carrying capacity
-		! if (bacteria(i,j)%totalpop .gt. int(kbact(i,j)*fish_imp,8)) then
-
-		if (bacteria(i,j)%totalpop .gt. int(kbact(i,j),8)) then
-			bacteria(i,j)%totalpop = int(kbact(i,j),8)
+	  if (bacteria(i,j)%totalpop .gt. int(kbact(i,j)*fish_imp,8)) then
+			bacteria(i,j)%totalpop = int(kbact(i,j)*fish_imp,8)
 		end if
 
 		! Phage - Steady State, Compartment model. Function in P2Smod.f90
@@ -209,7 +211,6 @@ do i = 1, 2*grid, 1
 		!! Lysogenic compartment
 		! Find difference between carrying capacity and bacteria population
 		K_del = (int(kbact(i,j)*fish_imp,8) - bacthold(i,j)%totalpop)
-		! K_del = (int(kbact(i,j)) - bacthold(i,j)%totalpop)
 
 		! Determine carrying capacity in lysogenic compartment.
 		! Function in P2Smod.F90
@@ -246,11 +247,11 @@ bacteria%numspecies = 50
 phage%numspecies = 50
 lys%numspecies = 1
 
-bacteria%totalpop = int(0.001*kbact,8)
+bacteria%totalpop = int(0.3*kbact,8)
 
 phage%totalpop = 5*bacteria%totalpop
 
-lys%totalpop = int(0.01*real(bacteria%totalpop),8)
+lys%totalpop = int(0.001*real(bacteria%totalpop),8)
 
 bacthold = bacteria
 

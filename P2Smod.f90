@@ -5,7 +5,7 @@ implicit none
 type microbevar
 	sequence
 	integer*8				:: totalpop
-	integer		 			:: numspecies
+	real			 			:: numspecies
 end type microbevar
 
 ! Input variables
@@ -127,7 +127,7 @@ real*8 function comp_carry(k_diff,pop)
 
 implicit none
 	integer*8		:: K_diff, pop
-	real*8			:: max_pak = 2.5E13 ! Physical limit
+	real*8			:: max_pak = 2.5E10! 2.5E13 ! Physical limit
 
 comp_carry = real(K_diff,8)*(real(pop,8)/(max_pak))
 
@@ -154,13 +154,17 @@ lys_pop = int(lys_carry_loc-(lys_carry_loc/rate_l)*(ir),8)
 end function
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-integer function richness(k_mod,k_max)
+real function richness(bact_ss,k_mod,k_max)
 ! Determines the richness of the microbial community
 
 implicit none
 	real*8	:: k_mod, k_max ! Size of sample population
+	real*8	:: bact_ss
+	real*8	:: spec_mx
 
-richness = ceiling(100.0*(k_mod/k_max))
+spec_mx = k_mod/bact_ss
+
+richness = real(12.0*(k_mod/k_max),4)
 
 end function
 
@@ -173,7 +177,7 @@ implicit none
 	real*8	:: maxpop, minpop ! Determine max or min influence
 
 ! Initialize values - Based on in vivo measurements
-maxpop = 25.0*1.0E8
+maxpop = 25.0*1.0E7
 minpop = 25.0*1.0E4
 slope = 1.0/(maxpop-minpop)
 

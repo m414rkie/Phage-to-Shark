@@ -3,21 +3,7 @@ PROGRAM P2S
 ! Jon Parsons
 ! 8-4-19
 !
-! Special requirements:
-! * Module file - P2Smod.f90
-! * Subroutines - coral_subs.F90
-!									fish_subs.F90
-! 								microbes_subs.F90
-! 								nonlifesubs.f90
-!
-!
 ! ------------------ Code -----------------------------
-
-! TO DO:
-! Initial fish population is user input
-! Clean deprecated inputs
-! New method for adjustment of carrying capacity
-! 		- keep cc array clean and shift adjustment to the bacterial subs
 
 use globalvars
 use functions
@@ -59,7 +45,7 @@ allocate(seed(33), stat=allck)
 ! Initializing grids and variables
 rate = 1.0 ! Bacterial Growth rate
 bacdeath = 0.2 ! Bacterial death rate
-phagedie = 0.5 ! Phage death rate
+phagedie = 0.1 ! Phage death rate
 
 fish 					= fish_ini
 coral 				= 0.0
@@ -77,9 +63,6 @@ call corpop
 
 ! Initiallize coral holding layer
 holding = coral
-
-write(*,*) "0.0 represents pure algae; greater than zero represents coral, higher number represents more coral"
-write(*,*) "Files are written as (x,y,z) where z is the population/biomass"
 
 ! initial fish population, P2Smod.f90
 fish_carry = 1000.0*percentcor(grid) + 100.0
