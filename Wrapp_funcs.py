@@ -108,6 +108,7 @@ def graph_choice(ndir,datfiles,t_flag,var_vals,vr_nm):
 
     for val in comp_list:
         graph(datfiles[0],datfiles[val-1],0,val-1,t_flag,var_vals,ndir,vr_nm)
+        graph(datfiles[16],datfiles[0],0,val-1,t_flag,var_vals,ndir,vr_nm)
 
 
     while True:

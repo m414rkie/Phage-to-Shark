@@ -154,17 +154,17 @@ lys_pop = int(lys_carry_loc-(lys_carry_loc/rate_l)*(ir),8)
 end function
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-real function richness(bact_ss,k_mod,k_max)
+real function richness(bact_ss,k_o,k_mod,k_max)
 ! Determines the richness of the microbial community
 
 implicit none
-	real*8	:: k_mod, k_max ! Size of sample population
+	real*8	:: k_mod, k_max, k_o ! Size of sample population
 	real*8	:: bact_ss
 	real*8	:: spec_mx
 
-spec_mx = k_mod/bact_ss
+spec_mx = k_o/bact_ss
 
-richness = real(12.0*(k_mod/k_max),4)
+richness = real(spec_mx*(k_mod*k_o/k_max),4)
 
 end function
 
@@ -178,7 +178,7 @@ implicit none
 
 ! Initialize values - Based on in vivo measurements
 maxpop = 25.0*1.0E7
-minpop = 25.0*1.0E4
+minpop = 25.0*1.0E5
 slope = 1.0/(maxpop-minpop)
 
 ! Limit minimum output

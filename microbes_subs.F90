@@ -174,15 +174,6 @@ do i = 1, 2*grid, 1
 
 	do j = 1, 2*grid, 1
 
-  	! Bacteria - Steady State, Compartment model
-		bacteria(i,j)%totalpop = int((phagedie/(burst_eff*adsorp)),8)
-
-		spec = richness(real(bacteria(i,j)%totalpop,8),kbact(i,j)*real(fish_imp,8),kbar)
-
-		bacteria%numspecies = spec
-		phage%numspecies = spec
-		lys%numspecies = 1
-
 		! Find effective burst size - No interaction with the fish layer
 		! simple values
 		cc = kbact(i,j)
@@ -194,6 +185,16 @@ do i = 1, 2*grid, 1
 			burst_eff = 10
 		end if
 
+  	! Bacteria - Steady State, Compartment model
+		bacteria(i,j)%totalpop = int((phagedie/(burst_eff*adsorp)),8)
+! this part from bacthold, into richness hold/spec
+
+		spec = richness(real(bacteria(i,j)%totalpop,8),kbact(i,j),real(fish_imp,8),kbar)
+
+		bacteria%numspecies = spec
+		phage%numspecies = spec
+		lys%numspecies = 1
+
 		bacteria(i,j)%totalpop = int(real(spec,8)*bacteria(i,j)%totalpop,8)
 
 		! Limit population to carrying capacity
@@ -203,7 +204,7 @@ do i = 1, 2*grid, 1
 
 		! Phage - Steady State, Compartment model. Function in P2Smod.f90
 		! phage(i,j)%totalpop = int(virpop_dom(kbact(i,j),real(bacthold(i,j)%totalpop,8), &
-		 phage(i,j)%totalpop = int(virpop_dom(fish_imp*kbact(i,j),real(bacthold(i,j)%totalpop,8), &
+		 phage(i,j)%totalpop = int(virpop_dom(fish_imp*kbact(i,j),real(bacteria(i,j)%totalpop,8), &
 										adsorp,real(spec,8)),8)
 
 		!! Lysogenic compartment
@@ -245,11 +246,11 @@ bacteria%numspecies = 50
 phage%numspecies = 50
 lys%numspecies = 1
 
-bacteria%totalpop = int(0.3*kbact,8)
+bacteria%totalpop = int(0.1*kbact,8)
 
 phage%totalpop = 5*bacteria%totalpop
 
-lys%totalpop = int(0.001*real(bacteria%totalpop),8)
+lys%totalpop = int(0.1*real(bacteria%totalpop),8)
 
 bacthold = bacteria
 

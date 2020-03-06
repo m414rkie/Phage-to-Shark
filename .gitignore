@@ -1,5 +1,7 @@
 # Ignoring the data files
 *.dat
+*.mod
+*.o
 # Ignoring subdirectories
 Coral/
 General/
