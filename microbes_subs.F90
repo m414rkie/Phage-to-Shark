@@ -7,7 +7,7 @@ use globalvars, only: kbact, grid, coral, kalg, kcor, kbar
 implicit none
 	integer			:: i, j			! Looping integers
 
-kalg = 1.25E6 ! 25*5e6 ! Factor of 25 since our grid is 5cm X 5cm at the microbe
+kalg = 125.E6 ! 25*5e6 ! Factor of 25 since our grid is 5cm X 5cm at the microbe
 kcor = 25.0E6 ! 25*1e6     level
 kbar = 25.0E7 ! 25*1e7
 
@@ -180,14 +180,13 @@ do i = 1, 2*grid, 1
 		if (cc .eq. kcor) then
 			burst_eff = 100
 		else if (cc .eq. kalg) then
-			burst_eff = 60
+			burst_eff = 30
 		else
-			burst_eff = 10
+			burst_eff = 20
 		end if
 
   	! Bacteria - Steady State, Compartment model
 		bacteria(i,j)%totalpop = int((phagedie/(burst_eff*adsorp)),8)
-! this part from bacthold, into richness hold/spec
 
 		spec = richness(real(bacteria(i,j)%totalpop,8),kbact(i,j),real(fish_imp,8),kbar)
 
@@ -203,9 +202,8 @@ do i = 1, 2*grid, 1
 		end if
 
 		! Phage - Steady State, Compartment model. Function in P2Smod.f90
-		! phage(i,j)%totalpop = int(virpop_dom(kbact(i,j),real(bacthold(i,j)%totalpop,8), &
-		 phage(i,j)%totalpop = int(virpop_dom(fish_imp*kbact(i,j),real(bacteria(i,j)%totalpop,8), &
-										adsorp,real(spec,8)),8)
+		phage(i,j)%totalpop = int(virpop_dom(fish_imp*kbact(i,j),real(bacteria(i,j)%totalpop,8), &
+													adsorp,real(spec,8)),8)
 
 		!! Lysogenic compartment
 		! Find difference between carrying capacity and bacteria population
@@ -242,8 +240,8 @@ implicit none
 
 area = real((2*grid)**2)
 
-bacteria%numspecies = 50
-phage%numspecies = 50
+bacteria%numspecies = 5
+phage%numspecies = 5
 lys%numspecies = 1
 
 bacteria%totalpop = int(0.1*kbact,8)
