@@ -27,11 +27,11 @@ time_vals = "{}{}{}".format(time.day,time.month,time.year)
 # Values for input
 grid = 100 # grid size
 numT = 50 # Number of time steps
-corcov_ini = 0.5 # Initial coral coverage
+corcov_ini = 0.6 # Initial coral coverage
 pisc_mass = 20 # Piscivore mass
 hunt_avg = 6 # Average number of days between a succesful piscivore hunt
 burst = 30 # Burst size of lytic event
-fish_ini = 900*corcov_ini # Initial fish population
+fish_ini = 500*corcov_ini # Initial fish population
 f_Grate = 0.003 # Fish growth rate
 diff_co = 0.01 # Diffusion pressure for bacterial layer
 dis_flag = 'N' # Flag for disaster events N - None

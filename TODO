@@ -122,8 +122,13 @@ TODO
 	
 New Paper: 
 	- Burst size counts from 5 - 100
-	- viral decay rate can change from 20 - 01 1/Lhr
+	- viral decay rate can change from 20 - 0.1 1/Lhr
 	
-	
+3-6-2020
+	- Starting runs with a lower initial fish population
+	- error in microbial carrying capacities fixed
+	- what drives down richness in microbes?
+	- fish growth weighted higher in impact parameter
+	- phage pop zero? - current build gives number of spec(b*) = k_mod
 	
 	

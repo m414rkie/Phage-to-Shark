@@ -164,7 +164,7 @@ implicit none
 
 spec_mx = k_o/bact_ss
 
-richness = real(spec_mx*(k_mod*k_o/k_max),4)
+richness = real(spec_mx*(k_mod*k_o)/k_max,4)
 
 end function
 

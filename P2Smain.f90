@@ -64,7 +64,7 @@ call corpop
 ! Initiallize coral holding layer
 holding = coral
 
-! initial fish population, P2Smod.f90
+! initial fish cc, P2Smod.f90
 fish_carry = 1000.0*percentcor(grid) + 100.0
 
 ! Determining bacterial carrying capacity
@@ -156,7 +156,7 @@ do t = 1, numtime, 1
 
 	! Disallow spawning during disease
 	if (sickDays .lt. 1) then
-	  	call corexp(1*buds)
+	  	call corexp(2*buds)
 	end if
 
 	! Update microbe carying capacity

@@ -188,7 +188,7 @@ do i = 1, new, 1
 	! Set new coral if bacteria is not enough to prevent
 	if (temp .ge. bact_imp) then
 		numnew = numnew + 1
-		coral(x,y) = 2.5
+		coral(x,y) = 3.5
 	end if
 
 end do
@@ -255,9 +255,9 @@ yloop:	do y = 1, grid, 1
 		end if
 
 ! Fish impact should affect the carrying capacity in the algae. Shift to
-!	k-subroutine
+!	k-subroutine  0.17 seems to work really well
 
-		grow = 1.0 + (deconst*growpercent - 0.2*bacteff)
+		grow = 1.0 + (deconst*growpercent - 0.22*bacteff)
 		!write(*,*) fish_imp, growpercent, bacteff, grow, tot_bac
 
 		! Sum to average
