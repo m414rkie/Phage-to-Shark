@@ -44,14 +44,15 @@ def graph(xfil,yfil,xnum,ynum,flg,vals,dire,vr_nm):
 
     if flg == 1:
         nm = 1
-    else:
+    elif flg == 2:
         nm = 5
+    else:
+        nm = 9
 
-    if flg != 1:
+    if flg == 2:
         plt_title = "{} - {} \n Variable: {}".format(xfil,yfil,vr_nm)
     else:
         plt_title = "{} - {}".format(xfil,yfil)
-
 
     x_lab = xfil + " " + units[xnum]
     y_lab = yfil + " " + units[ynum]
@@ -62,17 +63,26 @@ def graph(xfil,yfil,xnum,ynum,flg,vals,dire,vr_nm):
     plt.ylabel(y_lab)
 
     i = 1
-    while i <= nm:
+    if flg == 1:
+        iter = nm
+    else:
+        iter = nm
+
+    while i <= iter:
         x_data = []
         y_data = []
 
         if flg == 1:
             xfile = xfil + ".dat"
             yfile = yfil + ".dat"
-        else:
+        elif flg == 2:
             xfile = xfil + "{}.dat".format(i)
             yfile = yfil + "{}.dat".format(i)
-            plt.legend([vals[0],vals[1],vals[2],vals[3],vals[4]], loc='upper right')
+        elif flg == 3:
+            xfile = xfil + "{}.dat".format(i)
+            yfile = yfil + "{}.dat".format(i)
+        else:
+            print("ERROR: Unknown Graph flag.")
 
 
         with open(xfile,'r') as x:
@@ -87,8 +97,15 @@ def graph(xfil,yfil,xnum,ynum,flg,vals,dire,vr_nm):
             dyt = lines.split()
             y_data.append(float(dyt[0]))
 
-        plt.plot(x_data,y_data)
+        if flg == 3:
+            plt.scatter(x_data,y_data)
+        else:
+            plt.plot(x_data,y_data)
+
         i += 1
+
+    if flg == 2:
+            plt.legend([vals[0],vals[1],vals[2],vals[3],vals[4]], loc='upper right')
 
     plt.savefig(plt_name,bbox_inches='tight')
     plt.clf()
@@ -96,6 +113,7 @@ def graph(xfil,yfil,xnum,ynum,flg,vals,dire,vr_nm):
 
     shutil.copy(plt_dir,dire2)
 
+    print("Graph can be found in {}".format(plt_dir))
 ################################################################################
 
 def graph_choice(ndir,datfiles,t_flag,var_vals,vr_nm):
@@ -106,6 +124,9 @@ def graph_choice(ndir,datfiles,t_flag,var_vals,vr_nm):
     # Default graphs made here
     comp_list = [11,5,6,7,8,10,9,16]
 
+    graph(datfiles[10],datfiles[4],10,4,t_flag,var_vals,ndir,vr_nm)
+    graph(datfiles[10],datfiles[5],10,5,t_flag,var_vals,ndir,vr_nm)
+    graph(datfiles[5],datfiles[4],5,4,t_flag,var_vals,ndir,vr_nm)
     for val in comp_list:
         graph(datfiles[0],datfiles[val-1],0,val-1,t_flag,var_vals,ndir,vr_nm)
         graph(datfiles[16],datfiles[0],0,val-1,t_flag,var_vals,ndir,vr_nm)
@@ -163,7 +184,9 @@ def graph_choice(ndir,datfiles,t_flag,var_vals,vr_nm):
 def dir_make(direc):
     i = 0
 
-    os.chdir("/home/jon/Desktop/Phage2Shark")
+    rel_path = os.path.dirname(__file__)
+
+    os.chdir(rel_path)
     dirchk = direc
 
     while os.path.isdir(dirchk):
@@ -174,9 +197,9 @@ def dir_make(direc):
         direc = direc + "{}".format(i)
 
 
-    dir2_2cpy = "/home/jon/Desktop/Phage2Shark/General"
-    cor_dir = "/home/jon/Desktop/Phage2Shark/Coral"
-    file_2cpy = "inputs.dat"
+    dir2_2cpy = rel_path + "/General"
+    cor_dir =  rel_path + "/Coral"
+    file_2cpy = rel_path + "/inputs.dat"
 
     os.mkdir(direc)
     shutil.move(dir2_2cpy,direc)
@@ -186,7 +209,7 @@ def dir_make(direc):
 
 ################################################################################
 
-## Subroutine to run the simulation a single time
+## Subroutine to call the fortran source code
 def run(in_list):
     in_file = "inputs.dat"
     in_file_p = open(in_file,'w')
@@ -201,13 +224,130 @@ def run(in_list):
 
 ################################################################################
 
+## Subroutine to adjust the initial values of the simulations
+def ini_adj(cc,pm,ha,bu,fi,fg,dc,df,dl,af,at,pm2,ha2,bu2,fi2,fg2,dc2):
+
+    adj_lst = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
+    spec_chcs = [1,8,9,10,11]
+    lev_chcs = [1,2,3,4,5]
+    vars = [cc,pm,ha,bu,fi,fg,dc,df,dl,af,at,pm2,ha2,bu2,fi2,fg2,dc2]
+    event_chcs = ['H','D','N']
+    adj_chcs = ['D','N']
+
+    adj_chc = 50
+    while adj_chc != 0:
+        print("\nSelect which value to change\n")
+        print("\nNote: Negative entries will be treated as absolute values\n")
+        print("1 - Initial Coral Coverage  {} \n2 - Piscivore Mass          {}".format(vars[0],vars[1]))
+        print("3 - Hunting Success Average {} \n4 - Burst Size              {}".format(vars[2],vars[3]))
+        print("5 - Initial Fish Population {} \n6 - Fish Growth Rate        {}".format(vars[4],vars[5]))
+        print("7 - Diffusion Coefficient   {} \n\n8 - Event Flag              {}".format(vars[6],vars[7]))
+        print("9 - Event Level             {} \n10- Adjustment Flag         {}".format(vars[8],vars[9]))
+        print("11- Adjustment Time         {} \n\n12- Piscivore Mass (Adj)    {}".format(vars[10],vars[11]))
+        print("13- Hunting Success (Adj)   {} \n14- Burst Size (Adj)        {}".format(vars[12],vars[13]))
+        print("15- Fish Population (Adj)   {} \n16- Fish Growth Rate (Adj)  {}".format(vars[14],vars[15]))
+        print("17- Diffustion Co. (Adj)    {} \n".format(vars[16]))
+
+        while True:
+            adj_chc = int(input("Choice (Leave blank to choose none): ") or '0')
+            if adj_chc == 0:
+                return vars
+            elif adj_chc not in adj_lst:
+                print("\nChoice not recognized, please try again")
+                continue
+            else:
+                break
+        # Coral percentage between 0,1
+        if adj_chc == 1:
+            print("\nTypical Value: {}".format(vars[adj_chc-1]))
+            while True:
+                nw_val = float(input("\nNew Value (Between 0 and 1): "))
+                if (nw_val < 0.01) or (nw_val > 1.0):
+                    print("\nInvalid entry, try again")
+                    continue
+                else:
+                    vars[adj_chc-1] = nw_val
+                    break
+
+        # Event flag handling
+        if adj_chc == 8:
+            print("\nCurrent Value: {}".format(vars[adj_chc-1]))
+            while True:
+                nw_val = input("\nNew Value (N-None, H-Hurricane, D-Disease): ")
+                nw_val = nw_val.upper()
+                if nw_val not in event_chcs:
+                    print("\nInvalid Choice, try again")
+                else:
+                    vars[adj_chc-1] = nw_val
+                    break
+
+            if nw_val != 'N':
+                print("\nChoose the severity as an integer (1-5): ")
+                while True:
+                    try:
+                        sev = int(input("\nLevel: "))
+                    except ValueError:
+                        print("Not an integer, try again.")
+                    if sev not in lev_chcs:
+                        print("Outside of range (1-5), try again")
+                    else:
+                        vars[adj_chc] = sev
+                        break
+
+        # Adjustment flag handling
+        if adj_chc == 10:
+            print("\nCurrent Value: {}".format(vars[adj_chc-1]))
+            while True:
+                nw_val = abs(input("\nNew Value (N-No adjustment, D-Adjust): "))
+                nw_val = nw_val.upper()
+                if nw_val not in adj_chcs:
+                    print("\nInvalid Choice, try again")
+                else:
+                    vars[adj_chc-1] = nw_val
+                    break
+
+            if nw_val != 'N':
+                print("\nChoose the timestep to change the values (integer): ")
+                try:
+                    td = abs(int(input("\nLevel: ")))
+                except ValueError:
+                    print("Not an integer, try again.")
+                vars[adj_chc] = td
+
+        if adj_chc == 9:
+            print("\nCurrent Value: {}".format(vars[adj_chc-1]))
+            try:
+                sev = int(input("\nNew Level as an integer (1-5): "))
+            except ValueError:
+                print("Not an integer, try again.")
+            vars[adj_chc-1] = sev
+
+        if adj_chc == 11:
+            print("\nCurrent Value: {}".format(vars[adj_chc-1]))
+            try:
+                sev = abs(int(input("\nNew time as an integer: ")))
+            except ValueError:
+                print("Not an integer, try again.")
+            vars[adj_chc-1] = sev
+
+        if adj_chc not in spec_chcs:
+            print("Typical value: {}".format(vars[adj_chc-1]))
+            vars[adj_chc-1] = abs(float(input("New Value: ")))
+
+    return vars
+
+################################################################################
+
+## Subroutine to handle single runs
 def single(inputs,outfiles,time):
+
+    rel_path = os.path.dirname(__file__)
 
     run(inputs)
 
     var_vals = [1]
 
-    out_dir = "/home/jon/Desktop/Phage2Shark/" + "Runs/" + time + "_single"
+    out_dir = rel_path + "/Runs/" + time + "_single"
 
     out_di = dir_make(out_dir)
     gr_flag = 1
@@ -220,7 +360,7 @@ def ranged(inputs,outfiles,time):
     num_runs = 4
     var_vals = []
 
-    dir = "/home/jon/Desktop/Phage2Shark/General/"
+    rel_path = os.path.dirname(__file__)
 
     vars = ["Initial Coral","Piscivore Mass","Days Between Hunts",
             "Average Burst Size","Initial Fish Population",
@@ -269,14 +409,14 @@ def ranged(inputs,outfiles,time):
         i += 1
 
         for ind in outfiles:
-            name_or = dir + "{}.dat".format(ind)
-            name_nw = dir + "{}{}.dat".format(ind,i)
+            name_or = rel_path + "/General/{}.dat".format(ind)
+            name_nw = rel_path + "/General/{}{}.dat".format(ind,i)
             os.rename(name_or,name_nw)
 
 
-    out_dir = "/home/jon/Desktop/Phage2Shark/" + "Runs/" + time + "_range"
+    out_dir = rel_path + "/Runs/" + time + "_range"
 
-    dir_make(out_dir)
+    out_dir = dir_make(out_dir)
 
     gr_flag = 2
     graph_choice(out_dir,outfiles,gr_flag,var_vals,vars[var_nm])
@@ -289,81 +429,38 @@ def ranged(inputs,outfiles,time):
 def stats_run(inputs,outfiles,time):
 
     num_runs = 9
-    num_iter = 4
 
-
-    var_vals = []
-    avg_vals = [[0 for x in range(len(outfiles))] for y in range(num_iter)]
-
-    dir = "/home/jon/Desktop/Phage2Shark/General/"
+    rel_path = os.path.dirname(__file__)
 
     vars = ["Initial Coral","Piscivore Mass","Days Between Hunts",
             "Average Burst Size","Initial Fish Population",
             "Fish Growth Rate","Diffusion Coefficient",]
 
-    print("Please select the variable to range over:")
-    print("Initial Coral Coverage  - 1  | Piscivore Mass             - 2")
-    print("Hunting Success Average - 3  | Burst Size                 - 4")
-    print("Initial Fish Population - 5  | Fish Growth Rate           - 6")
-    print("Diffusion Coefficient   - 7")
-    try:
-        var_it = int(input("Variable Choice: \n") or '0')
-    except ValueError:
-        print("Input not recognized. \n")
+    _=os.system('clear')
 
-
-    var_it += 1
-    var_nm = var_it -2
-
-    print("Typical Value: {}".format(inputs[var_it]))
-    var_min = float(input("\n Lower Bound: "))
-    var_max = float(input("\n Upper Bound: "))
-
-    var_del = (var_max - var_min)/(num_runs)
-
-    print("Variable Max: {} \n  \
-            Variable Min: {} \n \
-            Size of step: {} \n".format(var_max,var_min,var_del))
-
-    inputs[var_it] = var_min
     i = 0
-    j = 0
 
-    while j <= num_iter:
+    # generate a new seed
+    timeg = datetime.datetime.now()
+    seed = timeg.day+timeg.microsecond+timeg.second
+    inputs[13] = seed
 
-        var_vals.append(inputs[var_it])
-        inputs[var_it] += var_del
+    while i <= num_runs:
 
-        while i <= num_runs:
+        run(inputs)
 
-            run(inputs)
+        i += 1
 
-            i += 1
+        for l,ind in enumerate(outfiles):
+            name_or = rel_path + "/General/{}.dat".format(ind)
+            name_nw = rel_path + "/General/{}{}.dat".format(ind,i)
+            os.rename(name_or,name_nw)
 
-            for l,ind in enumerate(outfiles):
-                with open("{}.dat".format(ind), "rb") as fl:
-                    v1 = real(fl.readline())
-                    fl.seek(-1024, os.SEEK_END)
-                    while fl.read(1) != b"\n":
-                        f.seek(-1024, os.SEEK_CUR)
-                    v2 = real(fl.readline())
-                    avg_vals[j][l] += (v2-v1)
 
-                    fl.close()
-
-                name_or = dir + "{}.dat".format(ind)
-                name_nw = dir + "{}{}.dat".format(ind,i)
-                os.rename(name_or,name_nw)
-
-        j += 1
-
-    avg_vals = [[0 for x in range(len(outfiles))] for y in range(num_iter)]
-    for n in range(len(outfiles)):
-        for y in range(num_iter):
-            avg_vals[n][y] = avg_vals[n][y]/(num_runs + 1)
-
-    out_dir = "/home/jon/Desktop/Phage2Shark/" + "Runs/" + time + "_stats"
+    out_dir = rel_path + "/Runs/" + time + "_stats"
 
     dir_make(out_dir)
 
-    graph_choice_stats(out_dir,outfiles,avg_vals,var_vals,vars[var_nm])
+    gr_flag = 3
+    var_vals = [1]
+    graph_choice(out_dir,outfiles,gr_flag,var_vals,"B")

@@ -154,7 +154,8 @@ subroutine bactgrow_dom
 ! Subroutine to evolve the microbial population using the steady state solutions
 ! of the lotka-volterra eqns.
 
-use globalvars, only: kbact, bacteria, phage, lys, phagedie, grid, kcor, kbar, kalg, bacthold
+use globalvars, only: kbact, bacteria, phage, lys, phagedie, grid, kcor, kbar, &
+ 											kalg, bacthold, bacBurst
 use functions, only: virpop_dom, comp_carry, lys_pop, richness
 
 implicit none
@@ -164,7 +165,7 @@ implicit none
 	real*8		:: adsorp = 4.8E-10 ! Adsorption coefficient
 	real			:: fish_imp ! Holds fish impact parameter
 	real*8		:: burst_eff, cc ! Effective burst size, unmodded carrying capacity
-	real			:: spec ! Richness of system
+	real			:: spec , D_ph ! Richness of system, effective phage death rate
 
 fish_imp = 1.0
 call fishinteraction(fish_imp)
@@ -178,15 +179,20 @@ do i = 1, 2*grid, 1
 		! simple values
 		cc = kbact(i,j)
 		if (cc .eq. kcor) then
-			burst_eff = 100.0
+			burst_eff = bacBurst*2.0
+			D_ph = phagedie*0.01
 		else if (cc .eq. kalg) then
-			burst_eff = 60.0
+			burst_eff = bacBurst
+			D_ph = phagedie
 		else
-			burst_eff = 10.0
+			burst_eff = 0.01*bacBurst
+			if (burst_eff .lt. 1.0) then
+				burst_eff = 1.0
+			end if
+			D_ph = phagedie*2.0
 		end if
-
   	! Bacteria - Steady State, Compartment model
-		bacteria(i,j)%totalpop = int((phagedie/(burst_eff*adsorp)),8)
+		bacteria(i,j)%totalpop = int((D_ph/(burst_eff*adsorp)),8)
 
 		spec = richness(real(bacteria(i,j)%totalpop,8),kbact(i,j),real(fish_imp,8),kbar)
 
@@ -254,7 +260,7 @@ bacthold = bacteria
 
 write(*,*) "Initializing Microbial Layer"
 ! Cycle to remove instabilities
-do t = 1, 15, 1
+do t = 1, 25, 1
 
 	call bactgrow_dom
 	bacthold = bacteria

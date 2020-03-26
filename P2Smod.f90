@@ -127,7 +127,7 @@ real*8 function comp_carry(k_diff,pop)
 
 implicit none
 	integer*8		:: K_diff, pop
-	real*8			:: max_pak = 2.5E10! 2.5E13 ! Physical limit
+	real*8			:: max_pak = 2.5E8!10! 2.5E13 ! Physical limit
 
 comp_carry = real(K_diff,8)*(real(pop,8)/(max_pak))
 

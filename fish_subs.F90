@@ -9,6 +9,10 @@ use globalvars, only: fish, fish_carry, fgrowfact
 
 	! Ratio of change in fish population to carrying capacity
 	fisheat = 0.75*fishdelta(fish)/(fish*fgrowfact) + 0.25*fish/fish_carry
+	if (fish .eq. 0.0) then
+		fisheat = 0.0
+	end if
+
 	! Set maximal values
 	if (fisheat .lt. 0.0) then
 		fisheat = 0.0
@@ -20,7 +24,6 @@ use globalvars, only: fish, fish_carry, fgrowfact
 
 	! Adjust input values
 	modify = modify*(1.0 - fisheat)
-	write(*,*) "Fish impact parameter: ",  modify
 
 end subroutine
 

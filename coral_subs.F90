@@ -32,7 +32,7 @@ do while (perc .lt. percentcover)
 	! Get number for health
 	call random_number(healtharr)
 	! Fit between 1 and five
-	healtharr = 1.0 + healtharr*4.0
+	healtharr = 2.0 + healtharr*3.0
 
 	! Not implemented, only one shape right now
 	!if (choice .le. 0.5) then
@@ -188,7 +188,7 @@ do i = 1, new, 1
 	! Set new coral if bacteria is not enough to prevent
 	if (temp .ge. bact_imp) then
 		numnew = numnew + 1
-		coral(x,y) = 3.5
+		coral(x,y) = 4.5
 	end if
 
 end do
@@ -257,7 +257,7 @@ yloop:	do y = 1, grid, 1
 ! Fish impact should affect the carrying capacity in the algae. Shift to
 !	k-subroutine  0.17 seems to work really well
 
-		grow = 1.0 + (deconst*growpercent - 0.22*bacteff)
+		grow = 1.0 + (deconst*growpercent - 0.145*bacteff)
 		!write(*,*) fish_imp, growpercent, bacteff, grow, tot_bac
 
 		! Sum to average

@@ -44,8 +44,8 @@ allocate(seed(33), stat=allck)
 
 ! Initializing grids and variables
 rate = 1.0 ! Bacterial Growth rate
-bacdeath = 0.2 ! Bacterial death rate
-phagedie = 0.1 ! Phage death rate
+bacdeath = 0.5 ! Bacterial death rate
+phagedie = 0.5 ! Phage death rate
 
 fish 					= fish_ini
 coral 				= 0.0
@@ -142,7 +142,7 @@ do t = 1, numtime, 1
 
 	! Spawning season code
 	if (fertile .gt. 0) then
-			call corexp(4*buds)
+			call corexp(8*buds)
 	end if
 
 	! Shark events
@@ -156,7 +156,7 @@ do t = 1, numtime, 1
 
 	! Disallow spawning during disease
 	if (sickDays .lt. 1) then
-	  	call corexp(2*buds)
+	  	call corexp(4*buds)
 	end if
 
 	! Update microbe carying capacity

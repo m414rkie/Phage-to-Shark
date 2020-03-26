@@ -131,4 +131,6 @@ New Paper:
 	- fish growth weighted higher in impact parameter
 	- phage pop zero? - current build gives number of spec(b*) = k_mod
 	
-	
+3-23-2020
+	- Drive down bacteria and phage pop, VMR is in 100's
+	- implement abs value for non-handled inputs.

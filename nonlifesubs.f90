@@ -57,6 +57,7 @@ implicit none
 	real (kind=8) :: avgcoral, lysum, bacspec, phagespec
 	real (kind=8)	:: phagelysratio, phagesum, bacsum
 	real (kind=8) :: cordelt, lysspec
+	character*50	:: cwd
 	character*50	:: corfile
 	character*50	:: corpath
 	character*50	:: genpath
@@ -121,8 +122,9 @@ cordelt = (sum(coral) - sum(holding))
 50 format ("Coral/coraltime",1i4,".dat")
 
 ! File path statements
-corpath   = "~/Desktop/Phage2Shark/Coral"
-genpath   = "~/Desktop/Phage2Shark/General"
+call get_environment_variable('PWD',cwd)
+corpath   = trim(cwd)//"/Coral"
+genpath   = trim(cwd)//"/General"
 
 call dircheck(corpath)
 call dircheck(genpath)
