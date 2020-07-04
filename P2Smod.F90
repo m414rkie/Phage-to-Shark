@@ -83,7 +83,6 @@ implicit none
 end function fishdelta
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 real function percentcor(size)
 ! Function determines percentage of coral cover
 
@@ -104,8 +103,8 @@ corcount = count(wherecor)
 percentcor = float(corcount)/(float(size)**2)
 
 end function
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 real*8 function virpop_dom(carry,bacpop,ad,spec)
 ! Steady state solution for the phage population
 ! Uses LK equations as a base
@@ -115,26 +114,30 @@ use globalvars, only: rate, bacdeath
 implicit none
 	real*8	:: carry, bacpop, ad, spec
 					 ! capacity; bacteria pop; effective adsorption coefficient, richness
+	real*8	:: bac_ratio
 
-virpop_dom = spec*(rate*(1.0 - (bacpop/carry)) - bacdeath)/ad
+bac_ratio = bacpop/carry
+if (bac_ratio .lt. bacdeath) then
+	bac_ratio = bacdeath
+end if
+
+virpop_dom = spec*(rate*(1.0 - bac_ratio) - bacdeath)/ad
 
 end function
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 real*8 function comp_carry(k_diff,pop)
 ! Calculates the effective lysogen carrying capacity
 
 implicit none
 	integer*8		:: K_diff, pop
-	real*8			:: max_pak = 2.5E8!10! 2.5E13 ! Physical limit
+	real*8			:: max_pak = 2.5E9 ! Physical limit
 
 comp_carry = real(K_diff,8)*(real(pop,8)/(max_pak))
 
 end function
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 integer*8 function lys_pop(lys_carry_loc)
 ! Calculates the lysogen population
 
@@ -154,18 +157,19 @@ lys_pop = int(lys_carry_loc-(lys_carry_loc/rate_l)*(ir),8)
 end function
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-real function richness(bact_ss,k_o,k_mod,k_max)
+real function richness(bact_ss,k_o,k_mod)
 ! Determines the richness of the microbial community
+! sigmoid function
 
 implicit none
-	real*8	:: k_mod, k_max, k_o ! Size of sample population
-	real*8	:: bact_ss
-	real*8	:: spec_mx
+	real*8	:: k_mod, k_o ! Size of sample population
+	real*8	:: bact_ss ! steady-state bacterial population
+	real*8	:: spec_mx ! maximum species
 
 spec_mx = k_o/bact_ss
 
-richness = real(spec_mx*(k_mod*k_o)/k_max,4)
-
+richness = real(spec_mx*k_mod*k_mod,4)
+!write(*,*) spec_mx, k_o, bact_ss, "species stuff"
 end function
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -192,5 +196,7 @@ else
 end if
 
 end function
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 end module

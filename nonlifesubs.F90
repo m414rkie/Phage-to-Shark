@@ -1,22 +1,20 @@
 subroutine printtofile(arrin,size,file)
 
-! Prints to a file in x-y-z format
-
-use globalvars
+! Prints to a file in x-y-z format. Used for outputing locations of coral
 
 implicit none
-	integer, intent(in)							:: size
-	real,dimension(size,size),intent(in)		:: arrin
-	character(len=*), intent(in)				:: file
-	integer 									:: i, j
+	integer, intent(in)							      :: size ! size of array (square)
+	real,dimension(size,size),intent(in)	:: arrin ! holds values to print
+	character(len=*), intent(in)				  :: file ! name of file
+	integer 															:: i, j ! looping integers
 
+! open file
 open(unit=19,file=trim(file),status="replace",position="append")
-
+! print
 do i = 1, size, 1
 	do j = 1, size, 1
 		write(19,*) i, j, arrin(i,j)
 	end do
-	write(19,*)
 end do
 
 close(19)
@@ -24,19 +22,19 @@ close(19)
 end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 subroutine dircheck(path)
+
 ! Checks to see if a directoy exists.
 ! Creates directory if not already there
 
 implicit none
-	character(len=*)		:: path
-	character(len=100)		:: makepath
-	logical					:: check
+	character(len=*)   :: path ! directory path
+	character(len=100) :: makepath ! holds command to create path
+	logical						 :: check ! logical for if path exists
 
-
+  ! check for existance
 	inquire(file=trim(path)//'/.', exist=check)
-
+  ! create if it doesnt exist
 	if (check .eqv. .false.) then
 		makepath = "mkdir -p "//trim(path)
 		call system(makepath)
@@ -45,7 +43,6 @@ implicit none
 end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 subroutine datacollect(tim)
 ! Data collection subroutine. Reef averages and totals
 
@@ -53,14 +50,17 @@ use globalvars
 use functions
 
 implicit none
-	integer			  :: tim
+	integer			  :: tim ! time
+	! variables that hold averages and global sums
 	real (kind=8) :: avgcoral, lysum, bacspec, phagespec
 	real (kind=8)	:: phagelysratio, phagesum, bacsum
 	real (kind=8) :: cordelt, lysspec
-	character*50	:: cwd
+	! strings for file names and directory paths
+	character*50	:: cwd ! current working directory
 	character*50	:: corfile
 	character*50	:: corpath
 	character*50	:: genpath
+	! strings for output file names
 	character*50	:: cor_perc_file
 	character*50	:: cor_tot_file
 	character*50	:: bact_pop_file, fish_tot_file
@@ -69,13 +69,15 @@ implicit none
 	character*50	:: lys_spec_file, bact_spec_file, cor_delt_file
 	character*50	:: fish_delt_file, alg_perc_file, vmr_file
 	character*50	:: shark_evt_file, time_file
-	real				  :: fdel
-	real				  :: alg
-	real (kind=8)	:: vmr, lysperc
 
-	integer				:: i, j
+	real				  :: fdel ! change in fish population
+	real				  :: alg ! percentage of algae coverage
+	real (kind=8)	:: vmr, lysperc ! Virus to microbe ratio and percentage of
+																!  microbe population which is lysogenic
 
-! Data manipulation
+	integer				:: i, j ! looping integers
+
+! Initialize to zero
 phagesum = 0.0
 bacsum = 0.0
 lysum = 0.0
@@ -83,7 +85,7 @@ bacspec = 0.0
 phagespec = 0.0
 lysspec = 0.0
 
-! Find microbe populations and species
+! Find global microbe populations and species
 do i = 1, 2*grid, 1
 	do j = 1, 2*grid, 1
 		phagesum = phagesum + phage(i,j)%totalpop
@@ -125,7 +127,6 @@ cordelt = (sum(coral) - sum(holding))
 call get_environment_variable('PWD',cwd)
 corpath   = trim(cwd)//"/Coral"
 genpath   = trim(cwd)//"/General"
-
 call dircheck(corpath)
 call dircheck(genpath)
 
@@ -194,37 +195,23 @@ write(31,*) vmr ! VMR
 write(32,*) shrkevt ! If a shark hunt was succesful, prints 1, else 0
 write(33,*) tim ! current timesep
 write(34,*) lysum ! lysogen pop
-write(35,*) phagespec
+write(35,*) phagespec ! phage species count
 
 ! Close files
-close(15)
-close(20)
-close(21)
-close(22)
-close(23)
-close(24)
-close(25)
-close(26)
-close(27)
-close(28)
-close(30)
-close(31)
-close(32)
-close(33)
-close(34)
-close(35)
+close(15) ; close(20) ; close(21) ; close(22) ; close(23) ; close(24)
+close(25) ; close(26) ; close(27) ; close(28) ; close(30) ; close(31)
+close(32) ; close(33) ; close(34) ; close(35)
 
 end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 subroutine inputs
 ! User inputs, sort of self-documenting
 
 use globalvars
 
 implicit none
-	character*1		:: disFlagin, var_adjust_flagin ! Flags for disasters and adjustments
+	character*1	:: disFlagin, var_adjust_flagin ! Flags for disasters, adjustments
 
 disFlag = "N" ! default
 
@@ -295,18 +282,17 @@ end if
 end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 subroutine chartoup(stringin,stringout)
-
 ! converts text input to upper case
 
 implicit none
-	character(*)					:: stringin
-	character(len(stringin))		:: stringout
-	integer							:: i, j
+	character(*)					   :: stringin ! string to adjust
+	character(len(stringin)) :: stringout ! capitalized string
+	integer									 :: i, j ! looping integer, iachar indice value
 
-do i = 1, len(stringin), 1
-	j = iachar(stringin(i:i))
+do i = 1, len(stringin), 1 ! loop through string
+	j = iachar(stringin(i:i)) ! get iachar indice
+		! replace with uppercase version if needed
 		if(j .ge. iachar("a") .and. j .le. iachar("z")) then
 			stringout(i:i) = achar(iachar(stringin(i:i))-32)
 		else
@@ -315,7 +301,6 @@ do i = 1, len(stringin), 1
 end do
 
 end subroutine
-
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -379,30 +364,14 @@ area_alg_file = "General/area_alg.dat"
 area_bar_file = "General/area_bar.dat"
 
 ! Initializations
-bact_pop_cor = 0.0
-bact_pop_alg = 0.0
-bact_pop_bar = 0.0
-lys_pop_cor = 0.0
-lys_pop_alg = 0.0
-lys_pop_bar = 0.0
-phage_pop_cor = 0.0
-phage_pop_alg = 0.0
-phage_pop_bar = 0.0
-bact_spec_cor = 0.0
-bact_spec_alg = 0.0
-bact_spec_bar = 0.0
-lys_spec_cor = 0.0
-lys_spec_alg = 0.0
-lys_spec_bar = 0.0
-phage_spec_cor = 0.0
-phage_spec_alg = 0.0
-phage_spec_bar = 0.0
-phage_lys_rat_cor = 0.0
-phage_lys_rat_alg = 0.0
-phage_lys_rat_bar = 0.0
-vmr_cor = 0.0
-vmr_alg = 0.0
-vmr_bar = 0.0
+bact_pop_cor = 0.0 ; bact_pop_alg = 0.0 ; bact_pop_bar = 0.0
+lys_pop_cor = 0.0 ; lys_pop_alg = 0.0 ; lys_pop_bar = 0.0
+phage_pop_cor = 0.0 ; phage_pop_alg = 0.0 ; phage_pop_bar = 0.0
+bact_spec_cor = 0.0 ; bact_spec_alg = 0.0 ; bact_spec_bar = 0.0
+lys_spec_cor = 0.0 ; lys_spec_alg = 0.0 ; lys_spec_bar = 0.0
+phage_spec_cor = 0.0 ; phage_spec_alg = 0.0 ; phage_spec_bar = 0.0
+phage_lys_rat_cor = 0.0 ; phage_lys_rat_alg = 0.0 ; phage_lys_rat_bar = 0.0
+vmr_cor = 0.0 ; vmr_alg = 0.0 ; vmr_bar = 0.0
 
 ! Open the files
 open(unit=41,file=bact_pop_cor_file,status="unknown",position="append")
@@ -435,19 +404,15 @@ open(unit=67,file=area_bar_file,status="unknown",position="append")
 
 ! Count grid locations of each region
 kcounter = (kbact .eq. kalg)
-
 algCount = count(kcounter)
 
 kcounter = (kbact .eq. kcor)
-
 corCount = count(kcounter)
 
 kcounter = (kbact .eq. kbar)
-
 barCount = count(kcounter)
-
+! initialize
 AvgBactCapUse = 0.0
-
 sumCount = algCount + corCount + barCount
 
 write(65,*) float(corCount)/(4*grid*grid)
@@ -518,10 +483,11 @@ yloop:	do j = 1, 2*grid, 1
 end do
 
 ! Average capacity utilization
-AvgBactCapUse = AvgBactCapUse/float(4*grid*grid)
-write(*,*) "Average bacteria carrying capacity utilization: ", AvgBactCapUse
 
-! Normalize values
+AvgBactCapUse = AvgBactCapUse/float(4*grid*grid)
+write(*,'(A48,f5.3)') "Average bacteria carrying capacity utilization: ", AvgBactCapUse
+
+! Normalize values to cell volumes
 bact_pop_cor = bact_pop_cor*0.04/real(corCount,8)
 bact_pop_alg = bact_pop_alg*0.04/real(algCount,8)
 bact_pop_bar = bact_pop_bar*0.04/real(barCount,8)

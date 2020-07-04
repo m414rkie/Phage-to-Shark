@@ -15,9 +15,8 @@ kbar = 125.0E6 ! 25*5e6
 kbact = kalg
 
 ! Set coral locations
-do i = 1, grid, 1
-
-	do j = 1, grid, 1
+do j = 1, grid, 1
+	do i = 1, grid, 1
 
 		if (coral(i,j) .ne. 0) then
 			kbact(2*i-1,2*j-1) = kcor
@@ -27,13 +26,12 @@ do i = 1, grid, 1
 		end if
 
 	end do
-
 end do
 
 ! Loops to determine barrier interaction
-do i = 1, 2*grid, 1
+do j = 1, 2*grid, 1
 
-	do j = 1, 2*grid, 1
+	do i = 1, 2*grid, 1
 
 		if (i .lt. 2*grid) then
 			if ((i .lt. 2*grid) .and. (kbact(i,j) .ne. kbact(i+1,j))) then
@@ -54,7 +52,6 @@ end do
 end subroutine
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 subroutine diffuse
 
 ! Diffusion subroutine. Primary driver is population difference
@@ -69,76 +66,58 @@ implicit none
 delta = 0.0
 
 ! Working loops
-do i = 1, 2*grid, 1
-
-	do j = 1, 2*grid, 1
+do j = 1, 2*grid, 1
+	do i = 1, 2*grid, 1
 
 		! x+1
 		if ((i .lt. 2*grid) .and. (bacteria(i,j)%totalpop .gt. bacteria(i+1,j)%totalpop)) then
-
 			delta(i+1,j) = delta(i+1,j) +  diffco*real(bacteria(i,j)%totalpop - bacteria(i+1,j)%totalpop)
 			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i+1,j)%totalpop)
-
 		end if
 
 		! x-1
 		if ((i .gt. 1) .and. (bacteria(i,j)%totalpop .gt. bacteria(i-1,j)%totalpop)) then
-
 			delta(i-1,j) = delta(i-1,j) + diffco*real(bacteria(i,j)%totalpop - bacteria(i-1,j)%totalpop)
 			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i-1,j)%totalpop)
-
 		end if
 
 		! y+1
 		if ((j .lt. 2*grid) .and. (bacteria(i,j)%totalpop .gt. bacteria(i,j+1)%totalpop)) then
-
 			delta(i,j+1) = delta(i,j+1) + diffco*real(bacteria(i,j)%totalpop - bacteria(i,j+1)%totalpop)
 			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i,j+1)%totalpop)
-
 		end if
 
 		! x-1
 		if ((j .gt. 1) .and. (bacteria(i,j)%totalpop .gt. bacteria(i,j-1)%totalpop)) then
-
 			delta(i,j-1) = delta(i,j-1) + diffco*real(bacteria(i,j)%totalpop - bacteria(i,j-1)%totalpop)
 			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i,j-1)%totalpop)
-
 		end if
 
 		! x-1, y-1
 		if ((j .gt. 1) .and. (i .gt. 1) .and. (bacteria(i,j)%totalpop .gt. bacteria(i-1,j-1)%totalpop)) then
-
 			delta(i-1,j-1) = delta(i-1,j-1) + diffco*real(bacteria(i,j)%totalpop - bacteria(i-1,j-1)%totalpop)
 			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i-1,j-1)%totalpop)
-
 		end if
 
 		! x+1, y-1
 		if ((j .gt. 1) .and. (i .lt. 2*grid) .and. (bacteria(i,j)%totalpop .gt. bacteria(i+1,j-1)%totalpop)) then
-
 			delta(i+1,j-1) = delta(i+1,j-1) + diffco*real(bacteria(i,j)%totalpop - bacteria(i+1,j-1)%totalpop)
 			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i+1,j-1)%totalpop)
-
 		end if
 
 		! x-1, y+1
 		if ((j .lt. 2*grid) .and. (i .gt. 1) .and. (bacteria(i,j)%totalpop .gt. bacteria(i-1,j+1)%totalpop)) then
-
 			delta(i-1,j+1) = delta(i-1,j+1) + diffco*real(bacteria(i,j)%totalpop - bacteria(i-1,j+1)%totalpop)
 			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i-1,j+1)%totalpop)
-
 		end if
 
 		! x+1, y+1
 		if ((j .lt. 2*grid) .and. (i .lt. 2*grid) .and. (bacteria(i,j)%totalpop .gt. bacteria(i+1,j+1)%totalpop)) then
-
 			delta(i+1,j+1) = delta(i+1,j+1) + diffco*real(bacteria(i,j)%totalpop - bacteria(i+1,j+1)%totalpop)
 			delta(i,j) = delta(i,j) - diffco*real(bacteria(i,j)%totalpop - bacteria(i+1,j+1)%totalpop)
-
 		end if
 
 	end do
-
 end do
 
 ! Final update and trim
@@ -154,7 +133,7 @@ subroutine bactgrow_dom
 ! Subroutine to evolve the microbial population using the steady state solutions
 ! of the lotka-volterra eqns.
 
-use globalvars, only: kbact, bacteria, phage, lys, phagedie, grid, kcor, kbar, &
+use globalvars, only: kbact, bacteria, phage, lys, phagedie, grid, kcor, &
  											kalg, bacthold, bacBurst
 use functions, only: virpop_dom, comp_carry, lys_pop, richness
 
@@ -163,67 +142,74 @@ implicit none
 	integer*8	:: K_del ! Difference in carrying capacity and usage
 	integer   :: i, j ! Looping integers
 	real*8		:: adsorp = 4.8E-10 ! Adsorption coefficient
-	real			:: fish_imp ! Holds fish impact parameter
-	real*8		:: burst_eff, cc ! Effective burst size, unmodded carrying capacity
+	real*8		:: fish_imp ! Holds fish impact parameter
+	real*8		:: burst_eff, cc ! Effective burst size, unmodded local carrying
+														 !  capacity
 	real			:: spec , D_ph ! Richness of system, effective phage death rate
+	real*8	  :: cc_eff ! effective carrying capacity, fish accounted for
 
 fish_imp = 1.0
 call fishinteraction(fish_imp)
+write(*,*) "Fish Parameter:",fish_imp
 
 ! Loops
-do i = 1, 2*grid, 1
-
-	do j = 1, 2*grid, 1
+do j = 1, 2*grid, 1
+	do i = 1, 2*grid, 1
 
 		! Find effective burst size - No interaction with the fish layer
 		! simple values
 		cc = kbact(i,j)
 		if (cc .eq. kcor) then
-			burst_eff = bacBurst*2.0
-			D_ph = phagedie*0.01
+			burst_eff = bacBurst*10.0
+			D_ph = phagedie*0.1
 		else if (cc .eq. kalg) then
 			burst_eff = bacBurst
 			D_ph = phagedie
 		else
-			burst_eff = 0.01*bacBurst
+			burst_eff = 0.15*bacBurst
+			D_ph = phagedie*1.5
 			if (burst_eff .lt. 1.0) then
 				burst_eff = 1.0
 			end if
-			D_ph = phagedie*2.0
+			if(D_ph .ge. 1.0) then
+				D_ph = 0.99
+			end if
 		end if
+
+		cc_eff = cc*fish_imp
   	! Bacteria - Steady State, Compartment model
 		bacteria(i,j)%totalpop = int((D_ph/(burst_eff*adsorp)),8)
 
-		spec = richness(real(bacteria(i,j)%totalpop,8),kbact(i,j),real(fish_imp,8),kbar)
+		! microbial richness
+		spec = richness(real(bacteria(i,j)%totalpop,8),cc,real(fish_imp,8))
 
 		bacteria%numspecies = spec
 		phage%numspecies = spec
 		lys%numspecies = 1
 
+		! expand to entire community
 		bacteria(i,j)%totalpop = int(real(spec,8)*bacteria(i,j)%totalpop,8)
 
 		! Limit population to carrying capacity
-	  if (bacteria(i,j)%totalpop .gt. int(kbact(i,j)*fish_imp,8)) then
-			bacteria(i,j)%totalpop = int(kbact(i,j)*fish_imp,8)
+	  if (bacteria(i,j)%totalpop .gt. int(cc_eff,8)) then
+			bacteria(i,j)%totalpop = int(cc_eff,8)
 		end if
 
 		! Phage - Steady State, Compartment model. Function in P2Smod.f90
-		phage(i,j)%totalpop = int(virpop_dom(fish_imp*kbact(i,j),real(bacteria(i,j)%totalpop,8), &
+		phage(i,j)%totalpop = int(virpop_dom(cc,real(bacteria(i,j)%totalpop,8),&
 													adsorp,real(spec,8)),8)
 
 		!! Lysogenic compartment
 		! Find difference between carrying capacity and bacteria population
-		K_del = (int(kbact(i,j)*fish_imp,8) - bacthold(i,j)%totalpop)
+		K_del = (int(cc_eff,8) - bacthold(i,j)%totalpop)
 
 		! Determine carrying capacity in lysogenic compartment.
 		! Function in P2Smod.F90
 		lys_carry_loc = comp_carry(K_del,bacthold(i,j)%totalpop)
-
 		! Set number of lysogenic bacteria
 		lys(i,j)%totalpop = lys_pop(lys_carry_loc)
 
 	end do
-
 end do
 
 ! Remove any negatives

@@ -5,23 +5,19 @@ subroutine fishinteraction(modify)
 use functions, only: fishdelta
 use globalvars, only: fish, fish_carry, fgrowfact
 
-	real,intent(inout)			:: modify				! Input variable to be modified
+	real*8,intent(inout)	:: modify				! Input variable to be modified
+	real*8								:: fisheat
 
 	! Ratio of change in fish population to carrying capacity
-	fisheat = 0.75*fishdelta(fish)/(fish*fgrowfact) + 0.25*fish/fish_carry
-	if (fish .eq. 0.0) then
-		fisheat = 0.0
-	end if
+	fisheat = 0.6*fishdelta(fish)/(fish*fgrowfact) + 0.4*fish/fish_carry
 
-	! Set maximal values
 	if (fisheat .lt. 0.0) then
-		fisheat = 0.0
+		fisheat = 0.01
 	end if
 
 	if (fisheat .ge. 0.99) then
-		fisheat = 0.99
+		fisheat = 0.95
 	end if
-
 	! Adjust input values
 	modify = modify*(1.0 - fisheat)
 

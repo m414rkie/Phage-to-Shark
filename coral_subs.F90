@@ -69,7 +69,6 @@ end subroutine
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 subroutine corexp(new)
-
 ! Subroutine grows the coral into new spots
 
 use globalvars, only: coral, bacteria, lys, grid, check, numnew
@@ -184,11 +183,11 @@ do i = 1, new, 1
 	totbact = bactfact + real((lys(2*x,2*y)%totalpop+lys(2*x-1,2*y)%totalpop &
 		+lys(2*x-1,2*y-1)%totalpop+lys(2*x,2*y-1)%totalpop),8)
 
-	bact_imp = bactouch(totbact)
+	bact_imp = 0.8*bactouch(totbact)
 	! Set new coral if bacteria is not enough to prevent
 	if (temp .ge. bact_imp) then
 		numnew = numnew + 1
-		coral(x,y) = 4.5
+		coral(x,y) = 4.0
 	end if
 
 end do
@@ -257,8 +256,7 @@ yloop:	do y = 1, grid, 1
 ! Fish impact should affect the carrying capacity in the algae. Shift to
 !	k-subroutine  0.17 seems to work really well
 
-		grow = 1.0 + (deconst*growpercent - 0.145*bacteff)
-		!write(*,*) fish_imp, growpercent, bacteff, grow, tot_bac
+		grow = 1.0 + (deconst*growpercent - 0.3*bacteff)
 
 		! Sum to average
 		growavg = growavg + sngl(grow)
