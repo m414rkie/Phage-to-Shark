@@ -255,7 +255,7 @@ yloop:	do y = 1, grid, 1
 		end if
 
 		! growth avg = 0.1, at full capacity bacteria should win
-		grow = 1.0 + (deconst*growpercent - 0.18*bacteff)
+		grow = 1.0 + (deconst*growpercent - 0.15*bacteff)
 
 		! Sum to average
 		growavg = growavg + grow

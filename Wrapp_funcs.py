@@ -249,6 +249,8 @@ def dir_make(direc):
     # change path and assigne testing directory
     os.chdir(rel_path)
     dirchk = direc
+    if not os.path.exists(rel_path+"/Runs"):
+        os.mkdir(rel_path+"/Runs")
     # if path exists, append numeric and check again
     while os.path.isdir(dirchk):
         i += 1
@@ -256,14 +258,13 @@ def dir_make(direc):
     # update input directory
     if i > 0:
         direc = direc + "{}".format(i)
-
+    os.mkdir(direc)
     # assign subdirectories that need to be copied
     dir2_2cpy = rel_path + "/General"
     cor_dir =  rel_path + "/Coral"
     file_2cpy = rel_path + "/inputs.dat"
     file_tcpy = rel_path + "/times.dat"
     # make new directory and copy subdirectories
-    os.mkdir(direc)
     shutil.move(dir2_2cpy,direc)
     shutil.move(cor_dir,direc)
     shutil.move(file_2cpy,direc)
