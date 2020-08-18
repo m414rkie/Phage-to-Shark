@@ -476,7 +476,7 @@ yloop:	do j = 1, 2*grid, 1
 		end if
 
 		! Sum capacity use
-		AvgBactCapUse = AvgBactCapUse + bacteria(i,j)%totalpop/kbact(i,j)
+		AvgBactCapUse = AvgBactCapUse + real(bacteria(i,j)%totalpop)/kbact(i,j)
 
 	end do yloop
 
@@ -558,7 +558,8 @@ subroutine var_adjuster(tflag)
 ! Adjusts variables from initial values to the values set for the second half
 ! of the run
 
-use globalvars
+use globalvars, only : sharkMass, sharkMass_2nd, dayavg, dayavg_2nd, bacBurst, &
+		bacBurst_2nd, fgrowfact, fgrowfact_2nd, diffco, diffco_2nd
 
 implicit none
 	integer		:: tflag ! Tells what timestep this happens in

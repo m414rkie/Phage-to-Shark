@@ -5,6 +5,7 @@ import os
 import glob
 import datetime
 import shutil
+import random
 import matplotlib.pyplot as plt
 
 # Python wrapper for the P2S project.
@@ -43,9 +44,9 @@ def graph(xfil,yfil,xnum,ynum,flg,vals,dire,vr_nm):
     # xnum  - indice of unit array for x-axis
     # ynum  - indice of unit array for y-axis
     # flg   - flag for indicating which type of simulation was run
-    #           flg == 1 -> single ; flg == 2 -> ranged ; flg == 3 -> stats
+    #           flg == 1 -> single ; flg == 2 -> ranged ;
     # vals  - if simulation was 'ranged' holds values of that variable, else
-    #         not used
+    #         if calibration holds number of verification runs
     # dire  - holds directory to find datafiles subfolder in as well as where to
     #         place completed graphs
     # vr_nm - if simulation was 'ranged', holds which variable was iterated,
@@ -63,25 +64,28 @@ def graph(xfil,yfil,xnum,ynum,flg,vals,dire,vr_nm):
         nm = 1
     elif flg == 2:
         nm = 5
-    else:
-        nm = 9
+    elif flg == 3:
+        nm = vals
+
     # set title of plot
     if flg == 2:
         plt_title = "{} - {} \n Variable: {}".format(xfil,yfil,vr_nm)
-    else:
+    elif flg == 1:
         plt_title = "{} - {}".format(xfil,yfil)
+    elif flg == 3:
+        plt_title = "Calibration Results"
     # determine axis labels, name and append to plot
     x_lab = xfil + " " + units[xnum]
     y_lab = yfil + " " + units[ynum]
-    plt_name = "{}{}.png".format(xfil,yfil)
+    plt_name = "{}_{}.png".format(xfil,yfil)
     plt.ticklabel_format(useOffset=False)
     plt.title(plt_title)
     plt.xlabel(x_lab)
     plt.ylabel(y_lab)
 
     # data read and plotting loop
-    i = 1 # counting indice
-    while i <= nm:
+    i = 0 # counting indice
+    while i < nm:
         # initialize data vectors
         x_data = []
         y_data = []
@@ -108,10 +112,7 @@ def graph(xfil,yfil,xnum,ynum,flg,vals,dire,vr_nm):
             dyt = lines.split()
             y_data.append(float(dyt[0]))
         # Plot data
-        if flg == 3:
-            plt.scatter(x_data,y_data)
-        else:
-            plt.plot(x_data,y_data)
+        plt.plot(x_data,y_data)
 
         i += 1 # update count
 
@@ -141,6 +142,9 @@ def graph_choice(ndir,datfiles,t_flag,var_vals,vr_nm):
     # change to correct directory
     os.chdir(ndir+"/General")
     exit_input = ' ' # holds value for exit
+
+    dom_files = ["bact_pop","phage_pop","lys_pop","bact_spec","phage_spec",
+                "lys_spec","phage_lys_rat","vmr","time"]
 
     # Default graphs made here
     # contains datfiles vector indices for the data to plot automatically
@@ -193,12 +197,41 @@ def graph_choice(ndir,datfiles,t_flag,var_vals,vr_nm):
         except ValueError:
             print("\n Input not recognized. \n")
             continue
-        # match to indices of array (starts at 0)
+        # Determine which files to get
+        x_in = x_data
         x_data -= 1
+        y_in = y_data
         y_data -= 1
-        # get names of files
-        x_file = datfiles[x_data]
-        y_file = datfiles[y_data]
+        if x_data <= 17:
+            x_file = datfiles[x_data]
+        elif x_in > 17 and x_in < 31:
+            x_data -= 20
+            x_file = dom_files[x_data]
+            x_file = x_file+'_cor'
+        elif x_in >= 31 and x_in < 41:
+            x_data -= 30
+            x_file = dom_files[x_data]
+            x_file = x_file+'_alg'
+        elif x_in >= 41:
+            x_data -= 40
+            x_file = dom_files[x_data]
+            x_file = x_file+'_bar'
+
+        if y_data <= 17:
+            y_file = datfiles[y_data]
+        elif y_in > 17 and y_in < 31:
+            y_data -= 20
+            y_file = dom_files[y_data]
+            y_file = y_file+'_cor'
+        elif y_in >= 31 and y_in < 41:
+            y_data -= 30
+            y_file = dom_files[y_data]
+            y_file = y_file+'_alg'
+        elif y_in >= 41:
+            y_data -= 40
+            y_file = dom_files[y_data]
+            y_file = y_file+'_bar'
+
         # pass to graphing subroutine
         graph(x_file,y_file,x_data,y_data,t_flag,var_vals,ndir,vr_nm)
         # No returns
@@ -306,7 +339,7 @@ def ini_adj(vars):
             print("\nTypical Value: {}".format(vars[adj_chc]))
             while True:
                 nw_val = float(input("\nNew Value (Between 0 and 1): ") or '0')
-                if (nw_val < 0.01) or (nw_val > 1.0):
+                if (nw_val < 0.01) or (nw_val >= 1.0):
                     print("\nInvalid entry, try again")
                     continue
                 else:
@@ -387,6 +420,16 @@ def single(inputs,outfiles,time):
     # outfiles - contains names of data files
     # time     - contains date in dd_mm_yyy format with run type and number
 
+    # Get number of timesteps
+    try:
+        t_steps = int(input("Enter the number of timesteps (350 default): ") or '0')
+    except ValueError:
+        print("Time requires an integer, please try again")
+
+    if t_steps == 0:
+        t_steps = 350
+    inputs[1] = t_steps
+
     # obtain relative path
     rel_path = os.path.dirname(__file__)
 
@@ -410,10 +453,10 @@ def single(inputs,outfiles,time):
 def ranged(inputs,outfiles,time):
     # inputs   - vector of input variables
     # outfiles - contains names of data files
-    # time     - contains date in dd_mm_yyy format with run type and number
+    # time     - contains date in dd_mm_yyyy
 
     # set number of runs and initialize
-    num_runs = 4
+    num_runs = 5
     var_vals = []
     # relative working directory
     rel_path = os.path.dirname(__file__)
@@ -445,7 +488,7 @@ def ranged(inputs,outfiles,time):
     var_min = float(input("Lower Bound: "))
     var_max = float(input("Upper Bound: "))
     # determine step size
-    var_del = (var_max - var_min)/(num_runs)
+    var_del = (var_max - var_min)/(num_runs-1)
     # display user choices
     print("\nVariable Max: {}".format(var_max))
     print("Variable Min: {}".format(var_min))
@@ -456,24 +499,34 @@ def ranged(inputs,outfiles,time):
     except ValueError:
         print("Input not recognized. \n")
 
+    # Get number of timesteps
+    try:
+        t_steps = int(input("Enter the number of timesteps (350 default): ") or '0')
+    except ValueError:
+        print("Time requires an integer, please try again")
+
+    if t_steps == 0:
+        t_steps = 350
+    inputs[1] = t_steps
+
     # set parameter to be adjusted to lower bound
     inputs[var_it] = var_min
     dirgen = rel_path
     i = 0 # initialize
-    while i <= num_runs:
+    while i < num_runs:
         # run simulation with current values
         run(inputs)
         # attach current value to holding vector
         var_vals.append(inputs[var_it])
         # update current value
         inputs[var_it] += var_del
-        i += 1 # update iterator
         # Rename datafiles such that they are not overriden
-        quick_results(outfiles,dirgen,i-1)
+        quick_results(outfiles,dirgen,i)
         for ind in outfiles:
             name_or = rel_path + "/General/{}.dat".format(ind)
             name_nw = rel_path + "/General/{}{}.dat".format(ind,i)
             os.rename(name_or,name_nw)
+        i += 1 # update iterator
 
     # set output path to reflect run type
     out_dir = rel_path + "/Runs/" + time + "_range"
@@ -490,74 +543,23 @@ def ranged(inputs,outfiles,time):
     # No returns
 
 ################################################################################
-## Function to handle statistical averages of multiple runs
-# Runs simulation 10 times with the same parameters and finds average deltas
-# between the outputs.
-def stats_run(inputs,outfiles,time):
-    # inputs   - vector of input variables
-    # outfiles - contains names of data files
-    # time     - contains date in dd_mm_yyy format with run type and number
-
-    num_runs = 9 # number of runs to perform
-    # get relative path
-    rel_path = os.path.dirname(__file__)
-    # parameter names
-    vars = ["Initial Coral","Piscivore Mass","Days Between Hunts",
-            "Average Burst Size","Initial Fish Population",
-            "Fish Growth Rate","Diffusion Coefficient",]
-    # clear terminal
-    _=os.system('clear')
-
-    # generate a new seed and assign to parameters
-    timeg = datetime.datetime.now()
-    seed = timeg.day+timeg.microsecond+timeg.second
-    inputs[13] = seed
-
-    i = 0 # initialize
-    while i <= num_runs:
-        # run the simulation with current seed
-        run(inputs)
-        # update iterator
-        i += 1
-        # rename data files
-        for l,ind in enumerate(outfiles):
-            name_or = rel_path + "/General/{}.dat".format(ind)
-            name_nw = rel_path + "/General/{}{}.dat".format(ind,i)
-            os.rename(name_or,name_nw)
-
-    # set output path to reflect stats run
-    out_dir = rel_path + "/Runs/" + time + "_stats"
-    # make that path
-    dir_make(out_dir)
-    # set flags to reflect stats and pass to graphing subroutines
-    gr_flag = 3
-    var_vals = [1]
-    graph_choice(out_dir,outfiles,gr_flag,var_vals,"B")
-
-    # No returns
-
-################################################################################
 # subroutine to provide 'at-a-glance' stats for a given run. Includes max and
 # min of tracked values
 def quick_results(f_names,in_dir,run):
     # f_names   - array of names of files that hold the data
     # dat_dir   - directory data files can be found
     # f_dir_out - directory output file will go
-    dat_dir = in_dir+"/General"
+
+    dat_dir = in_dir + "/General"
     os.chdir(dat_dir)
     if run == 0:
         f_out = "glance.dat"
     else:
         f_out = "glance_r{}.dat".format(run)
     with open(f_out, 'a') as FO: # write header
-        FO.write("At a Glance Numbers \n Variable | Start | Final | Max | Time \
-            | Min | Time \n")
+        FO.write("At a Glance\nVariable, Start, Final, Max, Time, Min, Time\n")
     for file in f_names: # get the data
-        if run == 0:
-            F = file + ".dat"
-        else:
-            F = file + "{}.dat".format(run)
-
+        F = file + ".dat"
         data = [] # holds data
         with open(F,'r') as x:
             d = x.read().splitlines()
@@ -575,8 +577,251 @@ def quick_results(f_names,in_dir,run):
         min_t = data.index(min(data))
         # put it in the file
         with open(f_out, 'a') as FO:
-            FO.write("{} | {} | {} | {} | {} | {} | {} \n". \
+            FO.write("{}, {}, {}, {}, {}, {}, {}\n". \
             format(file,first,last,mx,max_t,mn,min_t))
     # copy file to final
     shutil.move(f_out,in_dir)
     os.chdir(in_dir)
+
+################################################################################
+# Routine for determining a set of input parameters that are stable for a given
+# percentage of coral coverage. Input parameters that can be adjusted are those
+# of population.
+
+def stability_run(inputs,outfiles,run_day):
+    # inputs   - vector of input values
+    # outfiles - names of data files
+    # run_day     - date in dd_mm_yyyy format
+
+    input_file = 'inputs.dat'
+    times_file = 'times.dat'
+
+    # make a copy of original inputs
+    inputs_original = inputs
+
+    # get relative working directory
+    rel_path = os.path.dirname(__file__)
+
+    # vector with iterable variables
+    vars = ["Piscivore Mass","Days Between Hunts",'Burst Size',
+        "Initial Fish Population","Fish Growth Rate","Diffusion Coefficient"]
+    # variable names
+    var_names = ['grid size','Timesteps','Initial coral','Piscivore mass',
+        'Hunting average','Burst size','Initial fish mass','Fish growth rate',
+        'Diffusion coefficient']
+
+    # get user input
+    _=os.system('clear')
+    # Coral fraction we want to keep stable
+    print("Please input the desired fraction of coral, between 0.01 and 1.\n")
+    while True:
+        cor_stable = float(input("Coral Fraction: ") or '0')
+        if (cor_stable < 0.01) or (cor_stable >= 1.0):
+            print("\nInput invalid. Please try again.")
+            continue
+        else:
+            break
+    # Length of time to keep stable for
+    print("\nPlease input the number of 'days' to simulate each run for.")
+    print("NOTE: Runs that are too short may not indicate long-term stability.")
+    while True:
+        num_days = int(input("Number of simulation days (integer): ") or '0')
+        if (num_days < 1):
+            print("\nPlease input a positive integer.")
+            continue
+        else:
+            break
+    # Random seed management
+    print("\nKeep the same random seed (Y) or a new seed for each run (N)?")
+    while True:
+        seed_chc = input("Choice: ")
+        seed_chc = seed_chc.upper()
+        if (seed_chc != 'Y') and (seed_chc != 'N'):
+            print("\nPlease enter 'Y' or 'N'")
+            continue
+        else:
+            break
+    # margin of error
+    print("Input the amount of stability error allowed")
+    print("The result will be considered stable if the final coral fraction is")
+    print("within the range of desired fraction plus/minus this value")
+    while True:
+        coral_range = float(input("Allowed error: ") or '0')
+        if (coral_range > 1.0):
+            print("This value will result in any final result being acceptable")
+            print("Please input another, smaller value")
+            continue
+        else:
+            break
+    # max number of runs allowed
+    print("Input the maximum number of runs allowed. Program will terminate")
+    print("if stability parameters not found")
+    while True:
+        max_runs = int(input("Max runs: " or '0'))
+        if (max_runs <= 1):
+            print("Must be a positive integer of at least 2")
+            continue
+        else:
+            break
+    # number of simulations to run to verify if one is found
+    print("Once a configuration results in stability, multiple runs verify")
+    print("NOTE: This will only occur if new seeds are used for each run")
+    print("Enter the number of runs used to verify")
+    while True:
+        verify_runs = int(input("Number of Runs: ") or '0')
+        if (verify_runs < 0):
+            print("Must be a positive value")
+            continue
+        else:
+            break
+    # get learning rate
+    print("Final input. Input the learning rate of the system")
+    print("NOTE: This rate acts as a percent change in value")
+    while True:
+        learn_rate = float(input("Learning Rate: ") or '0')
+        if (learn_rate <= 0):
+            print("Must be a positive, non-zero number")
+            continue
+        else:
+            break
+
+    # set upper and lower final limits
+    cor_max = cor_stable + coral_range
+    cor_min = cor_stable - coral_range
+
+    # set input values
+    inputs[2] = cor_stable
+    inputs[1] = num_days
+
+    # data holding directories
+    gen_dir = rel_path + "/General/"
+    cor_dir = rel_path + "/Coral/"
+    # file will hold all values attempted
+    f_record = "attempted_inputs.dat"
+    # set up the loop that runs the simulation and updates the inputs
+    in_params = [3,4,5,6,7,8] # indices possible parameters that can change
+    up_params = [3,4,5] # parameters that when increased help coral
+    run_num = 0
+    time = datetime.datetime.now()
+    inputs[13] = time.day+time.microsecond+time.second
+    cor_final = 0
+    while True:
+        # run the simulation with the current values
+        os.chdir(rel_path)
+        # record attempted values
+        with open(f_record, 'a+') as FR:
+            FR.write("Final Coral: {}".format(cor_final))
+            FR.write("\n_________________________________________\n")
+            FR.write("RUN {}________________________________\n".format(run_num))
+            for i, val in enumerate(inputs[0:len(var_names)]):
+                outs = "{} | {}\n".format(var_names[i],val)
+                FR.write(outs)
+        run(inputs)
+        # get final value of coral
+        cor_final = last(rel_path,outfiles[0])
+        # if outside parameters
+        if (cor_final > cor_max) or (cor_final < cor_min):
+            cor_diff = cor_final - cor_stable
+            if (abs(cor_diff) < 2.0*coral_range):
+                a_learn_rate = learn_rate*0.5
+            else:
+                a_learn_rate = learn_rate
+            # get rid of unwanted data.
+            if os.path.exists(gen_dir):
+                shutil.rmtree(gen_dir)
+            if os.path.exists(cor_dir):
+                shutil.rmtree(cor_dir)
+            if os.path.exists(input_file):
+                os.remove(input_file)
+            if os.path.exists(times_file):
+                os.remove(times_file)
+            # change an input
+            x = random.randint(0,len(in_params)-1) # get which input to change
+            indice = in_params[x]
+            # coral value too high, push down
+            if cor_final > cor_max:
+                if indice in up_params:
+                    inputs[indice] = inputs[indice]*(1-a_learn_rate)
+                else:
+                    inputs[indice] = inputs[indice]*(1+a_learn_rate)
+            # coral value too low, push up
+            elif cor_final < cor_min:
+                if indice in up_params:
+                    inputs[indice] = inputs[indice]*(1+a_learn_rate)
+                else:
+                    inputs[indice] = inputs[indice]*(1-a_learn_rate)
+            # ensure parameters still positive
+            if inputs[indice] <= 0:
+                inputs[indice] = inputs_original[indice]
+            # update seed if needed
+            if seed_chc == 'N':
+                time = datetime.datetime.now()
+                inputs[13] = time.day+time.microsecond+time.second
+        else: # inside parameters. Set up verification runs.
+            if seed_chc == 'Y':
+                break
+            else:
+                j = 0
+                while j <= verify_runs:
+                    inputs[13] = time.day+time.microsecond+time.second
+                    input_nw = 'inputs{}.dat'.format(j)
+                    times_nw = 'times{}.dat'.format(j)
+                    if os.path.exists(input_file):
+                        os.rename(input_file,input_nw)
+                    if os.path.exists(times_file):
+                        os.rename(times_file,times_nw)
+                    for ind in outfiles:
+                        name_or = gen_dir + "{}.dat".format(ind)
+                        name_nw = gen_dir + "{}{}.dat".format(ind,j)
+                        os.rename(name_or,name_nw)
+                    os.chdir(rel_path)
+                    run(inputs)
+                    j += 1
+                break
+        run_num += 1
+
+    # make file with input ranges
+    f_stable = "stable_params.dat"
+    with open(f_stable, 'a') as FO:
+        FO.write("Input Values\n")
+        for i, val in enumerate(in_params):
+            outs = "{} | {}\n".format(vars[i],inputs[in_params[i]])
+            FO.write(outs)
+
+    # set up file saving spots
+    out_dir = rel_path + "/Runs/" + run_day + "_calibration"
+    out_dir = dir_make(out_dir)
+
+    for file in glob.glob("*input*"):
+        shutil.move(file,out_dir)
+    for file in glob.glob("time*"):
+        shutil.move(file,out_dir)
+    shutil.move(f_stable,out_dir)
+
+    gr_flag = 3
+    var_vals = verify_runs
+    graph_choice(out_dir,outfiles,gr_flag,var_vals,"C")
+
+    # No returns
+
+################################################################################
+# subroutine to get the last value of the coral out of the files
+def last(dir_in,f_name):
+    # run_num - run number to see what happens to the files
+    # f_name  - file to get data from
+
+    dat_dir = dir_in + "/General"
+    os.chdir(dat_dir)
+    f_out = f_name + ".dat"
+
+    with open(f_out, 'r') as FO:
+        d = FO.read().splitlines()
+
+    data = []
+    for line in d:
+        ff = line.split()
+        data.append(float(ff[0]))
+
+    os.chdir(dat_dir)
+
+    return data[-1]

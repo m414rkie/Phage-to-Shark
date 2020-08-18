@@ -23,19 +23,16 @@ do while (perc .lt. percentcover)
 	call random_number(size)
 
 	! Size of shape
-	size  = 8.0*size + 1.0
+	size  = 3.0*size + 1.0
 	! Make integer
-	sizint = floor(size)
+	sizint = nint(size)
 	! Determine where the shape goes
 	coordinate = float(grid)*coordinate
 
 	! Get number for health
 	call random_number(healtharr)
 	! Fit between 1 and five
-	healtharr = 2.0 + healtharr*3.0
-
-	! Not implemented, only one shape right now
-	!if (choice .le. 0.5) then
+	healtharr = 1.0 + healtharr*9.0
 
 		! Set coordinates to integers that fit in the grid
 		x = floor(coordinate(1)) + 1
@@ -57,7 +54,7 @@ do while (perc .lt. percentcover)
 
 	! Trim outliers
 	where (coral .lt. 0.05) coral = 0.0
-	where (coral .gt. 5.0) coral = 5.0
+	where (coral .gt. 10.0) coral = 10.0
 
 	! Update percentage
 	perc = percentcor(grid)
@@ -81,11 +78,13 @@ implicit none
 	real								:: coord ! Holds the coordinates of the new coral
 	integer							:: x, y, i, j, l, c	! Integers for coordinates, looping, and algae locations
 	integer,allocatable	:: algaeloc(:,:)	! Holds the locations where there is algae and not coral
-	real*8							:: bactfact, neighbors ! Bacterial influence factor, holds number of coral neighbors
-	real*8							:: bact_imp, totbact
+	real								:: bactfact, neighbors ! Bacterial influence factor, holds number of coral neighbors
+	real								:: bact_imp, totbact
+	integer							:: tstep_new
 
 ! Initialize the 'counting' integer to update algaeloc locations
 c = 0
+tstep_new = 0
 
 ! Determines how many locations are not coral
 check = (coral .eq. 0.0)
@@ -95,8 +94,8 @@ l = count(check)
 allocate(algaeloc(2,l))
 algaeloc = 0
 
-! Checks coral average against threshold, checks against probability of generation, if pass calls random
-! locations in algaeloc and places coral.
+! Checks coral average against threshold, checks against probability of
+! generation, if passes calls random locations in algaeloc and places coral.
 
 ! Do loops to find exact coordinates of coral
 do i = 1, grid, 1
@@ -176,21 +175,23 @@ do i = 1, new, 1
 	if (y .gt. grid) y = grid
 
 	call random_number(temp)
-	! Bactfact = sum of all bacteria on location new coral may be placed as a ratio of  bacteria pop to carrycing capacity
 	bactfact = real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
-		+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop),8)
+		+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop))
 
 	totbact = bactfact + real((lys(2*x,2*y)%totalpop+lys(2*x-1,2*y)%totalpop &
-		+lys(2*x-1,2*y-1)%totalpop+lys(2*x,2*y-1)%totalpop),8)
+		+lys(2*x-1,2*y-1)%totalpop+lys(2*x,2*y-1)%totalpop))
 
-	bact_imp = 0.8*bactouch(totbact)
+	bact_imp = bactouch(totbact)
 	! Set new coral if bacteria is not enough to prevent
 	if (temp .ge. bact_imp) then
 		numnew = numnew + 1
-		coral(x,y) = 4.0
+		tstep_new = tstep_new + 1
+		coral(x,y) = 2.5
 	end if
 
 end do
+
+write(*,*) "Number of new coral growths:", tstep_new
 
 deallocate(algaeloc)
 
@@ -206,13 +207,13 @@ use globalvars, only: grid, bacteria, lys, growavg
 use functions, only: bactouch, percentcor
 
 implicit none
-	real,dimension(grid,grid), intent(in) 		:: arrin ! Input array
-	real,intent(in)														:: deconst ! growth modifier for disease
-	real,dimension(grid,grid), intent(out)		:: arrout	! Output array
-	real*8																		:: bactcoral, lyscoral, tot_bac
-	real*8																		:: grow, bacteff ! Bacterial influences
-	integer																		:: x, y ! Looping integers
-	real																			:: cur_perc, growpercent, ran
+	real,dimension(grid,grid), intent(in) 	:: arrin ! Input array
+	real,intent(in)													:: deconst ! growth modifier for disease
+	real,dimension(grid,grid), intent(out)	:: arrout	! Output array
+	real																		:: bactcoral, lyscoral, tot_bac
+	real																		:: grow, bacteff ! Bacterial influences
+	integer																	:: x, y ! Looping integers
+	real																		:: cur_perc, growpercent, ran
 
 ! Initialize
 growavg = 0.0
@@ -228,9 +229,9 @@ yloop:	do y = 1, grid, 1
 
 		! bact. pop on coral directly
 		bactcoral = real((bacteria(2*x,2*y)%totalpop+bacteria(2*x-1,2*y)%totalpop &
-								+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop),8)
+								+bacteria(2*x-1,2*y-1)%totalpop+bacteria(2*x,2*y-1)%totalpop))
 		lyscoral = real((lys(2*x,2*y)%totalpop+lys(2*x-1,2*y)%totalpop &
-								+lys(2*x-1,2*y-1)%totalpop+lys(2*x,2*y-1)%totalpop),8)
+								+lys(2*x-1,2*y-1)%totalpop+lys(2*x,2*y-1)%totalpop))
 
 		! normalize to area of region covered
 		tot_bac = bactcoral + lyscoral
@@ -253,16 +254,14 @@ yloop:	do y = 1, grid, 1
 			growpercent = 0.1 - 0.05*growpercent
 		end if
 
-! Fish impact should affect the carrying capacity in the algae. Shift to
-!	k-subroutine  0.17 seems to work really well
-
-		grow = 1.0 + (deconst*growpercent - 0.3*bacteff)
+		! growth avg = 0.1, at full capacity bacteria should win
+		grow = 1.0 + (deconst*growpercent - 0.18*bacteff)
 
 		! Sum to average
-		growavg = growavg + sngl(grow)
+		growavg = growavg + grow
 
 		! Grow location
-		arrout(x,y) = arrin(x,y)*sngl(grow)
+		arrout(x,y) = arrin(x,y)*grow
 
 	end do yloop
 
@@ -270,7 +269,8 @@ end do
 
 ! Normalize the average growth
 cur_perc = percentcor(grid)
-growavg = growavg/(grid*grid*cur_perc)
+growavg = growavg/(float(grid*grid))
+
 ! Set to maximum
 where (arrout .gt. 5.0) arrout = 5.0
 where (arrout .lt. 0.05) arrout = 0.0

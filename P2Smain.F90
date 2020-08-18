@@ -39,7 +39,7 @@ call cpu_time(t_tot_i)
 
 ! Handle user inputs - in nonlifesubs.f90
 call inputs
-bgrid = 2*grid
+bgrid = 2*grid ! microbial grid is twice as large as coral grid
 ! Allocation statements
 allocate(coral(grid,grid), stat=allck)
 	if (allck .ne. 0) stop "Coral Allocation Failed"
@@ -51,33 +51,35 @@ allocate(check(grid,grid), stat=allck)
 	if (allck .ne. 0) stop "Check Allocation Failed"
 allocate(bacteria(bgrid,bgrid), stat=allck)
 	if (allck .ne. 0) stop "Bacteria Allocation Failed"
-allocate(bacthold(bgrid,bgrid), stat=allck)
-	if (allck .ne. 0) stop "Bacteria Hold Allocation Failed"
+bacteria%totalpop = 0.0
+bacteria%numspecies = 0.0
 allocate(kbact(bgrid,bgrid), stat=allck)
 	if (allck .ne. 0) stop "Kbact Allocation Failed"
-	kbact = 0.0
+kbact = 0.0
 allocate(phage(bgrid,bgrid), stat=allck)
 	if (allck .ne. 0) stop "Phage Allocation Failed"
+phage%totalpop = 0.0
+phage%numspecies = 0.0
 allocate(lys(bgrid,bgrid), stat=allck)
 	if (allck .ne. 0) stop "Lys Allocation Failed"
+lys%totalpop = 0.0
+lys%numspecies = 0.0
 allocate(seed(33), stat=allck)
 	if (allck .ne. 0) stop "Seed Allocation Failed"
 
 ! Initializing grids and variables
-rate = 1.1 ! Bacterial Growth rate
-bacdeath = 0.49 ! Bacterial death rate
-phagedie = 0.75 ! Phage death rate
-fish 					= fish_ini ! initial fish population
-coral 				= 0.0 ! initialize to 0
-holding 			= 0.0 ! initialize to 0
-bacteria%totalpop 	= 0 ! initialize to 0
-bacteria%numspecies = 0 ! initialize to 0
+rate = 1.0 ! Bacterial Growth rate
+bacdeath = 0.7 ! Bacterial death rate
+phagedie = 0.5 ! Phage death rate
+fish 		 = fish_ini ! initial fish population
+coral 	 = 0.0 ! initialize to 0
+holding  = 0.0 ! initialize to 0
 ! Sub Variables
-fertile 	= 0 ! determines amount of times to call coral spawning subroutines
-numday 		= 0 ! determines number of days between succesful shark attacks
-numnew 		= 0 ! number of new coral growth in simulation
+fertile  = 0 ! determines amount of times to call coral spawning subroutines
+numday 	 = 0 ! determines number of days between succesful shark attacks
+numnew 	 = 0 ! number of new coral growth in simulation
 sickDays = 0 ! number of days of disease left
-def_mod		= 1.0 ! default coral growth modifier
+def_mod	 = 1.0 ! default coral growth modifier
 
 call cpu_time(t_ini_i)
 
@@ -110,7 +112,36 @@ t_dat_s = t_dat_s + (t_dat_f - t_dat_i)
 
 ! user output - initial coral coverage
 write(*,*) "Coral percentage:", percentcor(grid)
+write(*,*) "Initializing"
 
+! initialization loop
+growpercmod = def_mod
+do t = 1, 20, 1
+	cor_per = percentcor(grid)
+	! determine current carrying capacity of fish
+	fish_carry = 1000.0*cor_per
+	! Determine number of potential new coral buds
+	buds = nint(cor_per*10.0)
+	! Microbial diffusion
+	call diffuse
+	! Shark events
+	call shark(1)
+	! Update fish population
+	fish = fish + fishdelta(fish)
+	! Disallow negative numbers
+	if (fish .lt. 0) then
+			fish = 0.0
+	end if
+	! Update microbe carying capacity
+	call kgrid
+	! Grow microbe layer
+	call bactgrow_dom
+	! Update holding layers
+	holding = coral
+! End of initialization loop
+end do
+
+! primary loop
 ! Outer loop, iterates time
 do t = 1, numtime, 1
 
@@ -126,12 +157,12 @@ do t = 1, numtime, 1
 		fertile = 14
 	end if
 	! determine if a disaster event happens
-	if ((t .eq. 200).and.(disFlag .eq. "H")) then
+	if ((t .eq. numtime/2).and.(disFlag .eq. "H")) then
 		call hurricane
 		write(*,*) "Hurricane!"
 	end if
 	! determine if a disease strikes
-	if ((t .eq. 200).and.(disFlag .eq. "D")) then
+	if ((t .eq. numtime/2).and.(disFlag .eq. "D")) then
 		call disease
 		write(*,*) "Disease!"
 	end if
@@ -176,14 +207,14 @@ do t = 1, numtime, 1
 	! Coral growth and decay
 	call growth(holding,coral,growpercmod)
 	! User output
-	write(*,*) "Average coral Growth:", growavg
+	write(*,*) "Average coral growth Percentage:", growavg
 	! Disallow spawning during disease
 	if (sickDays .lt. 1) then
-	  	call corexp(4*buds)
+	  	call corexp(2*buds)
 	end if
 	! Spawning season, adds additional chances for new coral
 	if (fertile .gt. 0) then
-			call corexp(6*buds)
+			call corexp(10*buds)
 	end if
 	call cpu_time(t_cor_f)
 	t_cor_s = t_cor_s + (t_cor_f - t_cor_i)
@@ -202,7 +233,6 @@ do t = 1, numtime, 1
 
 	! Update holding layers
 	holding = coral
-	bacthold = bacteria
 
 	! data output
 	call cpu_time(t_dat_i)
@@ -240,7 +270,9 @@ deallocate(seed)
 
 ! Write timing data
 open(unit=90,file=timing_file,status="unknown",position="append")
+write(90,*) "Values in seconds"
 write(90,*) "Total time: ", t_tot_f - t_tot_i
+write(90,*) "Seconds/day: ", (t_tot_f-t_tot_i)/float(numtime)
 write(90,*) "Diffusion time: ", t_dif_s, "Fraction: ", t_dif_s/(t_tot_f-t_tot_i)
 write(90,*) "Microbe time: ", t_mic_s, "Fraction: ", t_mic_s/(t_tot_f-t_tot_i)
 write(90,*) "Coral time: ", t_cor_s, "Fraction: ", t_cor_s/(t_tot_f-t_tot_i)

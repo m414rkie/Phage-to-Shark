@@ -23,12 +23,12 @@ time_vals = "{}_{}_{}".format(time.day,time.month,time.year)
 grid = 100 # grid size, indice 0
 numT = 350 # Number of time steps, indice 1
 corcov_ini = 0.5 # Initial coral coverage, indice 2
-pisc_mass = 15 # Piscivore mass, indice 3
-hunt_avg = 4 # Average number of days between a succesful piscivore hunt, indice 4
+pisc_mass = 20 # Piscivore mass, indice 3
+hunt_avg = 8 # Average number of days between a succesful piscivore hunt, indice 4
 burst = 50 # Burst size of lytic event, indice 5
 fish_ini = 800*corcov_ini # Initial fish population, indice 6
 f_Grate = 0.003 # Fish growth rate, indice 7
-diff_co = 0.01 # Diffusion pressure for bacterial layer, indice 8
+diff_co = 0.1 # Diffusion pressure for bacterial layer, indice 8
 dis_flag = 'N' # Flag for disaster events N - None, indice 9
 dis_lev = 5 # Severity of disasters, indice 10
 adj_flag = 'N' # Flag to indicate a change in values at the half-way point, indice 11
@@ -40,7 +40,7 @@ hunt_avg_2 = 6 # Average number of days between a succesful piscivore hunt, indi
 burst_2 = 50 # Burst size of lytic event, indice 16
 fish_ini_2 = 600 # Fish population adjusted, indice 17
 f_Grate_2 = 0.003 # Fish growth rate, indice 18
-diff_co_2 = 0.01 # Diffusion pressure for bacterial layer, indice 19
+diff_co_2 = 0.1 # Diffusion pressure for bacterial layer, indice 19
 
 # vector containing simulation parameters
 in_vals = [grid,numT,corcov_ini,pisc_mass,hunt_avg,burst,fish_ini,f_Grate,
@@ -54,7 +54,7 @@ out_files = ["coral_fraction","coral_total","coral_average","coral_delta",
             "shark_evt","vmr","time"]
 
 # Initial user inputs. Determine type of run. Single, ranged, averaging ##
-choice_list = ['S','R','A']
+choice_list = ['S','R','C']
 seed_list = ['I','P']
 # Clear terminal and set for user input
 _=os.system('clear')
@@ -83,8 +83,7 @@ if adj_flg == 'Y':
 
 # Random or user seed generation
 print("\nGenerate a Random Seed (P) or Input a seed (I)?")
-print("\nPlease note that choosing a 'stats' run will generate a different seed \
-        for each run.")
+
 # check user input
 while True:
     sd_flag = input("Choice: ")
@@ -96,10 +95,13 @@ while True:
         break
 # for user set seed
 if sd_flag == 'I':
-    try:
-        seed_in = int(input("Enter an integer to be used as the seed: "))
-    except ValueError:
-        print("Not an integer, please try again")
+    while True:
+        try:
+            seed_in = int(input("Enter an integer to be used as the seed: "))
+        except ValueError:
+            print("Not an integer, please try again")
+            continue
+        break
     in_vals[13] = seed_in
 # for random(ish) seed
 if sd_flag == 'P':
@@ -107,20 +109,10 @@ if sd_flag == 'P':
     seed = time.day+time.microsecond+time.second
     print("The random seed is {}".format(seed))
 
-# Get number of timesteps
-try:
-    t_steps = int(input("Enter the number of timesteps to simulate (350 default): ") or '0')
-except ValueError:
-    print("Time requires an integer, please try again")
-
-if t_steps == 0:
-    t_steps = 350
-in_vals[1] = t_steps
-
 # user input for type of run
 print("\nTo run a single simulation Enter 'S'")
 print("To run a set of simulations with an iterated variable enter 'R'")
-print("To run a set of simulations with the same parameters enter 'A'")
+print("To run a set of calibrations enter 'C'")
 
 # Validate input
 while True:
@@ -139,7 +131,8 @@ if type == 'S':
     fns.single(in_vals,out_files,time_vals)
 if type == 'R':
     fns.ranged(in_vals,out_files,time_vals)
-if type == 'A':
-    fns.stats_run(in_vals,out_files,time_vals)
+if type == 'C':
+    fns.stability_run(in_vals,out_files,time_vals)
+
                             #### END MAIN  ####
 ################################################################################

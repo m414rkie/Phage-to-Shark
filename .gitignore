@@ -2,6 +2,7 @@
 *.dat
 *.mod
 *.o
+*.x
 # Ignoring subdirectories
 Coral/
 General/

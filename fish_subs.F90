@@ -2,21 +2,28 @@ subroutine fishinteraction(modify)
 
 ! Interaction of fish with algae layer. Lessens the pressure of algae against coral
 
-use functions, only: fishdelta
-use globalvars, only: fish, fish_carry, fgrowfact
+use globalvars, only: fish, fish_carry
 
 	real*8,intent(inout)	:: modify				! Input variable to be modified
-	real*8								:: fisheat
+	real*8								:: fisheat, carry_mod, grow_mod
 
 	! Ratio of change in fish population to carrying capacity
-	fisheat = 0.6*fishdelta(fish)/(fish*fgrowfact) + 0.4*fish/fish_carry
-
-	if (fisheat .lt. 0.0) then
-		fisheat = 0.01
+	carry_mod = fish/fish_carry
+	if (carry_mod .gt. 1.0) then
+		carry_mod = 1.0
+	end if
+	! Ratio of fish growth to natural growth rate. Floor of 0
+	grow_mod = 1.0 - carry_mod
+	if (grow_mod .gt. 1.0) then
+		grow_mod = 1.0
+	else if (grow_mod .lt. 0.0) then
+		grow_mod = 0.0
 	end if
 
-	if (fisheat .ge. 0.99) then
-		fisheat = 0.95
+	fisheat = 0.9*grow_mod + 0.1*carry_mod
+
+	if (fisheat .ge. 0.8) then
+		fisheat = 0.8
 	end if
 	! Adjust input values
 	modify = modify*(1.0 - fisheat)
@@ -28,11 +35,12 @@ end subroutine
 subroutine shark(f)
 ! Subroutine to determine piscivore interactions
 
-use globalvars
+use globalvars, only : sharkMass, dayavg, numday, fish, shrkevt
 
 implicit none
-	real			:: catch ! Will determine if hunt is succesful
-	integer		:: f ! Flag to determine if user is notified
+	real		:: catch, caught ! random variable, amount to be removed
+	real		:: hunger ! comparison variable
+	integer	:: f ! Flag to determine if user is notified
 
 call random_number(catch)
 
